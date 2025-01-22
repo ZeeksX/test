@@ -5,6 +5,8 @@ import HomePage from './pages/HomePage';
 import Login from "./pages/Login";
 import { AuthProvider, useAuth } from './components/Auth';
 import SignUp from './pages/SignUp';
+import Onboarding from './pages/Onboarding';
+import Landing from './pages/Landing';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -22,14 +24,18 @@ const App = () => {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path='/' element={<Landing />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <HomePage sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
             </ProtectedRoute>
           } />
           <Route path="/signup" element={
-              <SignUp sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+            <SignUp sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+          } />
+          <Route path="/onboarding" element={
+            <Onboarding sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
           } />
         </Routes>
       </Router>

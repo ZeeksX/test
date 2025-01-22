@@ -103,11 +103,16 @@ const Login = () => {
                             <TextField
                                 fullWidth
                                 variant="outlined"
-                                placeholder="Enter your email"
+                                placeholder="email@example.com"
                                 name="email"
                                 id="email"
                                 value={email}
                                 onChange={(event) => setEmail(event.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        height: '3rem', // Set the height of the TextField
+                                    }
+                                }}
                             />
                             <div className="flex flex-row justify-between w-full">
                                 <label htmlFor="password" className="text-[#666666]">Password</label>
@@ -136,6 +141,11 @@ const Login = () => {
                                             </InputAdornment>
                                         ),
                                     },
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        height: '3rem', // Set the height of the TextField
+                                    }
                                 }}
                             />
 

@@ -2,16 +2,17 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  background: url("../assets/bg-image.png");
-  background-position: center;
-  background-size: 100% 120%;
-  backdrop-filter: blur(5px);
-  font-family: 'Inter';
+  
 }
 
 .landing {
   height: 100%;
   width: 100%;
+  background: url("../assets/Background.png");
+  background-position: center;
+  background-size: 100% 100%;
+  backdrop-filter: blur(5px);
+  font-family: 'Inter';
 }
 
 .signin-image {
@@ -20,20 +21,7 @@ body {
   background-size: cover;
 }
 
-.css-1blp12k-MuiInputBase-root-MuiOutlinedInput-root,
-.css-1n04w30-MuiInputBase-root-MuiOutlinedInput-root {
-  height: 2.5rem;
-}
-
-.css-16wblaj-MuiInputBase-input-MuiOutlinedInput-input:-webkit-autofill {
-  height: 0.5rem;
-}
-
 label {
   font-size: 0.75rem;
 }
 
-.form .css-1blp12k-MuiInputBase-root-MuiOutlinedInput-root,
-.form .css-1n04w30-MuiInputBase-root-MuiOutlinedInput-root {
-  height: 2rem;
-}

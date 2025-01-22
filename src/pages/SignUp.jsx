@@ -77,7 +77,7 @@ const SignUp = () => {
     };
 
     const handleSignInClick = () => {
-        navigate("/");
+        navigate("/login");
     };
 
     return (
@@ -103,6 +103,12 @@ const SignUp = () => {
                                 value={name}
                                 autoComplete="name"
                                 onChange={(event) => setName(event.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        height: '2rem', // Set the height of the TextField
+                                        padding: "0.5rem"
+                                    }
+                                }}
                             />
                             <label htmlFor="email" className="text-[#666666]">School email address</label>
                             <TextField
@@ -113,6 +119,12 @@ const SignUp = () => {
                                 value={email}
                                 autoComplete="email"
                                 onChange={(event) => setEmail(event.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        height: '2rem', // Set the height of the TextField
+                                        padding: "0.5rem"
+                                    }
+                                }}
                             />
                             <label htmlFor="password" className="text-[#666666]">Password</label>
                             <TextField
@@ -138,6 +150,12 @@ const SignUp = () => {
                                         ),
                                     }
 
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        height: '2rem', // Set the height of the TextField
+                                        padding: "0.5rem"
+                                    }
                                 }}
                             />
                             <div className="flex flex-row justify-between w-full">
@@ -173,11 +191,16 @@ const SignUp = () => {
                                             </InputAdornment>
                                         ),
                                     }
-
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        height: '2rem', // Set the height of the TextField
+                                        padding: "0.5rem"
+                                    }
                                 }}
                             />
                             <button
-                                className="w-full mt-2 h-10 font-extralight text-base leading-[24.2px] rounded-full bg-[#c3c3c3] hover:bg-blue-800 text-white py-1 px-3 border border-transparent transition-all focus:outline-none"
+                                className="w-full mt-2 h-10 font-light text-base leading-[24.2px] rounded-full bg-[#c3c3c3] hover:bg-blue-800 text-white py-1 px-3 border border-transparent transition-all focus:outline-none"
                                 type="submit"
                             >
                                 Create an account
