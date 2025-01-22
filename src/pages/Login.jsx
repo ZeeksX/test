@@ -134,7 +134,7 @@ const Login = () => {
                             Log in
                         </button>
 
-                        <h3 className="flex justify-center text-[#666666] cursor-pointer">
+                        <h3 className="flex w-full justify-center text-[#666666] cursor-pointer">
                             Or, continue with
                             <img className="ml-1" width="25" height="20"
                                 src="https://img.icons8.com/color/48/google-logo.png" alt="google-logo" />
