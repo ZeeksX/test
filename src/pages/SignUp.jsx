@@ -82,18 +82,18 @@ const SignUp = () => {
 
     return (
         <>
-            <div className="landing flex flex-col items-center lg:justify-center justify-center gap-2 lg:gap-0 w-full min-h-screen">
-                <div className="sign-in flex flex-row lg:w-3/5 lg:h-[90vh]">
-                    <div className="signin-image w-1/2"></div>
-                    <div className="login flex flex-col max-w-96 lg:max-w-screen-lg w-full rounded-r-md bg-[white] text-black px-4 lg:px-3 border gap-4 py-4">
-                        <div className="flex flex-col justify-center items-center gap-1">
-                            <img className="w-2/5 h-12" src={logo} alt="Acad AI logo" />
-                            <h3 className="text-black font-medium text-[1.5rem] leading-[2rem]">Create an account</h3>
-                            <p className="text-black text-base font-normal leading-[19.36px] text-center">Already have an account?
+            <div className="landing flex flex-col items-center lg:justify-center justify-center gap-4 md:gap-2 lg:gap-0 w-full min-h-screen">
+                <div className="sign-in flex flex-row w-[80%] md:w-auto lg:w-3/5 lg:h-[90vh]">
+                    <div className="signin-image w-1/2 md:flex hidden"></div>
+                    <div className="login flex flex-col lg:max-w-screen-lg w-full rounded-md md:rounded-r-md  bg-[white] text-black px-2 md:px-4 lg:px-3 border gap-4 py-4">
+                        <div className="flex flex-col justify-center items-center gap-1 lg:gap-2">
+                            <img className="w-1/2 h-16" src={logo} alt="Acad AI logo" />
+                            <h3 className="text-black font-medium text-[1.25rem] leading-[1rem]">Create an account</h3>
+                            <p className="text-[#666666] text-[12px] font-normal leading-[19.36px] text-center">Already have an account?
                                 <a className="underline cursor-pointer ml-1" onClick={handleSignInClick}>Log in</a>
                             </p>
                         </div>
-                        <form onSubmit={handleSubmit} className="form flex flex-col gap-2 items-start justify-center w-4/5 mx-auto h-auto">
+                        <form onSubmit={handleSubmit} className="form flex flex-col gap-1 2xl:gap-3 items-start justify-center w-4/5 mx-auto h-auto">
                             <label htmlFor="name" className="text-[#666666]">Full name (Surname first)</label>
                             <TextField
                                 fullWidth
@@ -106,7 +106,7 @@ const SignUp = () => {
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         height: '2rem', // Set the height of the TextField
-                                        padding: "0.5rem"
+                                        fontSize: "12px"
                                     }
                                 }}
                             />
@@ -122,7 +122,7 @@ const SignUp = () => {
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         height: '2rem', // Set the height of the TextField
-                                        padding: "0.5rem"
+                                        fontSize: "12px"
                                     }
                                 }}
                             />
@@ -154,7 +154,7 @@ const SignUp = () => {
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         height: '2rem', // Set the height of the TextField
-                                        padding: "0.5rem"
+                                        fontSize: "12px"
                                     }
                                 }}
                             />
@@ -195,17 +195,17 @@ const SignUp = () => {
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
                                         height: '2rem', // Set the height of the TextField
-                                        padding: "0.5rem"
+                                        fontSize: "12px"
                                     }
                                 }}
                             />
                             <button
-                                className="w-full mt-2 h-10 font-light text-base leading-[24.2px] rounded-full bg-[#c3c3c3] hover:bg-blue-800 text-white py-1 px-3 border border-transparent transition-all focus:outline-none"
+                                className="w-full flex justify-center items-center mt-6 md:mt-4 h-12 md:h-10 lg:h-12 font-light text-base leading-[24.2px] rounded-full bg-[#c3c3c3] hover:bg-blue-800 text-white py-1 px-3 lg:py-4 border border-transparent transition-all focus:outline-none"
                                 type="submit"
                             >
                                 Create an account
                             </button>
-                            <h3 className="flex w-full justify-center text-[#666666] hover:text-gray-600 text-center cursor-pointer">Or, continue with
+                            <h3 className="flex w-full mt-2 mb-2 justify-center text-[#666666] hover:text-gray-600 text-center cursor-pointer">Or, continue with
                                 <img className="ml-1" width="25" height="20" src="https://img.icons8.com/color/48/google-logo.png" alt="google-logo" />
                             </h3>
                         </form>
