@@ -27,9 +27,9 @@ const App = () => {
           <Route path='/' element={<ParticlesReact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={
-            <ProtectedRoute>
+            // <ProtectedRoute>
               <HomePage sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-            </ProtectedRoute>
+            // </ProtectedRoute>
           } />
           <Route path="/signup" element={
             <SignUp sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />

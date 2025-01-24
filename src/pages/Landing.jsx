@@ -5,7 +5,7 @@ const Landing = () => {
     return (
         <>
             <TopNav />
-            <div className='flex flex-row justify-center items-center w-full'>
+            <div className='flex flex-row justify-center items-center w-full mt-2'>
                 <button className=' cursor-pointer flex w-52 items-center justify-center mt-12 border-2 border-[#2d4fd8] text-[#1836B2] hover:text-white hover:bg-[#1836B2] font-normal text-sm p-2 rounded-full bg-[#95cff1]'>Reclaim your time</button>
             </div>
             <div className='flex flex-col justify-center items-center w-full mt-8'>
