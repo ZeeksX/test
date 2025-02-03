@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './components/Auth';
 import SignUp from './pages/SignUp';
 import Onboarding from './pages/Onboarding';
 import ParticlesReact from './pages/ParticlesReact';
+import Loader from "./components/ui/Loader"
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -41,6 +42,7 @@ const App = () => {
         <Routes>
           <Route path='/' element={<ParticlesReact />} />
           <Route path="/login" element={<Login isMobile={isMobile} />} />
+          <Route path="/loader" element={<Loader isMobile={isMobile} />} />
           <Route path="/dashboard" element={
             // <ProtectedRoute>
               <HomePage sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} />
