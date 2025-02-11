@@ -15,13 +15,6 @@ h1, h2, h3, h4, h5, h6, p, details, ::content {
 body {
     width: 100%;
     height: 100%;
-    max-width: 1440px;
-}
-
-html {
-    width: 100%;
-    height: 100%;
-    max-width: 2560px;
 }
 
 #root {
