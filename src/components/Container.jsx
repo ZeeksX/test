@@ -2,13 +2,17 @@ import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar";
 import { Card, CardContent, CardImage } from "./ui/Card";
 import Rectangle4221 from "/Rectangle_4221.svg";
-import Rectangle4223 from "/Rectangle_4223.png"
-import Rectangle4225 from "/Rectangle_4225.png"
+import Rectangle4223 from "/Rectangle_4223.png";
+import Rectangle4225 from "/Rectangle_4225.png";
 import { TbSchool, TbUserQuestion } from "react-icons/tb";
 import { GoChecklist } from "react-icons/go";
+import { useAuth } from "./Auth.jsx";
 
 const Container = () => {
   const [src, setSrc] = useState("");
+
+  const { user } = useAuth();
+  console.log(user)
 
   return (
     <div className="w-full h-full px-11 py-5 overflow-auto">
@@ -21,11 +25,11 @@ const Container = () => {
               alt="Profile"
             />
           ) : (
-            <AvatarFallback className="!w-[53px] !h-[53px]"></AvatarFallback>
+            <AvatarFallback className="!w-[53px] !h-[53px]">A</AvatarFallback>
           )}
         </Avatar>
-        <div className="">
-          <h3 className="text-[19px] font-normal">Welcome Back Anji</h3>
+        <div>
+          <h3 className="text-[19px] font-normal">Welcome Back, {user.last_name}</h3>
           <p className="text-sm">Teacher</p>
         </div>
       </div>
@@ -72,7 +76,7 @@ const Container = () => {
         <h2 className="mb-5">Recent Exam Rooms</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card>
-            <CardImage src={Rectangle4221} alt={""} />
+            <CardImage src={Rectangle4221} alt="AI Course" />
             <CardContent>
               <h3 className="text-2xl text-black mb-4">
                 Artificial Intelligence
@@ -81,14 +85,14 @@ const Container = () => {
             </CardContent>
           </Card>
           <Card>
-            <CardImage src={Rectangle4223} alt={""} />
+            <CardImage src={Rectangle4223} alt="Intro Tech" />
             <CardContent>
               <h3 className="text-2xl text-black mb-4">Intro Tech</h3>
               <p className="opacity-[50%] text-base">Enrolled students: 900</p>
             </CardContent>
           </Card>
           <Card>
-            <CardImage src={Rectangle4225} alt={""} />
+            <CardImage src={Rectangle4225} alt="Requirements Engr." />
             <CardContent>
               <h3 className="text-2xl text-black mb-4">Requirements Engr.</h3>
               <p className="opacity-[50%] text-base">Enrolled students: 1500</p>

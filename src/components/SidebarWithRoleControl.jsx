@@ -7,7 +7,7 @@ import { Link, useLocation } from "react-router";
 const SidebarWithRoleControl = () => {
   const sideNavLinks = [
     { icon: GoHome, title: "Dashboard", href: "/dashboard" },
-    { icon: TbSchool, title: "Enrolled Students", href: "" },
+    { icon: TbSchool, title: "Enrolled Students", href: "/enrolled" },
     { icon: LuClipboardList, title: "Exam Room", href: "" },
   ];
   const { pathname } = useLocation();

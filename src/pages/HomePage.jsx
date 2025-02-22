@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import SidebarWithRoleControl from "../components/SidebarWithRoleControl";
-import Container from "../components/Container";
 import { AuthProvider } from "../components/Auth";
 import TopNav from "../components/topnav/TopNav";
 import DynamicTopNav from "../components/topnav/DynamicTopNav";
+import { Outlet } from "react-router";
 
 const HomePage = ({ sidebarOpen, toggleSidebar }) => {
   const [scrolling, setScrolling] = useState(false);
@@ -23,10 +23,7 @@ const HomePage = ({ sidebarOpen, toggleSidebar }) => {
     <div className="w-full h-full sm:overflow-hidden">
       <AuthProvider>
         {/* Top navbar for small screens */}
-        <DynamicTopNav
-          sidebarOpen={sidebarOpen}
-          toggleSidebar={toggleSidebar}
-        />
+        <DynamicTopNav sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
 
         <div className="home-page flex sm:flex-row flex-col w-full h-[calc(100%_-_64px)]">
           {/* Sidebar for larger screens */}
@@ -37,14 +34,14 @@ const HomePage = ({ sidebarOpen, toggleSidebar }) => {
           {/* Main content container */}
           {!sidebarOpen && (
             <div
-              className={`flex-1 w-full ${
-                scrolling ? "pt-14" : ""
-              } transition-padding duration-100`}
+              className={`flex-1 w-full ${scrolling ? "pt-14" : ""
+                } transition-padding duration-100`}
             >
-              <Container />
+              <Outlet />
             </div>
           )}
         </div>
+
       </AuthProvider>
     </div>
   );

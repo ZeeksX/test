@@ -7,16 +7,18 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import "../styles/main.css";
 import ForgotPassword from "../components/modals/ForgotPassword";
 import Toast from "../components/modals/Toast";
-import logo from "../assets/Acad AI logo.jpg";
+import logo from "../assets/brand.jpg";
 import logoMobile from "../assets/logo.png";
+import Loader from "../components/ui/Loader";
 
 const Login = ({ isMobile }) => {
     const [formState, setFormState] = useState({ email: "", password: "" });
     const [showPassword, setShowPassword] = useState(false);
-    const [toast, setToast] = useState({ open: false, message: "" });
+    const [loader, setLoader] = useState(false)
     const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+    const [toast, setToast] = useState({ open: false, message: "", severity: "info" });
 
-    const { setUser } = useAuth();
+    const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleInputChange = useCallback((e) => {
@@ -31,45 +33,73 @@ const Login = ({ isMobile }) => {
     const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch("http://localhost:3000/api/v1/users/login", {
+            const formData = new FormData();
+            formData.append("email", formState.email);
+            formData.append("password", formState.password);
+
+            const res = await fetch("http://127.0.0.1:8000/users/login/", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formState),
+                body: formData,
             });
 
             const data = await res.json();
+
             if (res.ok) {
-                setUser({ id: data.user.id, email: data.user.email, role: data.user.role });
-                showToast(data.message);
-                navigate("/dashboard");
+                localStorage.setItem("access_token", data.access);
+                localStorage.setItem("refresh_token", data.refresh);
+
+                login({
+                    email: formState.email,
+                    last_name: data.last_name,
+                    role: "student",
+                    access: data.access,
+                    refresh: data.refresh,
+                });
+
+                // Show toast on the login page
+                showToast("Login successful!", "success");
+
+                // Store the toast message in local storage for the dashboard
+                localStorage.setItem("toastMessage", JSON.stringify({
+                    message: "Login successful!",
+                    severity: "success",
+                }));
+
+                setLoader(true);
+                // Delay navigation by 1 second
+                setTimeout(() => {
+                    navigate("/dashboard");
+                }, 3000);
             } else {
-                showToast(data.message || "Login failed. Please try again.");
+                setLoader(false)
+                showToast(data.non_field_errors || "Login failed. Please try again.", "error");
             }
         } catch (error) {
-            showToast("An error occurred. Please try again later.");
             console.error("Error during login:", error.message);
+            showToast("An error occurred. Please try again later.", "error");
         }
-    }, [formState, navigate, setUser]);
-
-    const showToast = (message) => {
-        setToast({ open: true, message });
-    };
-
-    const closeToast = () => {
-        setToast({ open: false, message: "" });
-    };
+    }, [formState, navigate, login]);
 
     const navigateToSignUp = () => {
         navigate("/signup");
     };
 
+    const showToast = (message, severity = "info") => {
+        setToast({ open: true, message, severity });
+    };
+
+    const closeToast = () => {
+        setToast({ open: false, message: "", severity: "info" });
+    };
+
     return (
         <div className="landing flex flex-col items-center justify-center w-full min-h-screen">
+            {loader && <Loader />}
             <div className="sign-in flex flex-row lg:w-3/5 lg:h-[90vh]">
                 <div className="signin-image md:w-1/2 hidden md:flex"></div>
                 <div className="login flex flex-col w-4/5 mx-auto max-w-96 lg:max-w-screen-lg md:w-full rounded-md md:rounded-r-md bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
                     <Header navigateToSignUp={navigateToSignUp} />
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-2 lg:gap-3 items-start w-[90%] md:w-4/5 mx-auto">
+                    <form action="/dashboard" onSubmit={handleSubmit} className="flex flex-col gap-2 lg:gap-3 items-start w-[90%] md:w-4/5 mx-auto">
                         <InputField
                             label="Email"
                             name="email"
@@ -109,7 +139,12 @@ const Login = ({ isMobile }) => {
                     <ForgotPassword open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)} />
                 </div>
             </div>
-            <Toast open={toast.open} message={toast.message} onClose={closeToast} />
+            <Toast
+                open={toast.open}
+                message={toast.message}
+                severity={toast.severity}
+                onClose={closeToast}
+            />
         </div>
     );
 };
@@ -171,7 +206,5 @@ const GoogleSignInMobile = () => (
             src="https://img.icons8.com/color/48/google-logo.png" alt="google-logo" /> Sign in with Google
     </button>
 );
-
-
 
 export default Login;

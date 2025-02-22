@@ -14,10 +14,6 @@ Avatar.propTypes = {
   className: PropTypes.string,
 };
 
-Avatar.defaultProps = {
-  className: "",
-};
-
 export function AvatarImage({ src, alt, className = "" }) {
   return (
     <img
@@ -32,10 +28,6 @@ AvatarImage.propTypes = {
   src: PropTypes.string.isRequired,
   alt: PropTypes.string,
   className: PropTypes.string,
-};
-
-AvatarImage.defaultProps = {
-  alt: "Avatar",
 };
 
 export function AvatarFallback({ children, className = "" }) {

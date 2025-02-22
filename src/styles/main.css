@@ -49,6 +49,9 @@ label {
   #email {
     padding: 0.65rem !important;
   }
+  .login{
+    border-radius: 6px;
+  }
 }
 
 @media only screen and (min-width:1440px) {
