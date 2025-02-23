@@ -3,7 +3,7 @@ import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import Landing from "./Landing";
 
-const ParticlesReact = () => {
+const ParticlesReact = ({sidebarOpen, toggleSidebar}) => {
   const [init, setInit] = useState(false);
 
   useEffect(() => {
@@ -102,7 +102,7 @@ const ParticlesReact = () => {
         />
       )}
         <div className="flex flex-col items-center w-full">
-          <Landing />
+          <Landing sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar}/>
         </div>
       </div>
     </div>

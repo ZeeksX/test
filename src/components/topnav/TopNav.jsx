@@ -15,8 +15,8 @@ const TopNav = () => {
       <div className="flex flex-row items-center">
         <img className="w-full h-12" src={logo} alt="Acad AI logo" />
       </div>
-      <div className="flex flex-row w-1/3 items-center justify-between">
-        <ul className="flex flex-row w-full justify-between">
+      <div className="hidden md:flex flex-row w-1/3 items-center justify-between">
+        <ul className="flex flex-row w-full md:gap-6 justify-between">
           {navLinks.map((link, index) => (
             <li
               key={index}
@@ -29,7 +29,7 @@ const TopNav = () => {
       </div>
       <button
         onClick={handleClick}
-        className="flex flex-row gap-3 rounded-[14px] w-[143px] h-[50px] font-normal text-sm md:text-base leading-[19.43px] text-white justify-center items-center bg-[#1836B2]"
+        className="hidden md:flex flex-row gap-3 rounded-[14px] w-[143px] h-[50px] font-normal text-sm md:text-base leading-[19.43px] text-white justify-center items-center hover:bg-[green] bg-[#1836B2]"
       >
         Get started
         <img src={arrow} alt="arrow" />

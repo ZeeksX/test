@@ -72,7 +72,7 @@ label {
   padding: 0.75rem;
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (max-width: 767px) {
   .MuiOutlinedInput-root {
     height: 2.75rem !important;
     font-size: 14px;
@@ -90,7 +90,12 @@ label {
   .login {
     border-radius: 6px;
   }
+  .footer{
+    background-color: #1836B2;
+  }
 }
+
+
 
 @media only screen and (min-width:1440px) {
   .MuiOutlinedInput-root {

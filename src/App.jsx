@@ -47,7 +47,7 @@ const App = () => {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<ParticlesReact />} />
+          <Route path="/" element={<ParticlesReact sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar}/>} />
           <Route path="/login" element={<Login isMobile={isMobile} />} />
           <Route
             path="/signup"
