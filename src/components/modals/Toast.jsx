@@ -7,7 +7,7 @@ const Toast = ({ open, message, onClose, severity = "info" }) => {
             open={open}
             autoHideDuration={1000} 
             onClose={onClose}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }} 
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }} 
         >
             <Alert
                 onClose={onClose}

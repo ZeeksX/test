@@ -97,7 +97,7 @@ const Login = ({ isMobile }) => {
             {loader && <Loader />}
             <div className="sign-in flex flex-row lg:w-3/5 lg:h-[90vh]">
                 <div className="signin-image md:w-1/2 hidden md:flex"></div>
-                <div className="login flex flex-col w-4/5 mx-auto max-w-96 lg:max-w-screen-lg md:w-full rounded-md md:rounded-r-md bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
+                <div className="login flex flex-col w-4/5 mx-auto max-w-96 lg:max-w-screen-lg md:w-full md:rounded-r-md bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
                     <Header navigateToSignUp={navigateToSignUp} />
                     <form action="/dashboard" onSubmit={handleSubmit} className="flex flex-col gap-2 lg:gap-3 items-start w-[90%] md:w-4/5 mx-auto">
                         <InputField
@@ -151,7 +151,7 @@ const Login = ({ isMobile }) => {
 
 const Header = ({ navigateToSignUp }) => (
     <div className="flex flex-col justify-center items-center gap-1">
-        <img className="hidden md:flex w-1/2 h-24" src={logo} alt="Acad AI logo" />
+        <img className="hidden md:flex w-1/3" src={logo} alt="Acad AI logo" />
         <img className="flex md:hidden w-1/2 justify-center items-center" src={logoMobile} alt="Acad AI logo" />
         <h3 className="hidden md:flex text-black font-medium text-[1.75rem]">Welcome Back!</h3>
         <h3 className="md:hidden flex text-black font-medium text-[1.5rem]">Welcome to Acad AI</h3>

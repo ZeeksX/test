@@ -91,16 +91,17 @@ const ParticlesReact = () => {
   );
 
   return (
-    <div className="relative w-full min-h-screen bg-gradient-to-b from-white to-[#C7CEEC]">
+    <div className="relative w-full min-h-screen">
+      
+      <div className="flex flex-col items-center gap-2 lg:gap-0 w-full relative z-10 ">
       {init && (
         <Particles
           id="tsparticles"
           options={options}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
+          className="absolute -z-10 top-0 left-0 w-full pointer-events-none h-[55rem] bg-gradient-to-b from-white to-[#C7CEEC]"
         />
       )}
-      <div className="flex flex-col items-center gap-2 lg:gap-0 w-full relative z-10">
-        <div className="flex flex-col items-center h-[64rem] w-full">
+        <div className="flex flex-col items-center w-full">
           <Landing />
         </div>
       </div>

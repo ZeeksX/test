@@ -1,8 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@font-face {
+  font-family: 'Metropolis';
+  src: url('Metropolis-Medium.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Metropolis normal';
+  src: url('Metropolis.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 
+}
+
+.inter {
+  font-family: "Inter";
+}
+.roboto{
+  font-family: "Roboto", serif;
 }
 
 .landing {
@@ -23,6 +47,19 @@ body {
 
 label {
   font-size: 0.75rem;
+}
+
+.metropolis {
+  font-family: "Metropolis", sans-serif;
+}
+
+.metropolis-normal {
+  font-family: "Metropolis normal", sans-serif;
+}
+
+.feature {
+  background: #FFFFFF;
+  box-shadow: 2px 4px 21px rgba(0, 0, 0, 0.25);
 }
 
 #name,
@@ -49,7 +86,8 @@ label {
   #email {
     padding: 0.65rem !important;
   }
-  .login{
+
+  .login {
     border-radius: 6px;
   }
 }

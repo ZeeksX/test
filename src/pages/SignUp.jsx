@@ -61,34 +61,31 @@ const SignUp = () => {
             console.log("Response from backend:", data);
 
             if (res.ok) {
-                if (data.message && data.access && data.refresh) {
-                    localStorage.setItem("access_token", data.access);
-                    localStorage.setItem("refresh_token", data.refresh);
 
-                    // Pass user data including last_name to login function
-                    login({
-                        email: email,
-                        last_name: lastName,
-                        role: "student",
-                    });
+                localStorage.setItem("access_token", data.access);
+                localStorage.setItem("refresh_token", data.refresh);
 
-                    // Show toast on the signup page
-                    showToast("Sign up successful!", "success");
+                // Pass user data including last_name to login function
+                login({
+                    email: email,
+                    last_name: lastName,
+                    role: "student",
+                });
 
-                    // Store the toast message in local storage for the dashboard
-                    localStorage.setItem("toastMessage", JSON.stringify({
-                        message: "Sign up successful!",
-                        severity: "success",
-                    }));
-                    setLoader(true);
-                    // Delay navigation by 3 seconds
-                    setTimeout(() => {
-                        navigate("/dashboard");
-                    }, 3000);
-                } else {
-                    setLoader(false)
-                    showToast("Invalid response from server.", "error");
-                }
+                // Show toast on the signup page
+                showToast("Sign up successful!", "success");
+
+                // Store the toast message in local storage for the dashboard
+                localStorage.setItem("toastMessage", JSON.stringify({
+                    message: "Sign up successful!",
+                    severity: "success",
+                }));
+                setLoader(true);
+                // Delay navigation by 3 seconds
+                setTimeout(() => {
+                    navigate("/dashboard");
+                }, 3000);
+
             } else {
                 setLoader(false)
                 showToast(data.non_field_errors || "Sign up failed. Please try again.", "error");
@@ -255,7 +252,7 @@ const SignUp = () => {
                                     }
                                 }}
                             />
-                            <div className="flex flex-row justify-between w-full items-center mt-6 md:mt-4 gap-2">
+                            <div className="flex flex-col md:flex-row justify-between w-full items-center mt-6 md:mt-4 gap-2">
                                 <button
                                     className="w-full flex justify-center items-center h-12 md:h-10 lg:h-12 font-light text-base leading-[24.2px] rounded-full bg-[#1836B2] text-white hover:outline hover:outline-blue-300 hover:text-[#1836B2] hover:bg-[#DDE4FF] py-1 px-3 lg:py-4 border border-transparent transition-all focus:outline-none"
                                     type="submit"
