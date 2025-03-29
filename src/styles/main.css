@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
 @font-face {
   font-family: 'Metropolis';
   src: url('Metropolis-Medium.otf') format('opentype');
@@ -25,7 +26,8 @@ body {
 .inter {
   font-family: "Inter";
 }
-.roboto{
+
+.roboto {
   font-family: "Roboto", serif;
 }
 
@@ -36,6 +38,7 @@ body {
   background-position: center;
   background-size: 100% 100%;
   backdrop-filter: blur(5px);
+  background-repeat: no-repeat;
   font-family: 'Inter';
 }
 
@@ -62,49 +65,19 @@ label {
   box-shadow: 2px 4px 21px rgba(0, 0, 0, 0.25);
 }
 
-#name,
+/* #name,
 #email {
   height: 1.5rem;
   padding: 0.25rem 0.5rem;
-}
+} */
 
-.css-16wblaj-MuiInputBase-input-MuiOutlinedInput-input:-webkit-autofill {
-  padding: 0.75rem;
-}
 
 @media only screen and (max-width: 767px) {
-  .MuiOutlinedInput-root {
-    height: 2.75rem !important;
-    font-size: 14px;
-  }
-
-  .css-16wblaj-MuiInputBase-input-MuiOutlinedInput-input:-webkit-autofill {
-    padding: 1rem;
-  }
-
-  #name,
-  #email {
-    padding: 0.65rem !important;
-  }
-
   .login {
     border-radius: 6px;
   }
-  .footer{
+
+  .footer {
     background-color: #1836B2;
-  }
-}
-
-
-
-@media only screen and (min-width:1440px) {
-  .MuiOutlinedInput-root {
-    height: 3rem !important;
-    font-size: 1rem;
-  }
-
-  #name,
-  #email {
-    padding: 0.75rem !important;
   }
 }

@@ -1,10 +1,6 @@
 import React from 'react';
-import logo from "../assets/footer-logo.png";
 import { Link } from 'react-router-dom';
-import instagram from "../assets/instagram.png"
-import github from "../assets/github.png"
-import twitter from "../assets/twitter.png"
-import figma from "../assets/figma.png"
+import { figmaLogo, footerLogo, githubLogo, instagramLogo, twitterLogo } from '../utils/images';
 
 const Footer = () => {
     const footerItems = ["Home", "Features", "Services", "Contact"];
@@ -12,22 +8,22 @@ const Footer = () => {
     const socialIcons = [
         {
             name: "github",
-            icon: github,
+            icon: githubLogo,
             url: ""
         },
         {
             name: "instagram",
-            icon: instagram,
+            icon: instagramLogo,
             url: ""
         },
         {
             name: "figma",
-            icon: figma,
+            icon: figmaLogo,
             url: ""
         },
         {
             name: "twitter",
-            icon: twitter,
+            icon: twitterLogo,
             url: ""
         }
     ]
@@ -36,7 +32,7 @@ const Footer = () => {
         <div className='footer md:bg-[url("/footer-background.svg")] bg-no-repeat bg-cover w-full flex flex-col justify-center items-center md:h-96 mt-44 pt-8'>
             <div className='flex w-[90%] md:w-4/5 gap-6 md:items-start justify-between flex-col md:flex-row md:mt-12'>
                 <div className='flex flex-col my-8 gap-4 md:gap-8'>
-                    <img className='w-1/2' src={logo} alt="Acad-AI logo" />
+                    <img className='w-1/2' src={footerLogo} alt="Acad-AI logo" />
                     <button className='roboto w-[274px] h-[66px] bg-white rounded-[5px]'>Contact Us</button>
                 </div>
                 <div className='flex flex-col gap-4 my-8'>
@@ -51,7 +47,7 @@ const Footer = () => {
                     <h3 className='inter font-bold text-base text-white leading-[19.43px]'>Socials</h3>
                     <div className='flex flex-row md:flex-col gap-4'>
                         {socialIcons.map((item) => (
-                            <Link key={item.name} className='inter font-normal text-base text-white leading-[19.43px]' to={`${item.url}`}>
+                            <Link key={item.name} className='inter font-normal h-[19.43px] text-base text-white leading-[19.43px]' to={`${item.url}`}>
                                 <img src={item.icon} alt={item.name} />
                             </Link>
                         ))}

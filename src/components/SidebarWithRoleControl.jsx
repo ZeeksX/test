@@ -1,40 +1,75 @@
-import React from "react";
-import { GoHome } from "react-icons/go";
-import { TbSchool } from "react-icons/tb";
-import { LuClipboardList } from "react-icons/lu";
+import { LuLayoutDashboard } from "react-icons/lu";
 import { Link, useLocation } from "react-router";
+import { CourseDropdownMenu } from "./ui/Dropdown";
+import { FiHome, FiUsers } from "react-icons/fi";
+import { CreateExaminationRoom } from "./courses/CourseComponents";
+import { RxDashboard } from "react-icons/rx";
 
-const SidebarWithRoleControl = () => {
-  const sideNavLinks = [
-    { icon: GoHome, title: "Dashboard", href: "/dashboard" },
-    { icon: TbSchool, title: "Enrolled Students", href: "/enrolled" },
-    { icon: LuClipboardList, title: "Exam Room", href: "" },
-  ];
+const SidebarWithRoleControl = ({ role }) => {
   const { pathname } = useLocation();
 
+  const adminLinks = [
+    { icon: FiHome, title: "Dashboard", href: "/dashboard" },
+    { icon: FiUsers, title: "Student Groups", href: "/student-groups" },
+  ];
+  const studentLinks = [
+    { icon: FiHome, title: "Dashboard", href: "/dashboard" },
+    { icon: FiUsers, title: "Teachers", href: "/lecturers" },
+    { icon: RxDashboard, title: "Examinations", href: "/examinations" },
+  ];
+
   return (
-    <div className="w-full h-full flex flex-col items-center justify-start py-8 px-3">
+    <div className="fixed w-[260px] h-full flex flex-col items-center justify-start pt-4">
       <div className="space-y-2 w-full">
-        {sideNavLinks.map((link, index) => (
-          <div
-            className="w-full flex flex-col items-center justify-center"
-            key={index}
-          >
-            <button
-              className={`w-full text-left rounded-md flex items-center transition-colors ${
-                pathname === link.href
-                  ? "bg-secondary-bg"
-                  : "hover:bg-secondary-bg"
-              }`}
-            >
-              <Link to={link.href} className="w-full p-3 flex gap-4">
-                <link.icon size={24} />
-                {link.title}
-              </Link>
-            </button>
-          </div>
-        ))}
+        {role === "teacher" ? (
+          <>
+            {adminLinks.map((link, index) => (
+              <div
+                key={index}
+                className="w-full flex flex-col items-center justify-center"
+              >
+                <button
+                  className={`w-full text-left flex items-center transition-colors ${pathname === link.href
+                      ? "bg-secondary-bg border-l-4 border-primary-main"
+                      : "hover:bg-secondary-bg"
+                    }`}
+                >
+                  <Link to={link.href} className="w-full p-3 flex gap-4">
+                    <link.icon size={22} />
+                    {link.title}
+                  </Link>
+                </button>
+              </div>
+            ))}
+            {/* CourseDropdownMenu is rendered as the third item in the teacher sidebar */}
+            <div className="w-full flex flex-col items-center justify-center">
+              <CourseDropdownMenu />
+            </div>
+          </>
+        ) : role === "student" ? (
+          <>
+            {studentLinks.map((link, index) => (
+              <div
+                key={index}
+                className="w-full flex flex-col items-center justify-center"
+              >
+                <button
+                  className={`w-full text-left flex items-center transition-colors ${pathname === link.href
+                      ? "bg-secondary-bg border-l-4 border-primary-main"
+                      : "hover:bg-secondary-bg"
+                    }`}
+                >
+                  <Link to={link.href} className="w-full p-3 flex gap-4">
+                    <link.icon size={22} />
+                    {link.title}
+                  </Link>
+                </button>
+              </div>
+            ))}
+          </>
+        ) : null}
       </div>
+      <CreateExaminationRoom />
     </div>
   );
 };

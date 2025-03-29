@@ -1,21 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar";
-import { Card, CardContent, CardImage } from "./ui/Card";
-import Rectangle4221 from "/Rectangle_4221.svg";
-import Rectangle4223 from "/Rectangle_4223.png";
-import Rectangle4225 from "/Rectangle_4225.png";
-import { TbSchool, TbUserQuestion } from "react-icons/tb";
-import { GoChecklist } from "react-icons/go";
 import { useAuth } from "./Auth.jsx";
+import StudentContainer from "./students/Container.jsx";
+import LecturerContainer from "./lecturer/Container.jsx";
+import { FaPlus } from "react-icons/fa6";
+import { CustomButton } from "./ui/Button.jsx";
+import { useDispatch } from "react-redux";
+import { setShowJoinStudentGroupDialog } from "../features/reducers/uiSlice.jsx";
 
 const Container = () => {
   const [src, setSrc] = useState("");
+  const [studentGroup, setStudentGroup] = useState([]);
+  const dispatch = useDispatch();
 
   const { user } = useAuth();
-  console.log(user)
+  // console.log(user)
 
   return (
-    <div className="w-full h-full px-11 py-5 overflow-auto">
+    <div className="w-full h-full p-5 overflow-auto">
       <div className="flex items-center justify-start gap-5 mb-5">
         <Avatar>
           {src ? (
@@ -25,81 +27,46 @@ const Container = () => {
               alt="Profile"
             />
           ) : (
-            <AvatarFallback className="!w-[53px] !h-[53px]">A</AvatarFallback>
+            <AvatarFallback className="!w-[53px] !h-[53px]">
+              {user.last_name ? user.last_name.charAt(0) : "A"}
+            </AvatarFallback>
           )}
         </Avatar>
-        <div>
-          <h3 className="text-[19px] font-normal">Welcome Back, {user.last_name}</h3>
-          <p className="text-sm">Teacher</p>
+        <div className="flex flex-row justify-between h-[60px] w-full">
+          <div className="flex flex-col justify-between">
+            <h3 className="text-2xl font-medium">Welcome {user?.last_name}</h3>
+            <p className="text-base text-[#858585] capitalize">{user.role}</p>
+          </div>
+          <div
+            className={
+              studentGroup.length === 0
+                ? "hidden"
+                : "flex" + "items-center justify-center"
+            }
+          >
+            {/* <button className='bg-[#1835B3] w-64 gap-2 text-[white] h-[60px] flex items-center justify-center font-inter font-semibold text-lg rounded-lg px-4'>
+              Join Student Group
+              <FaPlus />
+            </button> */}
+            <CustomButton
+              onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
+              className="gap-2 !font-medium !text-sm"
+              size="lg"
+            >
+              Join Student Group
+              <FaPlus />
+            </CustomButton>
+          </div>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-7">
-        <Card>
-          <CardContent>
-            <div className="flex w-full items-center justify-between mb-5">
-              <h3 className="font-normal text-lg opacity-[80%]">
-                Total Enrolled
-              </h3>
-              <span className="rounded-[6px] p-1 bg-[#1836B233]">
-                <TbSchool size={24} color="#1836B2" />
-              </span>
-            </div>
-            <p className="opacity-[50%] text-xl">5000</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <div className="flex w-full items-center justify-between mb-5">
-              <h3 className="font-normal text-lg opacity-[80%]">
-                Total Exam rooms created
-              </h3>
-              <span className="rounded-[6px] p-1 bg-[#86C6EE33]">
-                <GoChecklist size={24} color="#85C7ED" />
-              </span>
-            </div>
-            <p className="opacity-[50%] text-xl">50</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent>
-            <div className="flex w-full items-center justify-between mb-5">
-              <h3 className="font-normal text-lg opacity-[80%]">Requests</h3>
-              <span className="rounded-[6px] p-1 bg-[#EE1D1D33]">
-                <TbUserQuestion size={24} color="#EE1D1D" />
-              </span>
-            </div>
-            <p className="opacity-[50%] text-xl">50</p>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="text-xl">
-        <h2 className="mb-5">Recent Exam Rooms</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardImage src={Rectangle4221} alt="AI Course" />
-            <CardContent>
-              <h3 className="text-2xl text-black mb-4">
-                Artificial Intelligence
-              </h3>
-              <p className="opacity-[50%] text-base">Enrolled Students: 500</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardImage src={Rectangle4223} alt="Intro Tech" />
-            <CardContent>
-              <h3 className="text-2xl text-black mb-4">Intro Tech</h3>
-              <p className="opacity-[50%] text-base">Enrolled students: 900</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardImage src={Rectangle4225} alt="Requirements Engr." />
-            <CardContent>
-              <h3 className="text-2xl text-black mb-4">Requirements Engr.</h3>
-              <p className="opacity-[50%] text-base">Enrolled students: 1500</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      {user.role === "teacher" ? (
+        <LecturerContainer />
+      ) : (
+        <StudentContainer
+          studentGroup={studentGroup}
+          setStudentGroup={setStudentGroup}
+        />
+      )}
     </div>
   );
 };

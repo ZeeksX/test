@@ -1,281 +1,416 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../components/Auth";
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { TextField, InputAdornment, IconButton } from "@mui/material";
 import "../styles/main.css";
-import ForgotPassword from '../components/modals/ForgotPassword';
-import logo from "../assets/brand.jpg";
-import Toast from '../components/modals/Toast';
-import Loader from "../components/ui/Loader";
+import ForgotPassword from "../components/modals/ForgotPassword";
+import Toast from "../components/modals/Toast";
+import { brandLogo } from "../utils/images.js";
+import { SERVER_URL } from "../utils/constants.js";
+import { Input, Password } from "../components/ui/Input.jsx";
+import { Label } from "../components/ui/Label.jsx";
+import OTPPage from "./OTPPage.jsx";
+import { Loader } from "../components/ui/Loader.jsx";
+import { CustomButton } from "../components/ui/Button.jsx";
 
 const SignUp = () => {
-    const [lastName, setLastName] = useState("");
-    const [otherNames, setOtherNames] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [confirmShowPassword, setConfirmShowPassword] = useState(false);
-    const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
-    const [loader, setLoader] = useState(false);
-    const [toast, setToast] = useState({ open: false, message: "", severity: "info" });
+  const [lastName, setLastName] = useState("");
+  const [otherNames, setOtherNames] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [hasSignedUp, setHasSignedUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [confirmShowPassword, setConfirmShowPassword] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [errors, setErrors] = useState({
+    lastName: "",
+    otherNames: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
+  const [loader, setLoader] = useState(false);
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
-    const auth = useAuth();
-    const { login } = auth;
-    const navigate = useNavigate();
+  const auth = useAuth();
+  const { login } = auth;
+  const navigate = useNavigate();
 
-    const handleClickShowPassword = () => setShowPassword((show) => !show);
-    const handleClickShowConfirmPassword = () => setConfirmShowPassword((show) => !show);
-    const handleMouseDownPassword = (event) => {
-        event.preventDefault();
+  // Validation functions
+  const validateLastName = (value) => {
+    if (!value.trim()) {
+      return "Last name is required";
+    }
+    if (value.length < 2) {
+      return "Last name must be at least 2 characters long";
+    }
+    if (!/^[A-Za-z\s'-]+$/.test(value)) {
+      return "Last name can only contain letters, spaces, apostrophes, and hyphens";
+    }
+    return "";
+  };
+
+  const validateOtherNames = (value) => {
+    if (!value.trim()) {
+      return "Other names are required";
+    }
+    if (value.length < 2) {
+      return "Other names must be at least 2 characters long";
+    }
+    if (!/^[A-Za-z\s'-]+$/.test(value)) {
+      return "Other names can only contain letters, spaces, apostrophes, and hyphens";
+    }
+    return "";
+  };
+
+  const validateEmail = (value) => {
+    if (!value.trim()) {
+      return "Email is required";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) {
+      return "Please enter a valid email address";
+    }
+    return "";
+  };
+
+  const validatePassword = (value) => {
+    if (!value.trim()) {
+      return "Password is required";
+    }
+    if (value.length < 8) {
+      return "Password must be at least 8 characters long";
+    }
+    if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value)) {
+      return "Password must include uppercase, lowercase, number, and special character";
+    }
+    return "";
+  };
+
+  const validateConfirmPassword = (value, originalPassword) => {
+    if (!value.trim()) {
+      return "Please confirm your password";
+    }
+    if (value !== originalPassword) {
+      return "Passwords do not match";
+    }
+    return "";
+  };
+
+  // Validate all fields before submission
+  const validateForm = () => {
+    const newErrors = {
+      lastName: validateLastName(lastName),
+      otherNames: validateOtherNames(otherNames),
+      email: validateEmail(email),
+      password: validatePassword(password),
+      confirmPassword: validateConfirmPassword(confirmPassword, password)
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    setErrors(newErrors);
 
-        if (password !== confirmPassword) {
-            setErrorMessage("Passwords don't match");
-            return;
-        }
+    // Check if any errors exist
+    return !Object.values(newErrors).some(error => error !== "");
+  };
 
-        setLoader(true); // Show loader during signup
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoader(true);
+
+    try {
+      const res = await fetch(`${SERVER_URL}/users/register/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          last_name: lastName,
+          other_names: otherNames,
+          email: email,
+          password: password,
+          confirm_password: confirmPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      console.log("Response from backend:", data);
+      if (data.email) {
+        navigate("/users/verify-otp", { state: { email: email } });
         try {
-            const formData = new FormData();
-            formData.append("last_name", lastName);
-            formData.append("other_names", otherNames);
-            formData.append("email", email);
-            formData.append("password", password);
-            formData.append("confirm_password", confirmPassword);
-
-            const res = await fetch("http://127.0.0.1:8000/users/register/", {
-                method: "POST",
-                body: formData,
-            });
-
-            const data = await res.json();
-
-            console.log("Response from backend:", data);
-
-            if (res.ok) {
-
-                localStorage.setItem("access_token", data.access);
-                localStorage.setItem("refresh_token", data.refresh);
-
-                // Pass user data including last_name to login function
-                login({
-                    email: email,
-                    last_name: lastName,
-                    role: "student",
-                });
-
-                // Show toast on the signup page
-                showToast("Sign up successful!", "success");
-
-                // Store the toast message in local storage for the dashboard
-                localStorage.setItem("toastMessage", JSON.stringify({
-                    message: "Sign up successful!",
-                    severity: "success",
-                }));
-                setLoader(true);
-                // Delay navigation by 3 seconds
-                setTimeout(() => {
-                    navigate("/dashboard");
-                }, 3000);
-
-            } else {
-                setLoader(false)
-                showToast(data.non_field_errors || "Sign up failed. Please try again.", "error");
-            }
+          const response = await axios.post(`${SERVER_URL}/users/resend-otp/`, {
+            email
+          });
+          if (response.status === 200) {
+            showToast("OTP resent successfully!", "success");
+          }
         } catch (error) {
-            setLoader(false)
-            console.error("Error during sign up:", error.message);
-            showToast("An error occurred. Please try again later.", "error");
+          showToast(
+            error.response?.data?.error || "Failed to resend OTP. Please try again.",
+            "error"
+          );
+        } finally {
+          setLoader(false);
         }
-    };
+        return;
+      }
 
-    const showToast = (message, severity = "info") => {
-        setToast({ open: true, message, severity });
-    };
+      if (res.ok) {
+        localStorage.setItem("access_token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
 
-    const closeToast = () => {
-        setToast({ open: false, message: "", severity: "info" });
-    };
+        login({
+          email: email,
+          last_name: lastName,
+          role: "student",
+        });
 
-    const handleForgotPasswordOpen = () => {
-        setForgotPasswordOpen(true);
-    };
+        showToast("Sign up successful!", "success");
 
-    const handleForgotPasswordClose = () => {
-        setForgotPasswordOpen(false);
-    };
+        localStorage.setItem(
+          "toastMessage",
+          JSON.stringify({
+            message: "Sign up successful!",
+            severity: "success",
+          })
+        );
+        setLoader(true);
 
-    const handleSignInClick = () => {
-        navigate("/login");
-    };
+        setHasSignedUp(true);
+      } else {
+        setLoader(false);
+        setEmailError(data.email);
+        setPasswordError(data.password);
+        showToast(
+          data.email || "Sign up failed. Please try again.",
+          "error"
+        );
+        // console.log("error", data)
+      }
+    } catch (error) {
+      setLoader(false);
+      console.error("Error during sign up:", error);
+      showToast("An error occurred. Please try again later.", "error");
+    } finally {
+      setLoader(false);
+    }
+  };
 
-    return (
-        <>
-            <div className="landing flex flex-col items-center lg:justify-center justify-center gap-4 md:gap-2 lg:gap-0 w-full min-h-screen">
-                {loader && <Loader />}
-                <div className="sign-in flex flex-row w-[80%] md:w-auto lg:w-3/5 max-lg:h-[90vh] lg:h-[93vh]">
-                    <div className="signin-image w-1/2 md:flex hidden"></div>
-                    <div className="login flex flex-col lg:max-w-screen-lg w-full md:rounded-r-md bg-[white] text-black px-2 md:px-4 lg:px-3 border gap-4 py-4">
-                        <div className="flex flex-col justify-center items-center gap-1 lg:gap-2">
-                            <img className="w-1/3" src={logo} alt="Acad AI logo" />
-                            <h3 className="text-black font-medium text-[1.25rem] leading-[1rem]">Create an account</h3>
-                            <p className="text-[#666666] text-[12px] font-normal leading-[19.36px] text-center">Already have an account?
-                                <a className="underline cursor-pointer ml-1" onClick={handleSignInClick}>Log in</a>
-                            </p>
-                        </div>
-                        <form onSubmit={handleSubmit} className="form flex flex-col gap-1 2xl:gap-3 items-start justify-center w-[85%] mx-auto h-auto">
-                            <label htmlFor="last_name" className="text-[#666666]">Last Name</label>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                name="last_name"
-                                id="last_name"
-                                value={lastName}
-                                autoComplete="last_name"
-                                onChange={(event) => setLastName(event.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        height: '2rem',
-                                        fontSize: "12px"
-                                    }
-                                }}
-                            />
-                            <label htmlFor="other_names" className="text-[#666666]">Other Names</label>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                name="other_names"
-                                id="other_names"
-                                value={otherNames}
-                                autoComplete="other_names"
-                                onChange={(event) => setOtherNames(event.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        height: '2rem',
-                                        fontSize: "12px"
-                                    }
-                                }}
-                            />
-                            <label htmlFor="email" className="text-[#666666]">School email address</label>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                name="email"
-                                id="email"
-                                value={email}
-                                autoComplete="email"
-                                onChange={(event) => setEmail(event.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        height: '2rem',
-                                        fontSize: "12px"
-                                    }
-                                }}
-                            />
-                            <label htmlFor="password" className="text-[#666666]">Password</label>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                id="password"
-                                name="password"
-                                type={showPassword ? 'text' : 'password'}
-                                value={password}
-                                onChange={(event) => setPassword(event.target.value)}
-                                slotProps={{
-                                    input: {
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton
-                                                    onClick={handleClickShowPassword}
-                                                    onMouseDown={handleMouseDownPassword}
-                                                    edge="end"
-                                                >
-                                                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }
-                                }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        height: '2rem',
-                                        fontSize: "12px"
-                                    }
-                                }}
-                            />
-                            <div className="flex flex-row justify-between w-full">
-                                <label htmlFor="confirm-password" className="text-[#666666]">Confirm password</label>
-                                <div className="error-message text-[0.7rem] text-[#7b142e]">{errorMessage}</div>
-                            </div>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                id="confirm-password"
-                                name="confirm-password"
-                                type={confirmShowPassword ? 'text' : 'password'}
-                                value={confirmPassword}
-                                onChange={(event) => {
-                                    setConfirmPassword(event.target.value);
-                                    if (event.target.value !== password) {
-                                        setErrorMessage("Passwords don't match");
-                                    } else {
-                                        setErrorMessage("");
-                                    }
-                                }}
-                                slotProps={{
-                                    input: {
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton
-                                                    onClick={handleClickShowConfirmPassword}
-                                                    onMouseDown={handleMouseDownPassword}
-                                                    edge="end"
-                                                >
-                                                    {confirmShowPassword ? <VisibilityOff /> : <Visibility />}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }
-                                }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        height: '2rem',
-                                        fontSize: "12px"
-                                    }
-                                }}
-                            />
-                            <div className="flex flex-col md:flex-row justify-between w-full items-center mt-6 md:mt-4 gap-2">
-                                <button
-                                    className="w-full flex justify-center items-center h-12 md:h-10 lg:h-12 font-light text-base leading-[24.2px] rounded-full bg-[#1836B2] text-white hover:outline hover:outline-blue-300 hover:text-[#1836B2] hover:bg-[#DDE4FF] py-1 px-3 lg:py-4 border border-transparent transition-all focus:outline-none"
-                                    type="submit"
-                                >
-                                    Create an account
-                                </button>
-                                <h3 className="flex w-full mt-2 mb-2 justify-center text-[#666666] hover:text-gray-600 text-center cursor-pointer">Or, continue with
-                                    <img className="ml-1" width="25" height="20" src="https://img.icons8.com/color/48/google-logo.png" alt="google-logo" />
-                                </h3>
-                            </div>
-                        </form>
-                        <ForgotPassword open={forgotPasswordOpen} onClose={handleForgotPasswordClose} />
-                    </div>
+  // Update input change handlers to validate on change
+  const handleLastNameChange = (event) => {
+    const value = event.target.value;
+    setLastName(value);
+    setErrors(prev => ({
+      ...prev,
+      lastName: validateLastName(value)
+    }));
+  };
+
+  const handleOtherNamesChange = (event) => {
+    const value = event.target.value;
+    setOtherNames(value);
+    setErrors(prev => ({
+      ...prev,
+      otherNames: validateOtherNames(value)
+    }));
+  };
+
+  const handleEmailChange = (event) => {
+    const value = event.target.value;
+    setEmail(value);
+    setErrors(prev => ({
+      ...prev,
+      email: validateEmail(value)
+    }));
+  };
+
+  const handlePasswordChange = (event) => {
+    const value = event.target.value;
+    setPassword(value);
+    setErrors(prev => ({
+      ...prev,
+      password: validatePassword(value),
+      confirmPassword: validateConfirmPassword(confirmPassword, value)
+    }));
+  };
+
+  const handleConfirmPasswordChange = (event) => {
+    const value = event.target.value;
+    setConfirmPassword(value);
+    setErrors(prev => ({
+      ...prev,
+      confirmPassword: validateConfirmPassword(value, password)
+    }));
+  };
+
+  // Rest of the component remains the same (showToast, closeToast, etc.)
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
+  };
+
+  const handleForgotPasswordOpen = () => {
+    setForgotPasswordOpen(true);
+  };
+
+  const handleForgotPasswordClose = () => {
+    setForgotPasswordOpen(false);
+  };
+
+  const handleSignInClick = () => {
+    navigate("/login");
+  };
+
+  return (
+    <>
+      {!hasSignedUp ? (
+        <div className="landing flex flex-col items-center lg:justify-center justify-center gap-4 md:gap-2 lg:gap-0 w-full min-h-screen">
+          {loader && <Loader />}
+          <div className="sign-in flex flex-row w-[80%] max-md:w-[90%] lg:w-3/5 md:h-[60vh] lg:h-[90vh]">
+            <div className="signin-image w-1/2 md:flex hidden"></div>
+            <div className="login flex flex-col lg:max-w-screen-lg w-full overflow-scroll md:rounded-r-2xl bg-[white] text-black px-2 md:px-4 lg:px-3 border gap-4 py-4">
+              <div className="flex flex-col justify-center items-center gap-1 lg:gap-2">
+                <img
+                  className="w-1/4 max-sm:w-1/2 max-2xl:w-1/3"
+                  src={brandLogo}
+                  alt="Acad AI logo"
+                />
+                <h3 className="text-black mt-3 font-medium text-[1.75rem] max-sm:text-[1.65rem] max-sm:font-semibold leading-[1rem]">
+                  Create an account
+                </h3>
+                <p className="text-[#666666] text-base mt-3 font-normal leading-[19.36px] text-center">
+                  Already have an account?
+                  <a
+                    className="underline cursor-pointer ml-1"
+                    onClick={handleSignInClick}
+                  >
+                    Log in
+                  </a>
+                </p>
+              </div>
+              <form
+                onSubmit={handleSubmit}
+                className="form flex flex-col gap-2 2xl:gap-3 items-start justify-center w-[85%] mx-auto h-auto"
+              >
+                <div className="flex gap-4">
+                  <div className="w-1/2">
+                    <Label htmlFor="last_name" className="text-[#666666]">
+                      Last Name
+                    </Label>
+
+                    <Input
+                      name="last_name"
+                      id="last_name"
+                      value={lastName}
+                      placeholder="E.g Doe"
+                      autoComplete="last_name"
+                      onChange={handleLastNameChange}
+                      error={errors.lastName}
+                    />
+                  </div>
+                  <div className="w-1/2">
+                    <Label htmlFor="other_names" className="text-[#666666]">
+                      Other Names
+                    </Label>
+
+                    <Input
+                      name="other_names"
+                      id="other_names"
+                      value={otherNames}
+                      placeholder="E.g John"
+                      autoComplete="other_names"
+                      onChange={handleOtherNamesChange}
+                      error={errors.otherNames}
+                    />
+                  </div>
                 </div>
+                <div className="w-full">
+                  <Label htmlFor="email" className="text-[#666666]">
+                    Email address
+                  </Label>
+
+                  <Input
+                    type="email"
+                    name="email"
+                    id="email"
+                    value={email}
+                    placeholder="E.g email@example.com"
+                    autoComplete="email"
+                    onChange={handleEmailChange}
+                    error={errors.email}
+                  />
+                </div>
+                <div className="w-full">
+                  <Label htmlFor="password" className="text-[#666666]">
+                    Password
+                  </Label>
+                  <Password
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={handlePasswordChange}
+                    error={errors.password}
+                  />
+                </div>
+                <div className="w-full">
+                  <Label htmlFor="confirm-password" className="text-[#666666]">
+                    Confirm password
+                  </Label>
+                  <Password
+                    id="confirm-password"
+                    name="confirm-password"
+                    value={confirmPassword}
+                    placeholder="Confirm your password"
+                    onChange={handleConfirmPasswordChange}
+                    error={errors.confirmPassword}
+                  />
+                </div>
+                <div className="flex flex-col justify-between w-full items-center mt-6 md:mt-4 gap-2">
+                  <CustomButton
+                    size="lg"
+                    loading={loader}
+                    className="w-full"
+                    type="submit"
+                  >
+                    Create an account
+                  </CustomButton>
+                  <h3 className="flex w-full mt-1 mb-2 justify-center text-[#666666] hover:text-gray-600 text-center cursor-pointer">
+                    Or, continue with <u className="ml-2">Google</u>
+                  </h3>
+                </div>
+              </form>
+              <ForgotPassword
+                open={forgotPasswordOpen}
+                onClose={handleForgotPasswordClose}
+              />
             </div>
-            <Toast
-                open={toast.open}
-                message={toast.message}
-                severity={toast.severity}
-                onClose={closeToast}
-            />
-        </>
-    );
+          </div>
+        </div>
+      ) : (
+        <OTPPage email={email} />
+      )}
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
+    </>
+  );
 };
 
 export default SignUp;

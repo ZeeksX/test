@@ -55,9 +55,15 @@ frontend/
 ├── public/          # Static assets
 ├── src/
 │   ├── components/  # Reusable UI components
+│   |   ├── courses/        # Courses related UI components
+│   |   ├── modals/         # Mini UI components
+│   |   ├── topnav/         # Top Navigation UI components
+│   |   ├── ui/             # UI component kit
 │   ├── pages/       # Application pages
 │   ├── assets/      # Images, fonts, etc.
 │   ├── styles/      # Global and modular CSS
+│   ├── features/    # Global state management using redux
+│   |   ├── reducers/       # Redux reducers
 │   ├── utils/       # Utility functions
 │   ├── hooks/       # Custom React hooks
 │   ├── contexts/    # Context API providers
@@ -65,6 +71,7 @@ frontend/
 │   └── App.jsx      # Main application component
 ├── .eslintrc.js     # ESLint configuration
 ├── vite.config.js   # Vite configuration
+├── tailwind.config.js      # Tailwind configuration
 ├── package.json     # Project dependencies
 └── README.md        # Project documentation
 ```
@@ -85,7 +92,7 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE) fil
 
 ## Contact
 
-For any questions or suggestions, feel free to reach out to the project maintainers or open an issue on the repository. You can also reach out to [Ezekiel](mailto:ikinwotezekiel@gmail.com) or visit their [GitHub profile](https://github.com/ZeeksX).
+For any questions or suggestions, feel free to reach out to the project maintainers or open an issue on the repository. You can also reach out to [Ezekiel](mailto:ikinwotezekiel@gmail.com), [Philip](mailto:philip.edward1510@gmail.com)  or visit their GitHub profile [ZeeksX](https://github.com/ZeeksX), [Pellumi](https://github.com/Pellumi).
 
 ---
 

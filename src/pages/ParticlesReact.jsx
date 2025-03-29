@@ -1,108 +1,111 @@
-import React, { useEffect, useMemo, useState } from "react";
-import Particles, { initParticlesEngine } from "@tsparticles/react";
-import { loadSlim } from "@tsparticles/slim";
+import React, { useEffect } from "react";
 import Landing from "./Landing";
 
-const ParticlesReact = ({sidebarOpen, toggleSidebar}) => {
-  const [init, setInit] = useState(false);
+// Helper function to load the particles.js script dynamically.
+const loadParticlesScript = () => {
+  return new Promise((resolve, reject) => {
+    // If particlesJS is already available on window, resolve immediately.
+    if (window.particlesJS) {
+      return resolve();
+    }
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load particles.js"));
+    document.body.appendChild(script);
+  });
+};
 
+const ParticlesReact = ({ sidebarOpen, toggleSidebar }) => {
   useEffect(() => {
-    initParticlesEngine(async (engine) => {
-      await loadSlim(engine);
-    }).then(() => {
-      setInit(true);
-    });
+    loadParticlesScript()
+      .then(() => {
+        window.particlesJS("particles-js", {
+          particles: {
+            number: {
+              value: 200,
+              density: {
+                enable: true,
+                value_area: 800,
+              },
+            },
+            color: { value: "#000000" },
+            shape: {
+              type: "circle",
+              stroke: { width: 0, color: "#000000" },
+              polygon: { nb_sides: 5 },
+            },
+            opacity: {
+              value: 0.1,
+              random: false,
+              anim: { enable: false, speed: 1, opacity_min: 0.1, sync: false },
+            },
+            size: {
+              value: 3,
+              random: true,
+              anim: { enable: false, speed: 40, size_min: 0.1, sync: false },
+            },
+            line_linked: {
+              enable: true,
+              distance: 150,
+              color: "#000000",
+              opacity: 0.1,
+              width: 0.8,
+            },
+            move: {
+              enable: true,
+              speed: 5,
+              direction: "none",
+              random: true,
+              straight: false,
+              out_mode: "bounce",
+              bounce: false,
+              attract: { enable: false, rotateX: 600, rotateY: 1200 },
+            },
+          },
+          interactivity: {
+            detect_on: "canvas",
+            events: {
+              onhover: { enable: false, mode: "repulse" },
+              onclick: { enable: false, mode: "push" },
+              resize: true,
+            },
+            modes: {
+              grab: { distance: 400, line_linked: { opacity: 1 } },
+              bubble: { distance: 400, size: 40, duration: 2, opacity: 0.1, speed: 3 },
+              repulse: { distance: 200, duration: 0.4 },
+              push: { particles_nb: 4 },
+              remove: { particles_nb: 2 },
+            },
+          },
+          retina_detect: true,
+          // Optional demo configuration (won't affect behavior)
+          config_demo: {
+            hide_card: false,
+            background_color: "",
+            background_image: "",
+            background_position: "50% 50%",
+            background_repeat: "no-repeat",
+            background_size: "cover",
+          },
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }, []);
-
-  const options = useMemo(
-    () => ({
-      background: {
-        color: {
-          value: ""
-        }
-      },
-      fullScreen: false,
-      fpsLimit: 120,
-      interactivity: {
-        events: {
-          onClick: {
-            enable: false,
-            mode: "push"
-          },
-          onHover: {
-            enable: false,
-            mode: "repulse"
-          }
-        },
-        modes: {
-          bubble: {
-            distance: 400,
-            duration: 2,
-            opacity: 0.1,
-            size: 40
-          },
-          push: {
-            quantity: 4
-          },
-          repulse: {
-            distance: 200,
-            duration: 0.4
-          }
-        }
-      },
-      particles: {
-        color: {
-          value: "#000000"
-        },
-        links: {
-          color: "#000000",
-          distance: 150,
-          enable: true,
-          opacity: 0.1,
-          width: 0.8
-        },
-        move: {
-          direction: "none",
-          enable: true,
-          outModes: "bounce",
-          random: true,
-          speed: 5,
-          straight: false
-        },
-        number: {
-          density: {
-            enable: true
-          },
-          value: 200
-        },
-        opacity: {
-          value: 0.1
-        },
-        shape: {
-          type: "circle"
-        },
-        size: {
-          value: { min: 1, max: 3 }
-        }
-      },
-      detectRetina: true
-    }),
-    []
-  );
 
   return (
     <div className="relative w-full min-h-screen">
-      
-      <div className="flex flex-col items-center gap-2 lg:gap-0 w-full relative z-10 ">
-      {init && (
-        <Particles
-          id="tsparticles"
-          options={options}
-          className="absolute -z-10 top-0 left-0 w-full pointer-events-none h-[55rem] bg-gradient-to-b from-white to-[#C7CEEC]"
-        />
-      )}
+      {/* Container for particles.js */}
+      <div
+        id="particles-js"
+        className="absolute -z-10 top-0 left-0 w-full pointer-events-none h-[55rem] bg-gradient-to-b from-white to-[#C7CEEC]"
+      ></div>
+      <div className="flex flex-col items-center gap-2 lg:gap-0 w-full relative z-10">
         <div className="flex flex-col items-center w-full">
-          <Landing sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar}/>
+          <Landing sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
         </div>
       </div>
     </div>
