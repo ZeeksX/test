@@ -59,32 +59,6 @@ const CourseExamPreview = ({ examData, setPreview }) => {
         </div>
       </div>
 
-      {/* <QuestionCard
-          type="Cloze"
-          marks={2}
-          question="__________ sit amet consectetur. At aliquet pharetra non sociis. In hendrerit lacinia neque ac sed diam a nascetur. Eget auctor elementum elementum ultrices fames gravida sed euismod. Vitae ornare eget commodo felis dui sed congue. Mi sem id diam viverra. Quis a vitae justo eu mi nisi purus. Sit et mi nisi convallis lobortis."
-          questionType="cloze"
-        />
-
-        <QuestionCard
-          type="Multiple/Single Choice"
-          marks={2}
-          question="Lorem ipsum dolor sit amet consectetur. At aliquet pharetra non sociis. In hendrerit lacinia neque ac sed diam a nascetur. Eget auctor elementum elementum ultrices fames gravida sed euismod. Vitae ornare eget commodo felis dui sed congue. Mi sem id diam viverra. Quis a vitae justo eu mi nisi purus. Sit et mi nisi convallis lobortis."
-          options={[
-            "Lorem ipsum dolor sit amet consectetur.",
-            "Lorem ipsum dolor sit amet consectetur.",
-            "Lorem ipsum dolor sit amet consectetur.",
-            "Lorem ipsum dolor sit amet consectetur.",
-          ]}
-          questionType={"multiple-choice"}
-        />
-
-        <QuestionCard
-          type="Theory"
-          marks={4}
-          question="Lorem ipsum dolor sit amet consectetur. At aliquet pharetra non sociis. In hendrerit lacinia neque ac sed diam a nascetur. Eget auctor elementum elementum ultrices fames gravida sed euismod. Vitae ornare eget commodo felis dui sed congue. Mi sem id diam viverra. Quis a vitae justo eu mi nisi purus. Sit et mi nisi convallis lobortis."
-          questionType="theory"
-        /> */}
       {examData?.questions.length > 0 ? (
         <div className="space-y-6">
           {examData.questions.map((question) => (

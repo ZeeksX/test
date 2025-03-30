@@ -30,7 +30,7 @@ const DynamicTopNav = () => {
   return (
     <>
       <div className={`fixed z-10 w-full flex flex-row items-center justify-between h-16 px-4 border-b-[4px] border-b-border-main`
-        + (isScrolled ? " bg-white" : "bg-transparent")}>
+        + (isScrolled ? " bg-white" : " bg-transparent")}>
         <div className="flex flex-row items-center gap-2">
           <div className="text-2xl cursor-pointer md:hidden flex">
             <DensityMediumIcon onClick={toggleSidebar} />

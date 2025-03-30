@@ -1,56 +1,94 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CustomButton } from "../components/ui/Button";
 import { logoMobile } from "../utils/images";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { useNavigate } from "react-router";
 import { MdOutlineArrowBack } from "react-icons/md";
+import Toast from "../components/modals/Toast";
 
 const ProfilleCustomization = () => {
+  const navigate = useNavigate();
   const [role, setRole] = useState("");
   const [schoolName, setSchoolName] = useState("");
   const [studentNumber, setStudentNumber] = useState("");
   const [form, setForm] = useState({
+    title: "",
     course: "",
     code: "",
   });
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+  const [loading, setLoading] = useState(false);
 
   const [isRoleSelected, setIsRoleSelected] = useState(false);
   const [isSchoolSelected, setIsSchoolSelected] = useState(false);
-  const [isSubmitted, setIsSubitted] = useState(false)
 
-  const handleSubmit = () => {
-    const body = {
-      role: role,
-      schoolName: schoolName,
-      matricNumber: studentNumber,
-      form: form,
+  // New state to control the fade-in effect
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    // Set the loaded flag to true when the component mounts
+    setLoaded(true);
+  }, []);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+
+    // Build the userData object: for teachers use form; for students, use studentNumber
+    const userData = {
+      role,
+      schoolName,
+      ...(role === "teacher" ? { form } : { studentNumber }),
     };
 
-    console.log(body);
+    localStorage.setItem("userData", JSON.stringify(userData));
+
+    // Optionally show a toast
+    showToast("Data saved. Redirecting to signup...", "success");
+
+    // Simulate delay then navigate to signup page
+    setTimeout(() => {
+      setLoading(false);
+      navigate("/signup");
+    }, 1000);
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
   };
 
   return (
-    <div className="landing flex flex-col items-center lg:justify-center justify-center gap-4 md:gap-2 lg:gap-0 w-full min-h-screen">
+    <div
+      className="landing flex flex-col items-center lg:justify-center justify-center gap-4 md:gap-2 lg:gap-0 w-full min-h-screen"
+      style={{ opacity: loaded ? 1 : 0.9, transition: "opacity 0.5s ease-in" }}
+    >
       <div className="sign-in flex flex-row w-[80%] md:w-auto lg:w-3/5 max-lg:h-[90vh] lg:h-[93vh]">
         <div className="login relative flex flex-col lg:max-w-screen-lg w-full md:rounded-2xl bg-[white] text-black px-2 md:px-4 lg:px-3 border gap-4 py-2 items-center justify-center">
           {isRoleSelected ? (
             isSchoolSelected ? (
-              role == "teacher" ? (
+              role === "teacher" ? (
                 <CourseCreation
                   onReturn={() => setIsSchoolSelected(false)}
                   form={form}
-                  setForm={(form) => setForm(form)}
-                  onSubmit={() => handleSubmit()}
+                  setForm={setForm}
+                  onSubmit={handleSubmit}
+                  loading={loading}
                 />
               ) : (
                 <StudentNumberSelection
                   onReturn={() => setIsSchoolSelected(false)}
                   studentNumber={studentNumber}
-                  setStudentNumber={(studentNumber) =>
-                    setStudentNumber(studentNumber)
-                  }
-                  onSubmit={() => handleSubmit()}
+                  setStudentNumber={setStudentNumber}
+                  onSubmit={handleSubmit}
+                  loading={loading}
                 />
               )
             ) : (
@@ -58,18 +96,24 @@ const ProfilleCustomization = () => {
                 onSubmit={() => setIsSchoolSelected(true)}
                 onReturn={() => setIsRoleSelected(false)}
                 schoolName={schoolName}
-                setSchoolName={(schoolName) => setSchoolName(schoolName)}
+                setSchoolName={setSchoolName}
               />
             )
           ) : (
             <RoleSelection
               onSubmit={() => setIsRoleSelected(true)}
               role={role}
-              setRole={(role) => setRole(role)}
+              setRole={setRole}
             />
           )}
         </div>
       </div>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </div>
   );
 };
@@ -78,11 +122,10 @@ const RoleSelection = ({ onSubmit, role, setRole }) => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleRoleSelection = () => {
-    if (!role || role === "") {
+    if (!role) {
       setErrorMessage("Please select a role");
       return;
     }
-
     onSubmit();
   };
 
@@ -95,11 +138,10 @@ const RoleSelection = ({ onSubmit, role, setRole }) => {
       </p>
       <div className="flex gap-5">
         <button
-          className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${
-            role === "teacher"
+          className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${role === "teacher"
               ? "border-primary-main text-primary-main bg-secondary-bg"
               : ""
-          }`}
+            }`}
           onClick={() => {
             setRole("teacher");
             setErrorMessage("");
@@ -108,11 +150,10 @@ const RoleSelection = ({ onSubmit, role, setRole }) => {
           Teacher
         </button>
         <button
-          className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${
-            role === "student"
+          className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${role === "student"
               ? "border-primary-main text-primary-main bg-secondary-bg"
               : ""
-          }`}
+            }`}
           onClick={() => {
             setRole("student");
             setErrorMessage("");
@@ -125,7 +166,7 @@ const RoleSelection = ({ onSubmit, role, setRole }) => {
       <CustomButton
         type="button"
         size="lg"
-        onClick={() => handleRoleSelection()}
+        onClick={handleRoleSelection}
         className="w-full bg-gray-400 text-white !mt-6"
       >
         Continue
@@ -142,13 +183,12 @@ const SchoolSelection = ({ onSubmit, onReturn, schoolName, setSchoolName }) => {
       setErrorMessage("Please fill in your school’s name");
       return;
     }
-
     onSubmit();
   };
 
   return (
     <div className="flex flex-col items-center space-y-5 p-6">
-      <button className="absolute top-4 left-4" onClick={() => onReturn()}>
+      <button className="absolute top-4 left-4" onClick={onReturn}>
         <MdOutlineArrowBack size={24} />
       </button>
       <img src={logoMobile} className="w-12" alt="" />
@@ -178,7 +218,7 @@ const SchoolSelection = ({ onSubmit, onReturn, schoolName, setSchoolName }) => {
       <CustomButton
         type="button"
         size="lg"
-        onClick={() => handleSchoolSelection()}
+        onClick={handleSchoolSelection}
         className="w-full bg-gray-400 text-white !mt-6"
       >
         Continue
@@ -187,21 +227,17 @@ const SchoolSelection = ({ onSubmit, onReturn, schoolName, setSchoolName }) => {
   );
 };
 
-const CourseCreation = ({ onReturn, form, setForm, onSubmit }) => {
+const CourseCreation = ({ onReturn, form, setForm, onSubmit, loading }) => {
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // setTimeout(() => {
-    //   navigate("/dashboard");
-    // }, 3000);
     onSubmit();
   };
 
   return (
-    <div className="flex flex-col items-center space-y-5 p-6">
-      <button className="absolute top-4 left-4" onClick={() => onReturn()}>
+    <div className="course flex flex-col items-center space-y-5 p-6 overflow-y-scroll">
+      <button className="absolute top-4 left-4" onClick={onReturn}>
         <MdOutlineArrowBack size={24} />
       </button>
       <img src={logoMobile} className="w-12" alt="" />
@@ -211,6 +247,21 @@ const CourseCreation = ({ onReturn, form, setForm, onSubmit }) => {
       </p>
       <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
         <div className="">
+          <Label htmlFor="title" className="text-[#666666]">
+            Title
+          </Label>
+          <Input
+            name="title"
+            id="title"
+            value={form.title}
+            placeholder="E.g Dr, Mr, Prof"
+            onChange={(e) =>
+              setForm({ ...form, title: e.target.value })
+            }
+            required
+          />
+        </div>
+        <div className="">
           <Label htmlFor="course" className="text-[#666666]">
             Course
           </Label>
@@ -219,7 +270,9 @@ const CourseCreation = ({ onReturn, form, setForm, onSubmit }) => {
             id="course"
             value={form.course}
             placeholder="English Language"
-            onChange={(e) => setForm({ ...form, course: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, course: e.target.value })
+            }
             required
           />
         </div>
@@ -232,14 +285,17 @@ const CourseCreation = ({ onReturn, form, setForm, onSubmit }) => {
             id="course_code"
             value={form.code}
             placeholder="ENG101"
-            onChange={(e) => setForm({ ...form, code: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, code: e.target.value })
+            }
             required
           />
         </div>
         <CustomButton
           type="submit"
-          className="w-full bg-gray-400 text-white "
+          className="w-full bg-gray-400 text-white"
           size="lg"
+          loading={loading}
         >
           Done
         </CustomButton>
@@ -253,21 +309,21 @@ const StudentNumberSelection = ({
   studentNumber,
   setStudentNumber,
   onSubmit,
+  loading,
 }) => {
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSchoolSelection = () => {
+  const handleStudentSubmit = () => {
     if (!studentNumber) {
-      setErrorMessage("Please fill in your school’s name");
+      setErrorMessage("Please fill in your student number");
       return;
     }
-
     onSubmit();
   };
 
   return (
     <div className="flex flex-col items-center space-y-5 p-6">
-      <button className="absolute top-4 left-4" onClick={() => onReturn()}>
+      <button className="absolute top-4 left-4" onClick={onReturn}>
         <MdOutlineArrowBack size={24} />
       </button>
       <img src={logoMobile} className="w-12" alt="" />
@@ -295,8 +351,9 @@ const StudentNumberSelection = ({
       <CustomButton
         type="button"
         size="lg"
-        onClick={() => handleSchoolSelection()}
+        onClick={handleStudentSubmit}
         className="w-full bg-gray-400 text-white !mt-6"
+        loading={loading}
       >
         Done
       </CustomButton>

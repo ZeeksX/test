@@ -55,7 +55,7 @@ const LecturerGroups = () => {
   ]
 
   return (
-    <div className='mt-[60px]'>
+    <div className=''>
       <div className='py-6 px-11 flex flex-col gap-4'>
         <h1 className='text-[32px] leading-8 font-medium'>{lecturer.lecturerName}</h1>
         <p className="text-sm text-[#222222] font-normal">Lorem ipsum dolor sit amet consectetur. At aliquet pharetra non sociis.</p>

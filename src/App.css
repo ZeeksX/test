@@ -4,7 +4,7 @@
     top: 0;
     width: 100%;
     height: 100%;
-   background: linear-gradient(180deg, white 0%, #C7CEEC 100%);
+    background: linear-gradient(180deg, white 0%, #C7CEEC 100%);
     z-index: 50;
 }
 
@@ -19,13 +19,29 @@
 
 .login {
     /* Hide scrollbar for IE, Edge and Firefox */
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  
-  .login::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
-  }  
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.login::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari and Opera */
+}
+
+.course {
+    /* Hide scrollbar for IE, Edge and Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.course::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari and Opera */
+}
 
 @keyframes slide-in {
     0% {

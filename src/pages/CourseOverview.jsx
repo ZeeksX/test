@@ -2,11 +2,15 @@ import { useEffect } from "react";
 import { Outlet, useParams } from "react-router";
 import CourseTopbar from "../components/courses/CourseTopbar";
 import { useDispatch, useSelector } from "react-redux";
-import { CreateNewExam, StudentGroupWarnDialog } from "../components/courses/CourseComponents";
+import {
+  CreateNewExam,
+  StudentGroupWarnDialog,
+} from "../components/courses/CourseComponents";
 import CourseNavbar from "../components/courses/CourseNavbar";
 import { setShowCreateNewExamination } from "../features/reducers/uiSlice";
 import { fetchCourseDetails } from "../features/reducers/courseSlice";
 import { Loader } from "../components/ui/Loader";
+import { fetchStudentGroups } from "../features/reducers/examRoomSlice";
 
 const CourseOverview = () => {
   const { courseId } = useParams();
@@ -22,6 +26,7 @@ const CourseOverview = () => {
 
   useEffect(() => {
     dispatch(fetchCourseDetails({ id: courseId }));
+    dispatch(fetchStudentGroups());
   }, [dispatch, courseId]);
 
   const isCreateExamOpen = useSelector(

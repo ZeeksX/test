@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination } from '@mui/material';
+import {
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TablePagination
+} from '@mui/material';
 
 const ExaminationTable = ({ examinations }) => {
     const [timeStatus, setTimeStatus] = useState({});
@@ -25,16 +34,19 @@ const ExaminationTable = ({ examinations }) => {
         return <div>No examinations data available</div>;
     }
 
+    // Filter to only include upcoming exams (date is in the future)
+    const upcomingExams = examinations.filter(exam => new Date(exam.date) > new Date());
+
     const columns = [
         { id: 'serial-number', label: 'S/N', minWidth: 50 },
         { id: 'exam-name', label: 'Examination Name', minWidth: 220 },
         { id: 'lecturer', label: 'Lecturer', minWidth: 200 },
         { id: 'course', label: 'Course', minWidth: 100 },
         { id: 'date', label: 'Scheduled Date & Time', minWidth: 180 },
-        { id: "option", label: "Option", minWidth: 100 }
+        { id: 'option', label: 'Option', minWidth: 100 }
     ];
 
-    const rows = examinations.map((exam, index) => {
+    const rows = upcomingExams.map((exam, index) => {
         const examDateTime = new Date(exam.date);
         const now = new Date();
         const isToday = examDateTime.toDateString() === now.toDateString();
@@ -47,7 +59,7 @@ const ExaminationTable = ({ examinations }) => {
 
         let timeString;
         if (isNow) {
-            timeString = `Now`;
+            timeString = 'Now';
         } else if (isToday) {
             timeString = `Today ${examDateTime.toLocaleTimeString()}`;
         } else if (isTomorrow) {
@@ -60,7 +72,7 @@ const ExaminationTable = ({ examinations }) => {
         const textColor = (isNow || isToday) ? 'green' : isTomorrow ? 'blue' : 'inherit';
 
         return {
-            'serial-number': index + 1,
+            'serial-number': index + 1, // Updated serial number based on upcomingExams array
             'exam-name': exam.exam_name,
             'lecturer': exam.lecturer,
             'course': exam.course,
@@ -75,7 +87,7 @@ const ExaminationTable = ({ examinations }) => {
                         opacity: isToday ? (isNow ? 1 : 0.4) : 0.4,
                         cursor: isNow ? 'pointer' : 'not-allowed'
                     }}
-                    className='bg-[#1835B3] w-[120px] h-11 gap-2 text-white flex items-center justify-center font-inter font-semibold text-base rounded-md px-4 hover:ring-2'
+                    className="bg-[#1835B3] w-[120px] h-11 gap-2 text-white flex items-center justify-center font-inter font-semibold text-base rounded-md px-4 hover:ring-2"
                     disabled={!isNow}
                 >
                     Take Exam
@@ -97,54 +109,52 @@ const ExaminationTable = ({ examinations }) => {
     };
 
     return (
-        <>
-            <Paper sx={{ width: '100%', overflow: 'hidden', fontFamily: 'Inter' }}>
-                <TableContainer sx={{ maxHeight: 440 }}>
-                    <Table stickyHeader aria-label="sticky table">
-                        <TableHead>
-                            <TableRow>
-                                {columns.map((column) => (
-                                    <TableCell
-                                        key={column.id}
-                                        align={column.align}
-                                        style={{ minWidth: column.minWidth, color: "#C2C2C2" }}
-                                    >
-                                        {column.label}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {rows
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((row) => (
-                                    <TableRow hover role="checkbox" tabIndex={-1} key={row['serial-number']}>
-                                        {columns.map((column) => {
-                                            const value = row[column.id];
-                                            return (
-                                                <TableCell key={column.id} align={column.align}>
-                                                    {column.format && typeof value === 'number'
-                                                        ? column.format(value)
-                                                        : value}
-                                                </TableCell>
-                                            );
-                                        })}
-                                    </TableRow>
-                                ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                <TablePagination
-                    rowsPerPageOptions={[10, 25, 100]}
-                    component="div"
-                    count={rows.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-            </Paper>
-        </>
+        <Paper sx={{ width: '100%', overflow: 'hidden', fontFamily: 'Inter' }}>
+            <TableContainer sx={{ maxHeight: 440 }}>
+                <Table stickyHeader aria-label="upcoming exams table">
+                    <TableHead>
+                        <TableRow>
+                            {columns.map((column) => (
+                                <TableCell
+                                    key={column.id}
+                                    align={column.align}
+                                    style={{ minWidth: column.minWidth, color: "#C2C2C2" }}
+                                >
+                                    {column.label}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {rows
+                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                            .map((row) => (
+                                <TableRow hover role="checkbox" tabIndex={-1} key={row['serial-number']}>
+                                    {columns.map((column) => {
+                                        const value = row[column.id];
+                                        return (
+                                            <TableCell key={column.id} align={column.align}>
+                                                {column.format && typeof value === 'number'
+                                                    ? column.format(value)
+                                                    : value}
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
+                            ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <TablePagination
+                rowsPerPageOptions={[10, 25, 100]}
+                component="div"
+                count={rows.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+        </Paper>
     );
 };
 

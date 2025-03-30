@@ -8,7 +8,7 @@ const StudentGroup = () => {
     const group = location.state.group
     return (
         <div
-            className='flex flex-col mt-[60px] font-inter'
+            className='flex flex-col font-inter'
         >
             <div className='p-6 flex flex-col gap-4'>
                 <h1 className='text-[#222222] text-[32px] leading-8 font-medium'>{group.name}</h1>

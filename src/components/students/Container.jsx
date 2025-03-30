@@ -7,60 +7,30 @@ import { FaPlus } from "react-icons/fa6";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import ExaminationTable from "./ExaminationTable";
 import CompletedExams from "./CompletedExams";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchStudentGroups,
+  fetchStudentsStudentGroups,
+  selectStudentGroupById,
+} from "../../features/reducers/examRoomSlice";
+import CustomButton from "../ui/Button";
+import { setShowJoinStudentGroupDialog } from "../../features/reducers/uiSlice";
+import { Loader } from "../ui/Loader";
 
-const Container = ({ studentGroup, setStudentGroup }) => {
-  // Set the initial state using a side-effect, not by assignment
+const Container = () => {
+  //  I am fetching the student group from the redux state now
+  const {
+    allStudentGroups,
+    studentStudentGroups: studentGroup,
+    loading,
+    error,
+  } = useSelector((state) => state.examRooms);
+  const dispatch = useDispatch();
+
   useEffect(() => {
-    setStudentGroup([
-      {
-        id: 1,
-        name: "Student Group 1",
-        lastEdited: "04/12/2025",
-        students: [
-          { id: 1, name: "Ikinwot Ezekiel" },
-          { id: 2, name: "Ebong Nsikak" },
-          { id: 3, name: "Ajayi Anjola" },
-          { id: 4, name: "Edward Philip" },
-        ],
-      },
-      {
-        id: 2,
-        name: "Student Group 2",
-        lastEdited: "05/12/2025",
-        students: [
-          { id: 5, name: "John Doe" },
-          { id: 6, name: "Jane Smith" },
-          { id: 7, name: "Alice Johnson" },
-          { id: 8, name: "Bob Brown" },
-          { id: 1, name: "Ikinwot Ezekiel" },
-        ],
-      },
-      {
-        id: 3,
-        name: "Student Group 3",
-        lastEdited: "05/12/2025",
-        students: [
-          { id: 5, name: "John Doe" },
-          { id: 6, name: "Jane Smith" },
-          { id: 7, name: "Alice Johnson" },
-          { id: 8, name: "Bob Brown" },
-          { id: 1, name: "Ikinwot Ezekiel" },
-        ],
-      },
-      {
-        id: 4,
-        name: "Student Group 4",
-        lastEdited: "05/12/2025",
-        students: [
-          { id: 5, name: "John Doe" },
-          { id: 6, name: "Jane Smith" },
-          { id: 7, name: "Alice Johnson" },
-          { id: 8, name: "Bob Brown" },
-          { id: 1, name: "Ikinwot Ezekiel" },
-        ],
-      },
-    ]);
-  }, [setStudentGroup]);
+    dispatch(fetchStudentsStudentGroups());
+    dispatch(fetchStudentGroups());
+  }, [dispatch]);
 
   const examinations = [
     {
@@ -122,6 +92,10 @@ const Container = ({ studentGroup, setStudentGroup }) => {
   // State to toggle between upcoming and completed exam tables.
   const [selectedTab, setSelectedTab] = useState("upcoming");
 
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
     <>
       <div className="font-inter grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-7">
@@ -159,35 +133,47 @@ const Container = ({ studentGroup, setStudentGroup }) => {
             <p className="text-[#667085] text-lg">
               Join a student group and start taking examinations.
             </p>
-            <button className="bg-[#1835B3] w-64 gap-2 text-white h-[60px] flex items-center justify-center font-inter font-semibold text-lg rounded-lg px-4">
+            {/* Used Custom button component */}
+            <CustomButton
+              size="lg"
+              className="gap-4"
+              onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
+            >
               Join Student Group
               <FaPlus />
-            </button>
+            </CustomButton>
           </div>
         ) : (
-          studentGroup.map((group) => (
-            <div
-              key={group.id}
-              className="flex flex-row py-4 pl-1 pr-6 w-full max-w-[309px] h-[132px] bg-white border rounded-xl border-[#D0D5DD] items-start gap-4"
-            >
-              <div>
-                <BsThreeDotsVertical className="text-xl" />
+          studentGroup.map((group) => {
+            const studentGroupDetail = allStudentGroups.find(
+              (g) => g.id === group.id
+            );
+
+            if (!studentGroupDetail) return null;
+
+            return (
+              <div
+                key={studentGroupDetail.id}
+                className="flex flex-row py-4 pl-1 pr-6 w-full max-w-[309px] h-max bg-white border rounded-xl border-[#D0D5DD] items-start gap-4"
+              >
+                <div>
+                  <BsThreeDotsVertical className="text-xl" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h1 className="text-xl leading-5 text-[#222222] font-medium">
+                    {studentGroupDetail.name}
+                  </h1>
+                  <p className="text-[#666666] text-[12px] leading-5 line-clamp-2">
+                    {studentGroupDetail.description}
+                  </p>
+                  <h3 className="text-[#A1A1A1] text-sm">
+                    Prof. Ezekiel Ikinwot.{" "}
+                    <span>{studentGroupDetail.students?.length} students</span> {/* I am waiting to get the number of students in a student group with this */}
+                  </h3>
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <h1 className="text-xl leading-5 text-[#222222] font-medium">
-                  {group.name}
-                </h1>
-                <p className="text-[#666666] text-[10px] leading-5 line-clamp-2">
-                  Description/Instruction Lorem ipsum dolor sit amet consectetur
-                  adipisicing elit. Quisquam, distinctio.
-                </p>
-                <h3 className="text-[#A1A1A1] text-sm">
-                  Prof. Ezekiel Ikinwot.{" "}
-                  <span>{group.students.length} students</span>
-                </h3>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

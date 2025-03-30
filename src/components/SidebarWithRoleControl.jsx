@@ -1,6 +1,7 @@
 import { LuLayoutDashboard } from "react-icons/lu";
 import { Link, useLocation } from "react-router";
 import { CourseDropdownMenu } from "./ui/Dropdown";
+import ExaminationDropdown from "./ui/ExaminationDropdown";
 import { FiHome, FiUsers } from "react-icons/fi";
 import { CreateExaminationRoom } from "./courses/CourseComponents";
 import { RxDashboard } from "react-icons/rx";
@@ -12,10 +13,10 @@ const SidebarWithRoleControl = ({ role }) => {
     { icon: FiHome, title: "Dashboard", href: "/dashboard" },
     { icon: FiUsers, title: "Student Groups", href: "/student-groups" },
   ];
+
   const studentLinks = [
     { icon: FiHome, title: "Dashboard", href: "/dashboard" },
     { icon: FiUsers, title: "Teachers", href: "/lecturers" },
-    { icon: RxDashboard, title: "Examinations", href: "/examinations" },
   ];
 
   return (
@@ -41,7 +42,6 @@ const SidebarWithRoleControl = ({ role }) => {
                 </button>
               </div>
             ))}
-            {/* CourseDropdownMenu is rendered as the third item in the teacher sidebar */}
             <div className="w-full flex flex-col items-center justify-center">
               <CourseDropdownMenu />
             </div>
@@ -66,6 +66,10 @@ const SidebarWithRoleControl = ({ role }) => {
                 </button>
               </div>
             ))}
+            {/* Add ExaminationDropdown for students */}
+            <div className="w-full flex flex-col items-center justify-center">
+              <ExaminationDropdown />
+            </div>
           </>
         ) : null}
       </div>

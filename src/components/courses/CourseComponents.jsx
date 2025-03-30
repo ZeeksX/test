@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ButtonDismissDialog,
   DialogContent,
@@ -45,13 +45,16 @@ import {
   MaterialCreateExamAddMaterial,
   MaterialCreateExamUpdateMetaData,
 } from "./CreateExamQuestion";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import CourseExamPreview from "./CourseExamPreview";
 import {
   createCourse,
   createLocalCourse,
 } from "../../features/reducers/courseSlice";
 import Toast from "../modals/Toast";
+import apiCall from "../../utils/apiCall";
+import { fetchStudentGroups } from "../../features/reducers/examRoomSlice";
+import { Spinner } from "../ui/Loader";
 
 export const CreateExaminationRoom = () => {
   const isOpen = useSelector((state) => state.ui.showCreateExaminationRoom);
@@ -162,6 +165,12 @@ export const CreateNewExam = () => {
   const { courseId } = useParams();
   const dispatch = useDispatch();
 
+  const { teacherStudentGroups } = useSelector((state) => state.examRooms);
+
+  useEffect(() => {
+    dispatch(fetchStudentGroups());
+  }, [dispatch]);
+
   const [selectedQuestionMethod, setSelectedQuestionMethod] = useState("");
   const [examPreview, setExamPreview] = useState(false);
 
@@ -181,6 +190,12 @@ export const CreateNewExam = () => {
     numberOfQuestions: 50,
     questionTypes: [],
     studentGroups: [],
+  });
+
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
   });
 
   const [showExamCreation, setShowExamCreation] = useState(false);
@@ -216,13 +231,6 @@ export const CreateNewExam = () => {
     });
   };
 
-  // const handleSwitchChange = (name, checked) => {
-  //   setExamData({
-  //     ...examData,
-  //     [name]: checked,
-  //   });
-  // };
-
   const handleSelectChange = (name, value) => {
     setExamData({
       ...examData,
@@ -252,44 +260,73 @@ export const CreateNewExam = () => {
     });
   };
 
-  const handlePublish = () => {
-    console.log(examData);
-  };
-
   const [selectedExam, setSelectedExam] = useState("");
 
   const updateExamData = (newData) => {
     setExamData({ ...examData, ...newData });
   };
 
+  const [submitting, setSubmitting] = useState(false);
+  const handlePublish = async () => {
+    setSubmitting(true);
+    const body = {
+      title: examData.name,
+      exam_type: examData.examType,
+      description: examData.description,
+      schedule_time: new Date(examData.scheduleTime),
+      status: "Scheduled",
+      due_time: new Date(examData.dueTime),
+      questions: examData.questions,
+      source_file: examData.uploadedFiles,
+      strict: examData.gradingStyle === "strict",
+      course: courseId,
+    };
+
+    try {
+      // const response = await apiCall.post("/exams/exam-rooms/", body);
+      console.log(body);
+    } catch (error) {
+      showToast("Failed to create exam. Please try again.", "error");
+      console.error("Error creating exam:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
+  };
+
   return (
     <div className="w-full h-full overflow-auto">
-      <div className="p-4 overflow-auto">
-        <div className="">
+      <div className="p-4 min-h-full overflow-auto">
+        <div className="h-full">
           <div className="mb-8">
             <div className="flex justify-center mb-2">
               <div className="flex items-center">
                 {[1, 2, 3, 4, 5].map((step) => (
                   <div key={step} className="flex items-center">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        currentStep === step
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === step
                           ? "bg-blue-600 text-white"
                           : step < currentStep
-                          ? "bg-green-500 text-white"
-                          : "bg-gray-200 text-gray-500"
-                      }`}
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-200 text-gray-500"
+                        }`}
                     >
                       {step}
                     </div>
                     <div
-                      className={`w-16 h-1 ${
-                        step < 5
+                      className={`w-16 h-1 ${step < 5
                           ? step < currentStep
                             ? "bg-green-500"
                             : "bg-gray-200"
                           : "hidden"
-                      }`}
+                        }`}
                     />
                   </div>
                 ))}
@@ -298,63 +335,58 @@ export const CreateNewExam = () => {
             <div className="text-center">
               <div className="flex justify-between w-full max-w-[456px] mx-auto">
                 <div
-                  className={`text-xs w-[80px] ${
-                    currentStep === 1
+                  className={`text-xs w-[80px] ${currentStep === 1
                       ? "text-blue-600"
                       : 1 < currentStep
-                      ? "text-green-500"
-                      : "text-gray-200"
-                  }`}
+                        ? "text-green-500"
+                        : "text-gray-200"
+                    }`}
                 >
                   Examination
                   <br />
                   Metadata
                 </div>
                 <div
-                  className={`text-xs w-[80px]  ${
-                    currentStep === 2
+                  className={`text-xs w-[80px]  ${currentStep === 2
                       ? "text-blue-600"
                       : 2 < currentStep
-                      ? "text-green-500"
-                      : "text-gray-200"
-                  }`}
+                        ? "text-green-500"
+                        : "text-gray-200"
+                    }`}
                 >
                   Create
                   <br />
                   Examination
                 </div>
                 <div
-                  className={`text-xs w-[80px] ${
-                    currentStep === 3
+                  className={`text-xs w-[80px] ${currentStep === 3
                       ? "text-blue-600"
                       : 3 < currentStep
-                      ? "text-green-500"
-                      : "text-gray-200"
-                  }`}
+                        ? "text-green-500"
+                        : "text-gray-200"
+                    }`}
                 >
                   Grading
                   <br />
                   Style
                 </div>
                 <div
-                  className={`text-xs w-[80px] ${
-                    currentStep === 4
+                  className={`text-xs w-[80px] ${currentStep === 4
                       ? "text-blue-600"
                       : 4 < currentStep
-                      ? "text-green-500"
-                      : "text-gray-200"
-                  }`}
+                        ? "text-green-500"
+                        : "text-gray-200"
+                    }`}
                 >
                   Time
                 </div>
                 <div
-                  className={`text-xs w-[80px] ${
-                    currentStep === 5
+                  className={`text-xs w-[80px] ${currentStep === 5
                       ? "text-blue-600"
                       : 5 < currentStep
-                      ? "text-green-500"
-                      : "text-gray-200"
-                  }`}
+                        ? "text-green-500"
+                        : "text-gray-200"
+                    }`}
                 >
                   Student
                   <br />
@@ -364,7 +396,7 @@ export const CreateNewExam = () => {
             </div>
           </div>
 
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-2xl h-full mx-auto">
             <div>
               {examPreview ? (
                 <>
@@ -374,7 +406,7 @@ export const CreateNewExam = () => {
                   />
                 </>
               ) : (
-                <>
+                <div className="h-full">
                   <div>
                     <h2 className="text-2xl mb-4">
                       {currentStep === 1 && "Examination metadata"}
@@ -386,6 +418,7 @@ export const CreateNewExam = () => {
                       {currentStep === 5 && "Student group"}
                     </h2>
                   </div>
+
                   {currentStep === 1 && (
                     <div className="space-y-6">
                       <div className="space-y-2">
@@ -482,7 +515,7 @@ export const CreateNewExam = () => {
 
                             <div
                               className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                              // onClick={() => setSelectedQuestionMethod("copy")}
+                            // onClick={() => setSelectedQuestionMethod("copy")}
                             >
                               <div className="flex justify-between items-center mb-4">
                                 <div>
@@ -588,8 +621,8 @@ export const CreateNewExam = () => {
                           value={
                             examData.scheduleTime
                               ? toLocalISOString(
-                                  new Date(examData.scheduleTime)
-                                )
+                                new Date(examData.scheduleTime)
+                              )
                               : ""
                           }
                           onChange={(e) =>
@@ -630,7 +663,7 @@ export const CreateNewExam = () => {
                   )}
 
                   {currentStep === 5 && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 h-full">
                       <div className="space-y-2">
                         <Label htmlFor="studentGroup">
                           Choose student group
@@ -645,18 +678,14 @@ export const CreateNewExam = () => {
                             <SelectValue placeholder="Student Group 1" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Student Group 1">
-                              Student Group 1
-                            </SelectItem>
-                            <SelectItem value="Student Group 2">
-                              Student Group 2
-                            </SelectItem>
-                            <SelectItem value="Student Group 3">
-                              Student Group 3
-                            </SelectItem>
-                            <SelectItem value="Student Group 4">
-                              Student Group 4
-                            </SelectItem>
+                            {teacherStudentGroups?.map((studentGroup) => (
+                              <SelectItem
+                                key={studentGroup.id}
+                                value={studentGroup}
+                              >
+                                {studentGroup.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -664,10 +693,10 @@ export const CreateNewExam = () => {
                       <div className="flex flex-wrap gap-2 mt-4">
                         {selectedGroups.map((group) => (
                           <Badge
-                            key={group}
+                            key={group.id}
                             className="bg-primary-main flex items-center gap-2 px-4 py-2"
                           >
-                            {group}
+                            {group.name}
                             <FiX
                               className="h-3 w-3 cursor-pointer"
                               onClick={() => removeStudentGroup(group)}
@@ -732,12 +761,19 @@ export const CreateNewExam = () => {
                       )}
                     </div>
                   )}
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </div>
   );
 };
@@ -773,14 +809,47 @@ export const StudentGroupWarnDialog = () => {
 };
 
 export const CreateStudentGroup = () => {
+  const { courseId } = useParams();
   const isOpen = useSelector((state) => state.ui.showCreateStudentGroup);
   const [formData, setFormData] = useState({ name: "", description: "" });
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+  const [loading, setLoading] = useState();
 
-  const handleCreateStudentGroup = (e) => {
+  const handleCreateStudentGroup = async (e) => {
     e.preventDefault();
 
-    console.log(formData);
-    setFormData({ name: "", session: "" });
+    const body = {
+      name: formData.name,
+      description: formData.description,
+      course: 1,
+      teacher: 1, // Change it once they send the teacher id from the backend
+    };
+
+    try {
+      const response = await apiCall.post("/exams/exam-rooms/", body);
+
+      if (response.status === 201) {
+        showToast("Student group created", "success");
+        setFormData({ name: "", description: "" });
+      }
+    } catch (error) {
+      showToast("Failed to create student group. Please try again.", "error");
+      console.error("Error creating student group:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
   };
 
   return (
@@ -822,11 +891,22 @@ export const CreateStudentGroup = () => {
         </DialogContent>
         <DropdownMenuSeparator />
         <DialogContent className="p-6 pt-4 flex items-center justify-end gap-4">
-          <CustomButton className="gap-2 w-full" size="lg">
+          <CustomButton
+            type="submit"
+            loading={loading}
+            className="gap-2 w-full"
+            size="lg"
+          >
             Create Student Group <FiPlus size={20} />
           </CustomButton>
         </DialogContent>
       </form>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </OutsideDismissDialog>
   );
 };
@@ -844,8 +924,8 @@ export const ShareStudentGroupLinkDialog = ({ link = "wbfefebi" }) => {
       maxWidth="400px"
     >
       <DialogHeader>
-        <DialogTitle>
-          Here’s your link to this Student <br /> group
+        <DialogTitle className="whitespace-pre-line">
+          {"Here’s your link to this\nStudent group"}
         </DialogTitle>
       </DialogHeader>
       <DropdownMenuSeparator />
@@ -881,16 +961,19 @@ export const ShareStudentGroupLinkDialog = ({ link = "wbfefebi" }) => {
 };
 
 export function ExaminationCard({
+  id = 0,
   title = "Examination name 6",
   description = "Description/Instruction lorem ipsum dolor sit amet dictietres consectetur. At aliquet pharetra non sociis. At aliquet phar...",
   studentGroups = 5,
-  dueDate = "Mar 22nd",
-  dueTime = "8:00 PM",
+  dueTime = "Mar 22nd, 8:00 PM",
 }) {
   return (
-    <div className="bg-white border w-full max-w-md shadow-sm">
-      <div className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <CustomButton variant="ghost" size="icon" className="h-8 w-8 -ml-2">
+    <Link
+      to={`${id}/detail`}
+      className="bg-white border w-full max-w-md shadow-sm p-4"
+    >
+      <div className="flex flex-row items-start justify-between gap-4 space-y-0 pb-2">
+        <CustomButton variant="ghost" size="icon" className="h-8 w-8 ">
           <FiMoreVertical className="h-5 w-5 text-gray-500" />
           <span className="sr-only">Menu</span>
         </CustomButton>
@@ -904,44 +987,72 @@ export function ExaminationCard({
           <p className="text-sm font-medium text-blue-600">
             {studentGroups} Student Groups
           </p>
-          <p className="text-sm text-gray-500">
-            Due Date & Time - {dueDate}, {dueTime}
-          </p>
+          <p className="text-sm text-gray-500">Due Date & Time - {dueTime}</p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
 export const JoinStudentGroupDialog = () => {
   const isOpen = useSelector((state) => state.ui.showJoinStudentGroupDialog);
-  const [type, setType] = useState("link");
-  const [link, setLink] = useState("");
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const dispatch = useDispatch();
+  const { allStudentGroups, loading, error } = useSelector(
+    (state) => state.examRooms
+  );
 
-  const inputRefs = useRef([]);
+  useEffect(() => {
+    dispatch(fetchStudentGroups());
+  }, [dispatch]);
 
-  const handleChange = (index, value) => {
-    // Only allow empty string or a single digit (0-9)
-    if (!/^[0-9]?$/.test(value)) return;
-    const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
+  const [search, setSearch] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
-    if (value && index < code.length - 1) {
-      inputRefs.current[index + 1].focus();
+  const filteredStudentGroups = allStudentGroups.filter((studentGroups) =>
+    studentGroups.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const joinGroup = async (studentGroupId) => {
+    setIsJoining(studentGroupId);
+
+    const body = {
+      status: "Active",
+      student: 4, // I am supposed to get the student Id during login from the backend and put it in the localhost, but since that has'nt been added, i am using a constant student id
+      exam_room: studentGroupId,
+    };
+
+    try {
+      console.log(body);
+      const response = await apiCall.post("/exams/enrollments/", body);
+      if (response.status === 201) {
+        showToast("Student group joined successfully", "success");
+      }
+    } catch (error) {
+      if (
+        error.response.data.non_field_errors[0] ==
+        "The fields student, exam_room must make a unique set."
+      ) {
+        showToast("You are already a member of this student group", "error");
+      } else {
+        showToast("Failed to join student group. Please try again.", "error");
+        console.error("Error joining student group:", error);
+      }
+    } finally {
+      setIsJoining("");
     }
-
-    // Automatically submit when all 6 digits are entered
-    // if (newCode.every((digit) => /^\d$/.test(digit))) {
-    //   handleSubmit(newCode.join(''));
-    // }
   };
 
-  const handleKeyDown = (index, e) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
-      inputRefs.current[index - 1].focus();
-    }
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
   };
 
   return (
@@ -949,77 +1060,66 @@ export const JoinStudentGroupDialog = () => {
       open={isOpen}
       onOpenChange={setShowJoinStudentGroupDialog}
     >
-      {type == "link" ? (
-        <>
-          <DialogHeader>
-            <DialogTitle>Join with a Link</DialogTitle>
-          </DialogHeader>
-          <DropdownMenuSeparator />
-          <DialogContent className="p-4">
-            <div className="w-full flex flex-col items-center justify-center">
-              <h2 className="font-inter font-medium text-xl mb-4">
-                Enter the link provided by the Teacher
-              </h2>
-              <div className="w-full px-4">
-                <Input
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                  required
-                  placeholder="Enter link here"
-                  className="mb-4"
-                  id="examRoomName"
-                />
-              </div>
-              <p
-                className="cursor-pointer text-primary-main"
-                onClick={() => setType("code")}
-              >
-                Use code instead
+      <DialogHeader>
+        <DialogTitle>Join a Student Group</DialogTitle>
+      </DialogHeader>
+      <DropdownMenuSeparator />
+      <DialogContent className="p-4">
+        <div className="w-full flex flex-col items-start justify-start">
+          <h2 className="font-inter font-medium text-xl mb-4">
+            Search for a student group to join
+          </h2>
+          {/* <div className="w-full px-4"> */}
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            required
+            placeholder="Enter query here"
+            className="mb-4"
+            id="examRoomName"
+          />
+          <p className="">Student Groups</p>
+          <div className="max-h-[50dvh] overflow-y-auto w-full">
+            {filteredStudentGroups.length === 0 ? (
+              <p className="text-center text-neutral-mediumGray py-4">
+                No Student Group found
               </p>
-              <CustomButton size="lg" className="gap-2 mt-4 w-full">
-                Join Student Group
-              </CustomButton>
-            </div>
-          </DialogContent>
-        </>
-      ) : (
-        <>
-          <DialogHeader>
-            <DialogTitle>Join with a code</DialogTitle>
-          </DialogHeader>
-          <DropdownMenuSeparator />
-          <DialogContent className="p-4">
-            <div className="w-full flex flex-col items-center justify-center">
-              <h2 className="font-inter font-medium text-xl mb-4">
-                Enter the code provided by the Teacher
-              </h2>
-              <div className="flex space-x-2 mb-4">
-                {code.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(el) => (inputRefs.current[index] = el)}
-                    type="text"
-                    value={digit}
-                    onChange={(e) => handleChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    maxLength="1"
-                    className="w-12 h-12 max-md:w-10 max-md:h-10 max-[330px]:w-1/6 max-[330px]:h-auto text-xl text-center border-2 rounded-md focus:outline-none focus:border-none focus:ring-2 focus:ring-primary-main"
-                  />
+            ) : (
+              <div className="space-y-3">
+                {filteredStudentGroups.map((studentGroup) => (
+                  <div
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary-bg"
+                    key={studentGroup.id}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="">
+                        <h4 className="font-medium">{studentGroup.name}</h4>
+                        <p className="text-xs text-neutral-mediumGray truncate">
+                          {studentGroup.description}
+                        </p>
+                      </div>
+                    </div>
+                    <CustomButton
+                      type="button"
+                      onClick={() => joinGroup(studentGroup.id)}
+                      disabled={isJoining != ""}
+                      className="w-[78px]"
+                    >
+                      {isJoining == studentGroup.id ? <Spinner /> : `Join`}
+                    </CustomButton>
+                  </div>
                 ))}
               </div>
-              <p
-                className="cursor-pointer text-primary-main"
-                onClick={() => setType("link")}
-              >
-                Use link instead
-              </p>
-              <CustomButton size="lg" className="gap-2 mt-4 w-full">
-                Join Student Group
-              </CustomButton>
-            </div>
-          </DialogContent>
-        </>
-      )}
+            )}
+          </div>
+        </div>
+      </DialogContent>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </ButtonDismissDialog>
   );
 };

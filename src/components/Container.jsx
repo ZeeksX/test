@@ -7,25 +7,63 @@ import { FaPlus } from "react-icons/fa6";
 import { CustomButton } from "./ui/Button.jsx";
 import { useDispatch } from "react-redux";
 import { setShowJoinStudentGroupDialog } from "../features/reducers/uiSlice.jsx";
+import { SERVER_URL } from "../utils/constants.js";
 
 const Container = () => {
   const [src, setSrc] = useState("");
   const [studentGroup, setStudentGroup] = useState([]);
   const dispatch = useDispatch();
-
   const { user } = useAuth();
-  // console.log(user)
+
+  // Post course details on mount if userData exists in localStorage
+  useEffect(() => {
+    const postCourseDetails = async () => {
+      try {
+        const storedData = localStorage.getItem("userData");
+        const token = localStorage.getItem("access_token");
+        if (!storedData) return;
+
+        const parsedData = JSON.parse(storedData);
+        if (parsedData.role === "teacher" && parsedData.form) {
+          // Ensure you correctly map the fields from parsedData.form
+          const { course: course_title, code: course_code } = parsedData.form;
+
+          const response = await fetch(`${SERVER_URL}/exams/courses/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({ course_title, course_code }),
+          });
+
+          if (!response.ok) {
+            // If response is not OK, try to get the text response for debugging
+            const errorText = await response.text();
+            throw new Error(`Server Error: ${errorText}`);
+          }
+
+          const data = await response.json();
+          console.log("Posted course data:", data);
+
+          // Remove userData and user after successful post
+          localStorage.removeItem("userData");
+          
+        }
+      } catch (error) {
+        console.error("Error posting course data:", error);
+      }
+    };
+
+    postCourseDetails();
+  }, );
 
   return (
     <div className="w-full h-full p-5 overflow-auto">
       <div className="flex items-center justify-start gap-5 mb-5">
         <Avatar>
           {src ? (
-            <AvatarImage
-              src={src}
-              className="!w-[53px] !h-[53px]"
-              alt="Profile"
-            />
+            <AvatarImage src={src} className="!w-[53px] !h-[53px]" alt="Profile" />
           ) : (
             <AvatarFallback className="!w-[53px] !h-[53px]">
               {user.last_name ? user.last_name.charAt(0) : "A"}
@@ -41,13 +79,9 @@ const Container = () => {
             className={
               studentGroup.length === 0
                 ? "hidden"
-                : "flex" + "items-center justify-center"
+                : "flex items-center justify-center"
             }
           >
-            {/* <button className='bg-[#1835B3] w-64 gap-2 text-[white] h-[60px] flex items-center justify-center font-inter font-semibold text-lg rounded-lg px-4'>
-              Join Student Group
-              <FaPlus />
-            </button> */}
             <CustomButton
               onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
               className="gap-2 !font-medium !text-sm"

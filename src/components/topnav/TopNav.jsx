@@ -27,10 +27,10 @@ const TopNav = () => {
       </div>
       <button
         onClick={handleClick}
-        className="hidden md:flex flex-row gap-3 rounded-[14px] w-[143px] h-[50px] font-normal text-sm md:text-base leading-[19.43px] text-white justify-center items-center bg-[#1836B2]"
+        className="hidden md:flex flex-row gap-3 hover:ring-2 rounded-[10px] w-[120px] h-[45px] font-normal text-sm md:text-base leading-[19.43px] text-white justify-center items-center bg-[#1836B2]"
       >
-        Get started
-        <img src={arrow} alt="arrow" />
+        Sign in
+        {/* <img src={arrow} alt="arrow" /> */}
       </button>
     </div>
   );

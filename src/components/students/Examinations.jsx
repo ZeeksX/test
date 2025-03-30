@@ -54,7 +54,7 @@ const Examinations = () => {
     }
   ]
   return (
-    <div className='mt-[60px]'>
+    <div className=''>
       <div className="flex flex-row justify-between w-full ">
         <div className="flex flex-col gap-4 py-8 px-11">
           <h3 className="text-[32px] leading-8 font-medium">Examinations</h3>

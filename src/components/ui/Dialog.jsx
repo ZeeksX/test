@@ -15,7 +15,7 @@ export const ButtonDismissDialog = ({
   if (!open) return null;
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-100 !m-0">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999] !m-0">
       <div
         className="bg-white rounded-lg shadow-lg w-full relative"
         style={{ maxWidth, height }}
@@ -115,7 +115,7 @@ export const DialogHeader = ({ children }) => (
 );
 
 DialogHeader.propTypes = {
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node,
 };
 
 export const DialogTitle = ({ children }) => (

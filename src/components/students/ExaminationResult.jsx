@@ -7,7 +7,7 @@ const ExaminationResult = () => {
     const exam = location.state.exam;
     console.log(exam)
     return (
-        <div className='mt-[60px]'>
+        <div className=''>
             <div className='py-6 px-11 flex flex-col gap-4'>
                 <h1 className='text-[32px] leading-8 font-medium'>{exam.exam_name} - Results</h1>
                 <p className="text-sm text-[#222222] font-normal">Lorem ipsum dolor sit amet consectetur. At aliquet pharetra non sociis.</p>
@@ -22,7 +22,7 @@ const ExaminationResult = () => {
                                 <ProgressBar />
                             </div>
                             <h1 className='text-[#A1A1A1] text-[40px] font-semibold'>
-                                <span className='text-[#1836B2] text-9xl font-semibold'>85</span>/100</h1>
+                                <span className='text-[#1836B2] text-9xl font-semibold'>74</span>/100</h1>
                         </div>
                         <p className='text-[#1836B2] text-base font-semibold'>Congratulations! You passed the examination!</p>
                     </div>

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../components/Auth";
 import "../styles/main.css";
 import ForgotPassword from "../components/modals/ForgotPassword";
@@ -11,11 +11,13 @@ import { Label } from "../components/ui/Label.jsx";
 import OTPPage from "./OTPPage.jsx";
 import { Loader } from "../components/ui/Loader.jsx";
 import { CustomButton } from "../components/ui/Button.jsx";
+import axios from "axios";
 
 const SignUp = () => {
   const [lastName, setLastName] = useState("");
   const [otherNames, setOtherNames] = useState("");
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [hasSignedUp, setHasSignedUp] = useState(false);
@@ -27,7 +29,7 @@ const SignUp = () => {
     otherNames: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [loader, setLoader] = useState(false);
   const [toast, setToast] = useState({
@@ -39,6 +41,14 @@ const SignUp = () => {
   const auth = useAuth();
   const { login } = auth;
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedData = localStorage.getItem("userData");
+    if (storedData) {
+      const parsedData = JSON.parse(storedData);
+      setRole(parsedData.role);
+    }
+  }, []);
 
   // Validation functions
   const validateLastName = (value) => {
@@ -85,7 +95,11 @@ const SignUp = () => {
     if (value.length < 8) {
       return "Password must be at least 8 characters long";
     }
-    if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(value)) {
+    if (
+      !/(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(
+        value
+      )
+    ) {
       return "Password must include uppercase, lowercase, number, and special character";
     }
     return "";
@@ -108,13 +122,13 @@ const SignUp = () => {
       otherNames: validateOtherNames(otherNames),
       email: validateEmail(email),
       password: validatePassword(password),
-      confirmPassword: validateConfirmPassword(confirmPassword, password)
+      confirmPassword: validateConfirmPassword(confirmPassword, password),
     };
 
     setErrors(newErrors);
 
     // Check if any errors exist
-    return !Object.values(newErrors).some(error => error !== "");
+    return !Object.values(newErrors).some((error) => error !== "");
   };
 
   const handleSubmit = async (e) => {
@@ -137,6 +151,7 @@ const SignUp = () => {
           last_name: lastName,
           other_names: otherNames,
           email: email,
+          role: role,
           password: password,
           confirm_password: confirmPassword,
         }),
@@ -145,18 +160,23 @@ const SignUp = () => {
       const data = await res.json();
 
       console.log("Response from backend:", data);
-      if (data.email) {
+      if (
+        data.error ==
+        "User already exists but is not verified. Please check your email for the OTP or request a new one."
+      ) {
+        showToast(data.error, "error");
         navigate("/users/verify-otp", { state: { email: email } });
         try {
           const response = await axios.post(`${SERVER_URL}/users/resend-otp/`, {
-            email
+            email,
           });
           if (response.status === 200) {
             showToast("OTP resent successfully!", "success");
           }
         } catch (error) {
           showToast(
-            error.response?.data?.error || "Failed to resend OTP. Please try again.",
+            error.response?.data?.error ||
+            "Failed to resend OTP. Please try again.",
             "error"
           );
         } finally {
@@ -168,11 +188,12 @@ const SignUp = () => {
       if (res.ok) {
         localStorage.setItem("access_token", data.access);
         localStorage.setItem("refresh_token", data.refresh);
+        localStorage.removeItem("user");
 
         login({
           email: email,
           last_name: lastName,
-          role: "student",
+          role: role,
         });
 
         showToast("Sign up successful!", "success");
@@ -189,13 +210,7 @@ const SignUp = () => {
         setHasSignedUp(true);
       } else {
         setLoader(false);
-        setEmailError(data.email);
-        setPasswordError(data.password);
-        showToast(
-          data.email || "Sign up failed. Please try again.",
-          "error"
-        );
-        // console.log("error", data)
+        showToast(data.email || "Sign up failed. Please try again.", "error");
       }
     } catch (error) {
       setLoader(false);
@@ -210,46 +225,46 @@ const SignUp = () => {
   const handleLastNameChange = (event) => {
     const value = event.target.value;
     setLastName(value);
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      lastName: validateLastName(value)
+      lastName: validateLastName(value),
     }));
   };
 
   const handleOtherNamesChange = (event) => {
     const value = event.target.value;
     setOtherNames(value);
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      otherNames: validateOtherNames(value)
+      otherNames: validateOtherNames(value),
     }));
   };
 
   const handleEmailChange = (event) => {
     const value = event.target.value;
     setEmail(value);
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      email: validateEmail(value)
+      email: validateEmail(value),
     }));
   };
 
   const handlePasswordChange = (event) => {
     const value = event.target.value;
     setPassword(value);
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
       password: validatePassword(value),
-      confirmPassword: validateConfirmPassword(confirmPassword, value)
+      confirmPassword: validateConfirmPassword(confirmPassword, value),
     }));
   };
 
   const handleConfirmPasswordChange = (event) => {
     const value = event.target.value;
     setConfirmPassword(value);
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      confirmPassword: validateConfirmPassword(value, password)
+      confirmPassword: validateConfirmPassword(value, password),
     }));
   };
 
@@ -310,7 +325,6 @@ const SignUp = () => {
                     <Label htmlFor="last_name" className="text-[#666666]">
                       Last Name
                     </Label>
-
                     <Input
                       name="last_name"
                       id="last_name"
@@ -325,7 +339,6 @@ const SignUp = () => {
                     <Label htmlFor="other_names" className="text-[#666666]">
                       Other Names
                     </Label>
-
                     <Input
                       name="other_names"
                       id="other_names"
@@ -341,7 +354,6 @@ const SignUp = () => {
                   <Label htmlFor="email" className="text-[#666666]">
                     Email address
                   </Label>
-
                   <Input
                     type="email"
                     name="email"

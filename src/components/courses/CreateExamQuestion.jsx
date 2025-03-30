@@ -27,13 +27,14 @@ export const ManualCreateExamQuestion = ({
   updateExamData,
   setSelectedQuestionMethod,
 }) => {
-  const oldQuestions = [...examData.questions];
+  // const oldQuestions = [...examData.questions];
 
   const [questions, setQuestions] = useState([
     {
       id: "q1",
       type: "multiple-choice",
       text: "",
+      score: 2,
       options: [
         { id: "opt1", text: "", isCorrect: true },
         { id: "opt2", text: "", isCorrect: false },
@@ -50,6 +51,7 @@ export const ManualCreateExamQuestion = ({
           id: "q1",
           type: "multiple-choice",
           text: "",
+          score: 2,
           options: [
             { id: "opt1", text: "", isCorrect: true },
             { id: "opt2", text: "", isCorrect: false },
@@ -65,6 +67,7 @@ export const ManualCreateExamQuestion = ({
     const newQuestion = {
       id: `q${questions.length + 1}`,
       type: "multiple-choice",
+      score: 2,
       text: "",
       options: [
         { id: `q${questions.length + 1}_opt1`, text: "", isCorrect: true },
@@ -102,6 +105,7 @@ export const ManualCreateExamQuestion = ({
           id: "q1",
           type: "multiple-choice",
           text: "",
+          score: 2,
           options: [
             { id: "opt1", text: "", isCorrect: true },
             { id: "opt2", text: "", isCorrect: false },

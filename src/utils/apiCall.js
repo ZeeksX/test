@@ -1,5 +1,6 @@
 import axios from "axios";
 import { SERVER_URL } from "./constants";
+import { logoutAndRedirect } from "./authHelper";
 
 const apiCall = axios.create({
   baseURL: SERVER_URL,
@@ -22,6 +23,9 @@ apiCall.interceptors.request.use(
 apiCall.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response && error.response.status === 401) {
+      logoutAndRedirect();
+    }
     return Promise.reject(error);
   }
 );

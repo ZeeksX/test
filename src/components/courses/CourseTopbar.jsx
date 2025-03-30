@@ -19,9 +19,9 @@ const CourseTopbar = () => {
         {course.course_title} ({course.course_code})
       </h2>
       <div className="flex items-center justify-center gap-4">
-        <CustomButton variant={"ghost"} className="text-xs gap-2">
+        {/* <CustomButton variant={"ghost"} className="text-xs gap-2">
           Export File <LuFileDown size={20} />
-        </CustomButton>
+        </CustomButton> */}
         <DialogTrigger
           onClick={
             hasStudentGroups

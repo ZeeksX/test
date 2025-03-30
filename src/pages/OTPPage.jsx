@@ -44,7 +44,7 @@ const OTPPage = ({ email }) => {
 
     // Automatically submit when all 6 digits are entered
     if (newOtp.every((digit) => /^\d$/.test(digit))) {
-      handleSubmit(newOtp.join(''));
+      handleSubmit(newOtp.join(""));
     }
   };
 
@@ -64,13 +64,14 @@ const OTPPage = ({ email }) => {
       }
     } catch (error) {
       showToast(
-        error.response?.data?.error || "Failed to resend OTP. Please try again.",
+        error.response?.data?.error ||
+          "Failed to resend OTP. Please try again.",
         "error"
       );
     } finally {
       setLoader(false);
     }
-  }
+  };
 
   const handleSubmit = async (otpValue) => {
     // If no otpValue is provided, join the current OTP state
@@ -96,12 +97,11 @@ const OTPPage = ({ email }) => {
         // Reset the OTP fields for future attempts
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0].focus();
-        navigate("/onboarding", { replace: true });
+        navigate("/login", { replace: true });
       }
     } catch (error) {
       showToast(
-        error.response?.data?.error ||
-        "Sign up failed. Please try again.",
+        error.response?.data?.error || "Sign up failed. Please try again.",
         "error"
       );
     } finally {
@@ -150,7 +150,8 @@ const OTPPage = ({ email }) => {
                 Didn't receive the email?{" "}
                 <span
                   onClick={handleClick}
-                  className="text-primary-main">
+                  className="text-primary-main cursor-pointer"
+                >
                   Click to resend
                 </span>
               </p>

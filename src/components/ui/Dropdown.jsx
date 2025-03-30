@@ -63,7 +63,7 @@ export const CourseDropdownMenu = () => {
               ease: [0.04, 0.62, 0.23, 0.98],
             }}
           >
-            <div className="">
+            <div className="h-[350px] overflow-auto pb-4">
               <ul className="space-y-1" id="courses-dropdown">
                 {courses.map((course) => (
                   <div

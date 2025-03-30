@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const ProgressBar = ({ score = 85 }) => {
+const ProgressBar = ({ score = 74 }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {

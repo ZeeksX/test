@@ -27,6 +27,8 @@ import Lecturers from "./components/students/Lecturers";
 import LecturerGroups from "./components/students/LecturerGroups";
 import Examinations from "./components/students/Examinations";
 import ExaminationResult from "./components/students/ExaminationResult";
+import ExamDetails from "./components/lecturer/ExamDetails";
+import StudentResultPage from "./components/lecturer/StudentResultPage";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -81,12 +83,7 @@ const App = () => {
               />
             }
           />
-          <Route
-            path="/onboarding"
-            element={
-              <ProfilleCustomization />
-            }
-          />
+          <Route path="/onboarding" element={<ProfilleCustomization />} />
 
           {/* Protected Home Route */}
           <Route
@@ -105,16 +102,29 @@ const App = () => {
 
             <Route path="examinations">
               <Route index element={<Examinations />} />
-              <Route path=":courseCode/result" element={<ExaminationResult />} />
+              <Route
+                path=":courseCode/result"
+                element={<ExaminationResult />}
+              />
             </Route>
-
             <Route path="lecturers">
               <Route index element={<Lecturers />} />
               <Route path=":lecturerId/groups" element={<LecturerGroups />} />
             </Route>
 
             <Route path="student-groups" element={<StudentGroups />} />
-            <Route path="student-groups/:groupId" element={<EnrolledStudents />} />
+            <Route
+              path="course/:courseId/published/:examId/detail"
+              element={<ExamDetails />}
+            />
+            <Route
+              path="course/:courseId/published/:examId/detail/student/:studentId"
+              element={<StudentResultPage />}
+            />
+            <Route
+              path="student-groups/:groupId"
+              element={<EnrolledStudents />}
+            />
             <Route path="course/:courseId" element={<CourseOverview />}>
               <Route path="published" element={<CoursePublishedExams />} />
               <Route path="saved" element={<CourseSavedExams />} />
