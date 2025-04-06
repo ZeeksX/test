@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const ProgressBar = ({ score = 74 }) => {
+const ProgressBar = ({ score }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ const ProgressBar = ({ score = 74 }) => {
   const getColor = () => {
     if (score >= 75) return "#22c55e"; // Green
     if (score >= 50) return "#eab308"; // Yellow
-    return "#ef4444"; // Red
+    return "#ef4444" // Red
   };
 
   // For the SVG circle:

@@ -13,34 +13,34 @@ import {
 const GroupTable = () => {
     // Hardcoded array of student exams
     const studentExams = [
-        {
-            id: 1,
-            exam_name: "Mathematics",
-            course: "MATH101",
-            date: "2025-03-29T13:40:00Z",
-            duration: "30 mins"
-        },
-        {
-            id: 2,
-            exam_name: "Physics",
-            course: "PHY101",
-            date: "2025-03-29T15:00:00Z",
-            duration: "60 mins"
-        },
-        {
-            id: 3,
-            exam_name: "Chemistry",
-            course: "CHEM101",
-            date: "2025-03-30T12:00:00Z",
-            duration: "20 mins"
-        },
-        {
-            id: 4,
-            exam_name: "Biology",
-            course: "BIO101",
-            date: "2025-03-30T13:00:00Z",
-            duration: "1 hour"
-        },
+        // {
+        //     id: 1,
+        //     exam_name: "Mathematics",
+        //     course: "MATH101",
+        //     date: "2025-03-29T13:40:00Z",
+        //     duration: "30 mins"
+        // },
+        // {
+        //     id: 2,
+        //     exam_name: "Physics",
+        //     course: "PHY101",
+        //     date: "2025-03-29T15:00:00Z",
+        //     duration: "60 mins"
+        // },
+        // {
+        //     id: 3,
+        //     exam_name: "Chemistry",
+        //     course: "CHEM101",
+        //     date: "2025-03-30T12:00:00Z",
+        //     duration: "20 mins"
+        // },
+        // {
+        //     id: 4,
+        //     exam_name: "Biology",
+        //     course: "BIO101",
+        //     date: "2025-03-30T13:00:00Z",
+        //     duration: "1 hour"
+        // },
     ];
 
     // Define the columns

@@ -13,7 +13,7 @@ const StudentGroup = () => {
             <div className='p-6 flex flex-col gap-4'>
                 <h1 className='text-[#222222] text-[32px] leading-8 font-medium'>{group.name}</h1>
                 <p className="text-[#A1A1A1] text-sm flex flex-row items-center">
-                    Prof. Ezekiel Ikinwot <span className='flex flex-row items-center'>
+                     <span className='flex flex-row items-center'>
                         <BsDot />{group.students.length} students</span>
                 </p>
             </div>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { emptyFolderImg } from "../../utils/images";
 import { CustomButton } from "../ui/Button";
 import { FiPlus } from "react-icons/fi";
@@ -10,20 +10,28 @@ import {
 import { DialogTrigger } from "../ui/Dialog";
 import { Loader } from "../ui/Loader";
 import { ExaminationCard } from "./CourseComponents";
-import { newFormatDate } from "../modals/UIUtilities";
+import { formatScheduleTime, newFormatDate } from "../modals/UIUtilities";
 import { useParams } from "react-router";
+import {
+  fetchExams,
+  fetchExamsforACourse,
+} from "../../features/reducers/examSlice";
 
 const CoursePublishedExams = () => {
   const { courseId } = useParams();
   const { hasStudentGroups } = useSelector((state) => state.examRooms);
-  const { allExams, loading, error } = useSelector((state) => state.exams);
+  const { courseExams, loading, error } = useSelector((state) => state.exams);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchExamsforACourse({ courseId }));
+  }, [dispatch, courseId]);
 
   if (loading) {
     return <Loader />;
   }
 
-  if (allExams.length == 0) {
+  if (courseExams.length == 0) {
     return (
       <div className="w-full h-full gap-1 flex flex-col items-center justify-center">
         <img src={emptyFolderImg} alt="" />
@@ -52,13 +60,14 @@ const CoursePublishedExams = () => {
   return (
     <div className="w-full h-full gap-1 p-4">
       <div className="grid grid-cols-1 md:grid-cols-2">
-        {allExams.map((exam) => (
+        {courseExams.map((exam) => (
           <ExaminationCard
             key={exam.id}
             title={exam.title}
             description={exam.description}
             id={exam.id}
-            // dueTime={newFormatDate(exam.dueTime)}
+            studentGroups={exam.exam_rooms.length}
+            dueTime={formatScheduleTime(exam.due_time)}
           />
         ))}
       </div>

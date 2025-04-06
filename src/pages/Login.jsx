@@ -7,7 +7,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import "../styles/main.css";
 import ForgotPassword from "../components/modals/ForgotPassword";
 import Toast from "../components/modals/Toast";
-import { brandLogo, logoMobile } from "../utils/images.js";
+import { brandLogo, googleLogo, logoMobile } from "../utils/images.js";
 import { SERVER_URL } from "../utils/constants.js";
 import { Loader } from "../components/ui/Loader.jsx";
 import { CustomButton } from "../components/ui/Button.jsx";
@@ -64,6 +64,9 @@ const Login = ({ isMobile }) => {
             email: formState.email,
             last_name: data.last_name,
             role: data.role,
+            id: data.id,
+            studentId: data.studentId,
+            teacherId: data.teacher1d,
             access: data.access,
             refresh: data.refresh,
           });
@@ -129,7 +132,7 @@ const Login = ({ isMobile }) => {
       {loader && <Loader />}
       <div className="sign-in flex flex-row lg:w-3/5 lg:h-[90vh]">
         <div className="signin-image md:w-1/2 hidden md:flex"></div>
-        <div className="login flex overflow-y-scroll flex-col w-4/5 mx-auto max-w-96 lg:max-w-screen-lg md:w-full md:rounded-r-2xl bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
+        <div className="login hide-scrollbar flex overflow-y-scroll flex-col w-4/5 mx-auto max-w-96 lg:max-w-screen-lg md:w-full md:rounded-r-2xl bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
           <Header navigateToSignUp={navigateToSignUp} />
           <form
             action="/dashboard"
@@ -230,39 +233,6 @@ const Header = ({ navigateToSignUp }) => (
   </div>
 );
 
-const InputField = ({
-  label,
-  name,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-  endAdornment,
-}) => (
-  <>
-    <label htmlFor={name} className="text-[#666666]">
-      {label}
-    </label>
-    <TextField
-      fullWidth
-      variant="outlined"
-      placeholder={placeholder}
-      name={name}
-      value={value}
-      onChange={onChange}
-      type={type}
-      slotProps={{
-        input: { endAdornment },
-      }}
-      sx={{
-        "& .MuiOutlinedInput-root": {
-          height: "3rem",
-        },
-      }}
-    />
-  </>
-);
-
 const GoogleSignInDesktop = () => (
   <h3 className="hidden md:flex w-full justify-center text-[#666666] cursor-pointer">
     Or, continue with <u className="ml-2">Google</u>
@@ -278,7 +248,7 @@ const GoogleSignInMobile = () => (
       className="mr-1"
       width="25"
       height="20"
-      src="https://img.icons8.com/color/48/google-logo.png"
+      src={googleLogo}
       alt="google-logo"
     />{" "}
     Sign in with Google

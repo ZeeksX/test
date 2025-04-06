@@ -1,161 +1,195 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import {
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TablePagination
-} from '@mui/material';
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+} from "@mui/material";
+import { useNavigate } from "react-router";
+import { SERVER_URL } from "../../utils/constants";
+import { illustration2 } from "../../utils/images";
 
 const ExaminationTable = ({ examinations }) => {
-    const [timeStatus, setTimeStatus] = useState({});
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [courses, setCourses] = useState([]);
+  const [examRooms, setExamRooms] = useState([]);
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const newStatus = {};
-            examinations.forEach(exam => {
-                const examDateTime = new Date(exam.date);
-                const now = new Date();
-                newStatus[exam.id] = {
-                    isToday: examDateTime.toDateString() === now.toDateString(),
-                    isNow: examDateTime <= now
-                };
-            });
-            setTimeStatus(newStatus);
-        }, 1000);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [coursesRes, examRoomsRes] = await Promise.all([
+          fetch(`${SERVER_URL}/exams/courses/`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            },
+          }),
+          fetch(`${SERVER_URL}/exams/exam-rooms/my_exam_rooms/`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            },
+          }),
+        ]);
 
-        return () => clearInterval(interval);
-    }, [examinations]);
+        if (!coursesRes.ok || !examRoomsRes.ok)
+          throw new Error("Error fetching data");
 
-    if (!examinations) {
-        return <div>No examinations data available</div>;
-    }
+        const [coursesData, examRoomsData] = await Promise.all([
+          coursesRes.json(),
+          examRoomsRes.json(),
+        ]);
 
-    // Filter to only include upcoming exams (date is in the future)
-    const upcomingExams = examinations.filter(exam => new Date(exam.date) > new Date());
+        setCourses(coursesData);
+        setExamRooms(examRoomsData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
 
-    const columns = [
-        { id: 'serial-number', label: 'S/N', minWidth: 50 },
-        { id: 'exam-name', label: 'Examination Name', minWidth: 220 },
-        { id: 'lecturer', label: 'Lecturer', minWidth: 200 },
-        { id: 'course', label: 'Course', minWidth: 100 },
-        { id: 'date', label: 'Scheduled Date & Time', minWidth: 180 },
-        { id: 'option', label: 'Option', minWidth: 100 }
-    ];
+    fetchData();
+  }, [courses]);
 
-    const rows = upcomingExams.map((exam, index) => {
-        const examDateTime = new Date(exam.date);
-        const now = new Date();
-        const isToday = examDateTime.toDateString() === now.toDateString();
-        const isNow = examDateTime <= now;
+  const courseMap = useMemo(() => {
+    return courses.reduce((acc, course) => {
+      acc[course.id] = course.course_title;
+      return acc;
+    }, {});
+  }, [courses]);
 
-        // Compute if the exam is tomorrow.
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const isTomorrow = examDateTime.toDateString() === tomorrow.toDateString();
+  const lecturerMap = useMemo(() => {
+    return examRooms.reduce((acc, room) => {
+      const teacher = room.teacher;
+      if (teacher) {
+        const title = teacher.title || "";
+        const otherNames = teacher.user?.other_names || "";
+        const lastName = teacher.user?.last_name || "";
+        const fullName = `${title} ${otherNames} ${lastName}`.trim();
+        acc[teacher.id] = fullName;
+      }
+      return acc;
+    }, {});
+  }, [examRooms]);
 
-        let timeString;
-        if (isNow) {
-            timeString = 'Now';
-        } else if (isToday) {
-            timeString = `Today ${examDateTime.toLocaleTimeString()}`;
-        } else if (isTomorrow) {
-            timeString = `Tomorrow ${examDateTime.toLocaleTimeString()}`;
-        } else {
-            timeString = examDateTime.toLocaleString();
-        }
+  const upcomingExams = useMemo(() => {
+    if (!examinations) return [];
+    return examinations
+      .filter((exam) => new Date(exam.due_time) > new Date())
+      .filter((exam) => lecturerMap[exam.teacher] && lecturerMap[exam.teacher] !== "Unknown Lecturer")
+      .sort((a, b) => new Date(a.due_time) - new Date(b.due_time));
+  }, [examinations, lecturerMap]);
 
-        // Set text color: green for now or today, blue for tomorrow, default otherwise.
-        const textColor = (isNow || isToday) ? 'green' : isTomorrow ? 'blue' : 'inherit';
+  const rows = useMemo(() => {
+    return upcomingExams.map((exam, index) => {
+      const examDateTime = new Date(exam.schedule_time);
+      const dueDateTime = new Date(exam.due_time);
+      const now = new Date();
 
-        return {
-            'serial-number': index + 1, // Updated serial number based on upcomingExams array
-            'exam-name': exam.exam_name,
-            'lecturer': exam.lecturer,
-            'course': exam.course,
-            'date': (
-                <span style={{ color: textColor }}>
-                    {timeString}
-                </span>
-            ),
-            'option': (
-                <button
-                    style={{
-                        opacity: isToday ? (isNow ? 1 : 0.4) : 0.4,
-                        cursor: isNow ? 'pointer' : 'not-allowed'
-                    }}
-                    className="bg-[#1835B3] w-[120px] h-11 gap-2 text-white flex items-center justify-center font-inter font-semibold text-base rounded-md px-4 hover:ring-2"
-                    disabled={!isNow}
-                >
-                    Take Exam
-                </button>
-            )
-        };
+      const isNow = now >= examDateTime && now <= dueDateTime;
+      const isToday = examDateTime.toDateString() === now.toDateString();
+
+      const tomorrow = new Date();
+      tomorrow.setDate(now.getDate() + 1);
+      const isTomorrow = examDateTime.toDateString() === tomorrow.toDateString();
+
+      let timeString;
+      let textColor = "inherit";
+
+      if (isNow) {
+        timeString = "Now";
+        textColor = "green";
+      } else if (isToday) {
+        timeString = `Today by ${examDateTime.toLocaleTimeString()}`;
+        textColor = "green";
+      } else if (isTomorrow) {
+        timeString = `Tomorrow by ${examDateTime.toLocaleTimeString()}`;
+        textColor = "blue";
+      } else if (now < examDateTime) {
+        timeString = `Scheduled on ${examDateTime.toLocaleString()}`;
+      } else {
+        timeString = `Active until ${dueDateTime.toLocaleString()}`;
+      }
+
+      return {
+        "serial-number": index + 1,
+        "exam-name": exam.title,
+        course: courseMap[exam.course] || "Unknown Course",
+        lecturer: lecturerMap[exam.teacher],
+        date: <span style={{ color: textColor }}>{timeString}</span>,
+        option: (
+          <button
+            style={{
+              opacity: isNow ? 1 : 0.4,
+              cursor: isNow ? "pointer" : "not-allowed",
+            }}
+            className="bg-[#1835B3] w-[120px] h-11 gap-2 text-white flex items-center justify-center font-inter font-semibold text-base rounded-md px-4 hover:ring-2"
+            disabled={!isNow}
+            onClick={() => navigate(`/examinations/${exam.id}/instructions`, { state: { examination: exam } })}
+          >
+            Take Exam
+          </button>
+        ),
+      };
     });
+  }, [upcomingExams, courseMap, lecturerMap, navigate]);
 
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+  const handleChangePage = (event, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(+event.target.value);
+    setPage(0);
+  };
 
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
-
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(+event.target.value);
-        setPage(0);
-    };
-
-    return (
-        <Paper sx={{ width: '100%', overflow: 'hidden', fontFamily: 'Inter' }}>
-            <TableContainer sx={{ maxHeight: 440 }}>
-                <Table stickyHeader aria-label="upcoming exams table">
-                    <TableHead>
-                        <TableRow>
-                            {columns.map((column) => (
-                                <TableCell
-                                    key={column.id}
-                                    align={column.align}
-                                    style={{ minWidth: column.minWidth, color: "#C2C2C2" }}
-                                >
-                                    {column.label}
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {rows
-                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                            .map((row) => (
-                                <TableRow hover role="checkbox" tabIndex={-1} key={row['serial-number']}>
-                                    {columns.map((column) => {
-                                        const value = row[column.id];
-                                        return (
-                                            <TableCell key={column.id} align={column.align}>
-                                                {column.format && typeof value === 'number'
-                                                    ? column.format(value)
-                                                    : value}
-                                            </TableCell>
-                                        );
-                                    })}
-                                </TableRow>
-                            ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <TablePagination
-                rowsPerPageOptions={[10, 25, 100]}
-                component="div"
-                count={rows.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-        </Paper>
-    );
+  return upcomingExams.length === 0 ? (
+    <div className="flex flex-col justify-center items-center gap-4 col-span-full ">
+      <img className="w-32 h-32" src={illustration2} alt="Illustration" />
+      <h1 className="text-[32px] font-medium leading-8">
+        Nothing to see here… yet!
+      </h1>
+      <p className="text-[#667085] text-lg">
+        Join a student group and start taking examinations.
+      </p>
+    </div>
+  ) : (
+    <Paper sx={{ width: "100%", overflow: "hidden", fontFamily: "Inter" }}>
+      <TableContainer sx={{ maxHeight: 440 }}>
+        <Table stickyHeader aria-label="upcoming exams table">
+          <TableHead>
+            <TableRow>
+              {["S/N", "Examination Name", "Course", "Lecturer", "Scheduled Time", "Option"].map((label, i) => (
+                <TableCell key={i} style={{ color: "#C2C2C2" }}>
+                  {label}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, i) => (
+              <TableRow hover key={i}>
+                {["serial-number", "exam-name", "course", "lecturer", "date", "option"].map((id) => (
+                  <TableCell key={id}>{row[id]}</TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[10, 25, 100]}
+        component="div"
+        count={rows.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+    </Paper>
+  );
 };
 
-export default ExaminationTable;
+export default React.memo(ExaminationTable);

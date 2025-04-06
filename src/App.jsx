@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect, Profiler } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -10,13 +10,11 @@ import HomePage from "./pages/HomePage";
 import Login from "./pages/Login";
 import { AuthProvider, useAuth } from "./components/Auth";
 import SignUp from "./pages/SignUp";
-import Onboarding from "./pages/Onboarding";
 import ParticlesReact from "./pages/ParticlesReact";
 import StudentGroups from "./pages/StudentGroups";
 import Container from "./components/Container";
 import ExamRooms from "./pages/ExamRooms";
 import CourseOverview from "./pages/CourseOverview";
-import CourseExamRoom from "./components/courses/CourseExamRoom";
 import OTPPage from "./pages/OTPPage";
 import EnrolledStudents from "./components/lecturer/EnrolledStudents";
 import ProfilleCustomization from "./pages/ProfilleCustomization";
@@ -29,7 +27,11 @@ import Examinations from "./components/students/Examinations";
 import ExaminationResult from "./components/students/ExaminationResult";
 import ExamDetails from "./components/lecturer/ExamDetails";
 import StudentResultPage from "./components/lecturer/StudentResultPage";
+import ExaminationInstructions from "./components/students/ExaminationInstructions";
+import ExaminationQuestions from "./components/students/ExaminationQuestions";
+import ExaminationReview from "./components/students/ExaminationReview";
 
+// ProtectedRoute ensures that the children are rendered only if the user is authenticated.
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   if (isAuthenticated === null) return null;
@@ -62,6 +64,7 @@ const App = () => {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Public Routes */}
           <Route
             path="/"
             element={
@@ -85,7 +88,7 @@ const App = () => {
           />
           <Route path="/onboarding" element={<ProfilleCustomization />} />
 
-          {/* Protected Home Route */}
+          {/* Protected Routes */}
           <Route
             element={
               <ProtectedRoute>
@@ -99,19 +102,29 @@ const App = () => {
           >
             <Route path="dashboard" element={<Container />} />
             <Route path="student-group/:groupId" element={<StudentGroup />} />
-
             <Route path="examinations">
               <Route index element={<Examinations />} />
               <Route
-                path=":courseCode/result"
+                path=":courseId/instructions"
+                element={<ExaminationInstructions />}
+              />
+              <Route
+                path=":courseId/questions"
+                element={<ExaminationQuestions />}
+              />
+              <Route
+                path=":courseId/result"
                 element={<ExaminationResult />}
+              />
+               <Route
+                path=":courseId/review"
+                element={<ExaminationReview />}
               />
             </Route>
             <Route path="lecturers">
               <Route index element={<Lecturers />} />
               <Route path=":lecturerId/groups" element={<LecturerGroups />} />
             </Route>
-
             <Route path="student-groups" element={<StudentGroups />} />
             <Route
               path="course/:courseId/published/:examId/detail"

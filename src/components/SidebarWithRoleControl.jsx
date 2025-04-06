@@ -3,8 +3,6 @@ import { Link, useLocation } from "react-router";
 import { CourseDropdownMenu } from "./ui/Dropdown";
 import ExaminationDropdown from "./ui/ExaminationDropdown";
 import { FiHome, FiUsers } from "react-icons/fi";
-import { CreateExaminationRoom } from "./courses/CourseComponents";
-import { RxDashboard } from "react-icons/rx";
 
 const SidebarWithRoleControl = ({ role }) => {
   const { pathname } = useLocation();
@@ -73,7 +71,7 @@ const SidebarWithRoleControl = ({ role }) => {
           </>
         ) : null}
       </div>
-      <CreateExaminationRoom />
+      
     </div>
   );
 };

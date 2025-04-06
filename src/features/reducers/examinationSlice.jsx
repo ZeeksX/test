@@ -13,6 +13,18 @@ export const fetchExaminations = createAsyncThunk(
     }
 );
 
+export const fetchStudentExaminations = createAsyncThunk(
+    "examinations/fetchStudentExaminations",
+    async (thunkApi) => {
+        try {
+            const response = await apiCall.get("/exams/examinations");
+            return response.data;
+        } catch (error) {
+            return thunkApi.rejectWithValue(error.response.data);
+        }
+    }
+)
+
 export const fetchExaminationDetails = createAsyncThunk(
     "examinations/fetchExaminationDetails",
     async ({ id }, thunkApi) => {

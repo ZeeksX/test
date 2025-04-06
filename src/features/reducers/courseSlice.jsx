@@ -5,7 +5,7 @@ export const fetchCourses = createAsyncThunk(
   "courses/fetchCourses",
   async (thunkApi) => {
     try {
-      const response = await apiCall.get("/exams/courses");
+      const response = await apiCall.get("/exams/courses/");
       return response.data;
     } catch (error) {
       return thunkApi.rejectWithValue(error.response.data);
@@ -17,7 +17,7 @@ export const fetchCourseDetails = createAsyncThunk(
   "courses/fetchCourseDetails",
   async ({ id }, thunkApi) => {
     try {
-      const response = await apiCall.get(`/exams/courses/${id}`);
+      const response = await apiCall.get(`/exams/courses/${id}/`);
       return response.data;
     } catch (error) {
       return thunkApi.rejectWithValue(error.response.data);
@@ -59,8 +59,6 @@ const courseSlice = createSlice({
   },
   reducers: {
     createLocalCourse: (state, action) => {
-      console.log("body:", action.payload);
-
       state.courses.push(action.payload);
     },
   },

@@ -1,14 +1,14 @@
 import React from 'react'
 import DensityMediumOutlinedIcon from '@mui/icons-material/DensityMediumOutlined';
 import MobileSidebar from './MobileSidebar';
-import { brandLogo } from '../utils/images';
+import { bannerTransparent} from '../utils/images';
 const MobileNavigation = ({ toggleSidebar, sidebarOpen }) => {
 
     return (
         <>
             <div className="w-[90vw] mx-auto flex flex-row items-center justify-between h-12 my-4">
                 <div className="flex flex-row items-center">
-                    <img className="w-full h-12" src={brandLogo} alt="Acad AI logo" />
+                    <img className="w-4/5 h-12" src={bannerTransparent} alt="Acad AI logo" />
                 </div>
                 <div onClick={toggleSidebar} className="cursor-pointer">
                     <DensityMediumOutlinedIcon sx={{ color: "#1836B2" }} />

@@ -11,7 +11,7 @@ const TopNav = () => {
   return (
     <div className="w-[90vw] mx-auto flex flex-row items-center justify-between h-12 my-4">
       <div className="flex flex-row items-center">
-        <img className="w-full h-12" src={bannerTransparent} alt="Acad AI logo" />
+        <img className="w-full max-md:w-3/5 h-12" src={bannerTransparent} alt="Acad AI logo" />
       </div>
       <div className="hidden md:flex flex-row w-1/3 items-center justify-between">
         <ul className="flex flex-row w-full md:gap-6 justify-between">

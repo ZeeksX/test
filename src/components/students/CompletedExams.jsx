@@ -1,85 +1,121 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination } from '@mui/material';
-import { Navigate, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
+import { SERVER_URL } from "../../utils/constants";
+import {illustration2} from "../../utils/images";
 
 const CompletedExams = ({ examinations }) => {
-    const [timeStatus, setTimeStatus] = useState({});
+    const [examRooms, setExamRooms] = useState([]);
+    const [courses, setCourses] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            const newStatus = {};
-            examinations.forEach(exam => {
-                const examDateTime = new Date(exam.date);
-                const now = new Date();
-                newStatus[exam.id] = {
-                    isToday: examDateTime.toDateString() === now.toDateString()
-                };
-            });
-            setTimeStatus(newStatus);
-        }, 1000);
+        const fetchExamRooms = async () => {
+            try {
+                const response = await fetch(`${SERVER_URL}/exams/exam-rooms/my_exam_rooms/`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("access_token")}`
+                    }
+                });
 
-        return () => clearInterval(interval);
-    }, [examinations]);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-    if (!examinations) {
-        return <div>No examinations data available</div>;
-    }
+                const data = await response.json();
+                setExamRooms(data);
+            } catch (error) {
+                console.error("Error fetching exam rooms:", error);
+            }
+        };
 
-    // Filter to only include completed exams (i.e. scheduled date in the past)
-    const completedExams = examinations.filter(exam => new Date(exam.date) <= new Date());
+        const fetchCourses = async () => {
+            try {
+                const response = await fetch(`${SERVER_URL}/exams/courses/`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("access_token")}`
+                    }
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+                setCourses(data);
+            } catch (error) {
+                console.error("Error fetching courses:", error);
+            }
+        };
+
+        fetchExamRooms();
+        fetchCourses();
+    }, []);
+
+    // Create a mapping for courses (course ID → course name)
+    const courseMap = useMemo(() => {
+        return courses.reduce((acc, course) => {
+            acc[course.id] = course.course_title; // Ensure we use the correct property for course name
+            return acc;
+        }, {});
+    }, [courses]);
+
+    // Get lecturer name from exam rooms data
+    const getLecturerName = (teacherId) => {
+        const teacherRoom = examRooms.find(room => room.teacher?.id === teacherId);
+
+        if (!teacherRoom || !teacherRoom.teacher || !teacherRoom.teacher.user) {
+            return "Unknown Lecturer";
+        }
+
+        const { title, user } = teacherRoom.teacher;
+        const otherNames = user.other_names || ""; // Prevents reading `null`
+        const lastName = user.last_name || ""; // Prevents reading `null`
+
+        return `${title} ${otherNames} ${lastName}`.trim();
+    };
+
+    const completedExams = useMemo(() => {
+        if (!examinations) return [];
+        return examinations
+            .filter((exam) => new Date(exam.due_time) <= new Date() && getLecturerName(exam.teacher) !== "Unknown Lecturer")
+            .sort((a, b) => new Date(a.due_time) - new Date(b.due_time));
+    }, [examinations, examRooms]);
 
     const handleClick = (exam) => {
-        const formattedCourseCode = exam.course
-            .replace(/\s+/g, "-") // Replace spaces with hyphens
-            .toLowerCase(); // Convert to lowercase
-        navigate(`/examinations/${formattedCourseCode}/result`, {
-            state: { exam },
-        });
-    }
+        const formattedCourseCode = exam.course.replace(/\s+/g, "-").toLowerCase();
+        navigate(`/examinations/${formattedCourseCode}/result`, { state: { exam } });
+    };
 
     const columns = [
         { id: 'serial-number', label: 'S/N', minWidth: 50 },
         { id: 'exam-name', label: 'Examination Name', minWidth: 220 },
         { id: 'lecturer', label: 'Lecturer', minWidth: 200 },
-        { id: 'course', label: 'Course', minWidth: 100 },
-        { id: 'date', label: 'Scheduled Date & Time', minWidth: 180 },
+        { id: 'course', label: 'Course', minWidth: 150 },
+        { id: 'date', label: 'Completed Date and Time', minWidth: 180 },
         { id: "option", label: "Option", minWidth: 100 }
     ];
 
     const rows = completedExams.map((exam, index) => {
-        const examDateTime = new Date(exam.date);
+        const examDateTime = new Date(exam.due_time);
         const now = new Date();
         const isToday = examDateTime.toDateString() === now.toDateString();
 
-        let timeString;
-        if (isToday) {
-            timeString = `Today ${examDateTime.toLocaleTimeString()}`;
-        } else {
-            timeString = examDateTime.toLocaleString();
-        }
-
-        // For completed exams, color green if completed today, default color otherwise.
-        const textColor = isToday ? 'green' : 'inherit';
+        let timeString = isToday
+            ? `Today ${examDateTime.toLocaleTimeString()}`
+            : examDateTime.toLocaleString();
 
         return {
             'serial-number': index + 1,
-            'exam-name': exam.exam_name,
-            'lecturer': exam.lecturer,
-            'course': exam.course,
-            'date': (
-                <span style={{ color: textColor }}>
-                    {timeString}
-                </span>
-            ),
+            'exam-name': exam.title,
+            'lecturer': getLecturerName(exam.teacher),
+            'course': courseMap[exam.course] || "Unknown Course", // Use the courseMap
+            'date': <span>{timeString}</span>,
             'option': (
                 <button
-                    style={{
-                        opacity: 1,
-                        cursor: 'pointer'
-                    }}
-                    onClick={() => { handleClick(exam) }}
-                    className='bg-[#1835B3] w-[150px] h-11 gap-2 text-white flex items-center justify-center font-inter font-semibold text-base rounded-md px-4 hover:ring-2'
+                    style={{ opacity: 1, cursor: 'pointer' }}
+                    onClick={() => handleClick(exam)}
+                    className='bg-[#1835B3] w-[120px] h-11 gap-2 text-white flex items-center justify-center font-inter font-semibold text-sm rounded-md px-4 hover:ring-2'
                 >
                     View Result
                 </button>
@@ -90,64 +126,59 @@ const CompletedExams = ({ examinations }) => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
-
+    const handleChangePage = (event, newPage) => setPage(newPage);
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(+event.target.value);
         setPage(0);
     };
 
-    return (
-        <>
-            <Paper sx={{ width: '100%', overflow: 'hidden', fontFamily: 'Inter' }}>
-                <TableContainer sx={{ maxHeight: 440 }}>
-                    <Table stickyHeader aria-label="sticky table">
-                        <TableHead>
-                            <TableRow>
-                                {columns.map((column) => (
-                                    <TableCell
-                                        key={column.id}
-                                        align={column.align}
-                                        style={{ minWidth: column.minWidth, color: "#C2C2C2" }}
-                                    >
-                                        {column.label}
-                                    </TableCell>
-                                ))}
+    return completedExams.length === 0 ? (
+        <div className="flex flex-col justify-center items-center gap-4 col-span-full ">
+            <img className="w-32 h-32" src={illustration2} alt="Illustration" />
+            <h1 className="text-[32px] font-medium leading-8">
+                Nothing to see here… yet!
+            </h1>
+            <p className="text-[#667085] text-lg">
+                Join a student group and start taking examinations.
+            </p>
+        </div>
+    ) : (
+        <Paper sx={{ width: '100%', overflow: 'hidden', fontFamily: 'Inter' }}>
+            <TableContainer sx={{ maxHeight: 440 }}>
+                <Table stickyHeader aria-label="completed exams table">
+                    <TableHead>
+                        <TableRow>
+                            {columns.map((column) => (
+                                <TableCell key={column.id} style={{ minWidth: column.minWidth, color: "#C2C2C2" }}>
+                                    {column.label}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+                            <TableRow hover role="checkbox" tabIndex={-1} key={row['serial-number']}>
+                                {columns.map((column) => {
+                                    const value = row[column.id];
+                                    return (
+                                        <TableCell key={column.id}>{column.format && typeof value === 'number' ? column.format(value) : value}</TableCell>
+                                    );
+                                })}
                             </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {rows
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((row) => (
-                                    <TableRow hover role="checkbox" tabIndex={-1} key={row['serial-number']}>
-                                        {columns.map((column) => {
-                                            const value = row[column.id];
-                                            return (
-                                                <TableCell key={column.id} align={column.align}>
-                                                    {column.format && typeof value === 'number'
-                                                        ? column.format(value)
-                                                        : value}
-                                                </TableCell>
-                                            );
-                                        })}
-                                    </TableRow>
-                                ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                <TablePagination
-                    rowsPerPageOptions={[10, 25, 100]}
-                    component="div"
-                    count={rows.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-            </Paper>
-        </>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <TablePagination
+                rowsPerPageOptions={[10, 25, 100]}
+                component="div"
+                count={rows.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+        </Paper>
     );
 };
 

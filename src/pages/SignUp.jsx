@@ -18,6 +18,7 @@ const SignUp = () => {
   const [otherNames, setOtherNames] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
+  const [title, setTitle] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [hasSignedUp, setHasSignedUp] = useState(false);
@@ -47,6 +48,7 @@ const SignUp = () => {
     if (storedData) {
       const parsedData = JSON.parse(storedData);
       setRole(parsedData.role);
+      setTitle(parsedData.title);
     }
   }, []);
 
@@ -141,20 +143,38 @@ const SignUp = () => {
 
     setLoader(true);
 
+    console.log({
+      title: title,
+      last_name: lastName,
+      other_names: otherNames,
+      email: email,
+      role: role,
+      password: password,
+      confirm_password: confirmPassword,
+    });
+
     try {
+      // Prepare the request body based on role
+      const requestBody = {
+        last_name: lastName,
+        other_names: otherNames,
+        email: email,
+        role: role,
+        password: password,
+        confirm_password: confirmPassword,
+      };
+
+      // Only include title if role is not student
+      if (role !== "student") {
+        requestBody.title = title;
+      }
+
       const res = await fetch(`${SERVER_URL}/users/register/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          last_name: lastName,
-          other_names: otherNames,
-          email: email,
-          role: role,
-          password: password,
-          confirm_password: confirmPassword,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await res.json();
@@ -296,7 +316,7 @@ const SignUp = () => {
           {loader && <Loader />}
           <div className="sign-in flex flex-row w-[80%] max-md:w-[90%] lg:w-3/5 md:h-[60vh] lg:h-[90vh]">
             <div className="signin-image w-1/2 md:flex hidden"></div>
-            <div className="login flex flex-col lg:max-w-screen-lg w-full overflow-scroll md:rounded-r-2xl bg-[white] text-black px-2 md:px-4 lg:px-3 border gap-4 py-4">
+            <div className="login hide-scrollbar flex flex-col lg:max-w-screen-lg w-full overflow-scroll md:rounded-r-2xl bg-[white] text-black px-2 md:px-4 lg:px-3 border gap-4 py-4">
               <div className="flex flex-col justify-center items-center gap-1 lg:gap-2">
                 <img
                   className="w-1/4 max-sm:w-1/2 max-2xl:w-1/3"

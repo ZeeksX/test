@@ -59,21 +59,21 @@ const Container = () => {
   }, );
 
   return (
-    <div className="w-full h-full p-5 overflow-auto">
+    <div className="w-full h-full p-5 overflow-auto bg-[#F9F9F9]">
       <div className="flex items-center justify-start gap-5 mb-5">
         <Avatar>
           {src ? (
             <AvatarImage src={src} className="!w-[53px] !h-[53px]" alt="Profile" />
           ) : (
             <AvatarFallback className="!w-[53px] !h-[53px]">
-              {user.last_name ? user.last_name.charAt(0) : "A"}
+              {user?.last_name ? user?.last_name.charAt(0) : "A"}
             </AvatarFallback>
           )}
         </Avatar>
         <div className="flex flex-row justify-between h-[60px] w-full">
           <div className="flex flex-col justify-between">
             <h3 className="text-2xl font-medium">Welcome {user?.last_name}</h3>
-            <p className="text-base text-[#858585] capitalize">{user.role}</p>
+            <p className="text-base text-[#858585] capitalize">{user?.role}</p>
           </div>
           <div
             className={
@@ -93,7 +93,7 @@ const Container = () => {
           </div>
         </div>
       </div>
-      {user.role === "teacher" ? (
+      {user?.role === "teacher" ? (
         <LecturerContainer />
       ) : (
         <StudentContainer

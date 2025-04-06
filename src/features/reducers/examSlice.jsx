@@ -3,9 +3,77 @@ import apiCall from "../../utils/apiCall";
 
 export const fetchExams = createAsyncThunk(
   "exams/fetchExams",
-  async (thunkApi) => {
+  async (_, thunkApi) => {
     try {
-      const response = await apiCall.get("/exams/exams/");
+      const response = await apiCall.get("/exams/get-exams/");
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const fetchExamDetails = createAsyncThunk(
+  "exams/fetchExamDetails",
+  async ({ id }, thunkApi) => {
+    console.log("response");
+    try {
+      const response = await apiCall.get(`/exams/exams/${id}/`);
+      console.log("dddresponse", response.data);
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const fetchExamsforACourse = createAsyncThunk(
+  "exams/fetchExamsforACourse",
+  async ({ courseId }, thunkApi) => {
+    try {
+      const response = await apiCall.get(`/exams/get-exam_course/${courseId}/`);
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const fetchStudentExams = createAsyncThunk(
+  "exams/fetchStudentExams",
+  async ({ id }, thunkApi) => {
+    try {
+      const examRoomsResponse = await apiCall.get(`/exams/exam-rooms/`);
+      const examRooms = examRoomsResponse.data;
+
+      const examResponse = await apiCall.get("/exams/get-exams/");
+      const exams = examResponse.data;
+      return getStudentExams(id, examRooms, exams);
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+const getStudentExams = (studentId, examRooms, exams) => {
+  const studentExamRooms = examRooms.filter((room) =>
+    room.students.some((student) => student.student_id === studentId)
+  );
+
+  const studentExamRoomIds = studentExamRooms.map((room) => room.id);
+
+  const availableExams = exams.filter((exam) =>
+    exam.exam_rooms.some((roomId) => studentExamRoomIds.includes(roomId))
+  );
+
+  return availableExams;
+};
+
+export const fetchExamSubmissions = createAsyncThunk(
+  "exams/fetchExamSubmissions",
+  async ({ examid }, thunkApi) => {
+    try {
+      const response = await apiCall.get(`/exams/${examid}/results/`);
       return response.data;
     } catch (error) {
       return thunkApi.rejectWithValue(error.response.data);
@@ -16,171 +84,11 @@ export const fetchExams = createAsyncThunk(
 const examSlice = createSlice({
   name: "exams",
   initialState: {
-    allExams: [
-      {
-        id: 1,
-        title: "Mid-Semester Exam",
-        exam_type: "Quiz",
-        description:
-          "This is a mid-semester quiz covering the first half of the course.",
-        schedule_time: "2025-04-10T10:00:00Z",
-        status: "Scheduled",
-        due_time: "2025-04-10T11:30:00Z",
-        questions: [
-          {
-            id: 101,
-            text: "What is the main purpose of a database index?",
-            type: "multiple-choice",
-            options: [
-              "Speed up queries",
-              "Store more data",
-              "Encrypt data",
-              "None of the above",
-            ],
-            answer: "Speed up queries",
-          },
-          {
-            id: 102,
-            text: "Explain the concept of normalization in databases.",
-            type: "essay",
-          },
-        ],
-        source_file: "exam_guidelines.pdf",
-        strict: true,
-        created_at: "2025-03-30T08:00:00Z",
-        updated_at: "2025-03-30T08:30:00Z",
-        teacher: 5,
-        course: 12,
-        studentGroups: [
-          {
-            id: 1,
-            name: "Test Exam Room",
-            description: "Test Exam Description",
-            created_at: "2025-03-29T22:31:25.286956Z",
-            updated_at: "2025-03-29T22:31:25.286970Z",
-            teacher: 1,
-            course: 1,
-          },
-          {
-            id: 2,
-            name: "New Exam Room",
-            description: "New Exam Description",
-            created_at: "2025-03-29T22:46:21.261249Z",
-            updated_at: "2025-03-29T22:46:21.261263Z",
-            teacher: 1,
-            course: 2,
-          },
-          {
-            id: 3,
-            name: "Another Student Group",
-            description: "Just another student group",
-            created_at: "2025-03-30T01:13:23.300530Z",
-            updated_at: "2025-03-30T01:13:23.300545Z",
-            teacher: 1,
-            course: 3,
-          },
-          {
-            id: 4,
-            name: "New Exam Room",
-            description: "New Exam Description",
-            created_at: "2025-03-29T22:46:21.261249Z",
-            updated_at: "2025-03-29T22:46:21.261263Z",
-            teacher: 1,
-            course: 2,
-          },
-          {
-            id: 5,
-            name: "Another Student Group",
-            description: "Just another student group",
-            created_at: "2025-03-30T01:13:23.300530Z",
-            updated_at: "2025-03-30T01:13:23.300545Z",
-            teacher: 1,
-            course: 3,
-          },
-          {
-            id: 6,
-            name: "New Exam Room",
-            description: "New Exam Description",
-            created_at: "2025-03-29T22:46:21.261249Z",
-            updated_at: "2025-03-29T22:46:21.261263Z",
-            teacher: 1,
-            course: 2,
-          },
-          {
-            id: 7,
-            name: "Another Student Group",
-            description: "Just another student group",
-            created_at: "2025-03-30T01:13:23.300530Z",
-            updated_at: "2025-03-30T01:13:23.300545Z",
-            teacher: 1,
-            course: 3,
-          },
-        ],
-      },
-      {
-        id: 2,
-        title: "Mid-Semester Exam",
-        exam_type: "Quiz",
-        description:
-          "This is a mid-semester quiz covering the first half of the course.",
-        schedule_time: "2025-04-10T10:00:00Z",
-        status: "Scheduled",
-        due_time: "2025-04-10T11:30:00Z",
-        questions: [
-          {
-            id: 101,
-            text: "What is the main purpose of a database index?",
-            type: "multiple-choice",
-            options: [
-              "Speed up queries",
-              "Store more data",
-              "Encrypt data",
-              "None of the above",
-            ],
-            answer: "Speed up queries",
-          },
-          {
-            id: 102,
-            text: "Explain the concept of normalization in databases.",
-            type: "essay",
-          },
-        ],
-        strict: true,
-        created_at: "2025-03-30T08:00:00Z",
-        updated_at: "2025-03-30T08:30:00Z",
-        teacher: 5,
-        course: 12,
-        studentGroups: [
-          {
-            id: 1,
-            name: "Test Exam Room",
-            description: "Test Exam Description",
-            created_at: "2025-03-29T22:31:25.286956Z",
-            updated_at: "2025-03-29T22:31:25.286970Z",
-            teacher: 1,
-            course: 1,
-          },
-          {
-            id: 2,
-            name: "New Exam Room",
-            description: "New Exam Description",
-            created_at: "2025-03-29T22:46:21.261249Z",
-            updated_at: "2025-03-29T22:46:21.261263Z",
-            teacher: 1,
-            course: 2,
-          },
-          {
-            id: 3,
-            name: "Another Student Group",
-            description: "Just another student group",
-            created_at: "2025-03-30T01:13:23.300530Z",
-            updated_at: "2025-03-30T01:13:23.300545Z",
-            teacher: 1,
-            course: 3,
-          },
-        ],
-      },
-    ],
+    allExams: [],
+    teacherExams: [],
+    studentExams: [],
+
+    courseExams: [],
 
     exam: {
       id: 1,
@@ -197,214 +105,21 @@ const examSlice = createSlice({
       updated_at: "",
       teacher: 0,
       course: 0,
-      studentGroups: [],
+      exam_rooms: [],
     },
 
-    allResults: [],
-
-    studentResult: {
-      id: 2,
-      totalScore: 50,
-      student: {
-        id: 4,
-        matric_number: "21/1134",
-        last_name: "Bassey",
-        other_names: "Imoh Imoh",
-      },
-      exam: {
-        id: 1,
-        title: "fhhffhfh",
-        questions: [
-          {
-            id: 25,
-            text: "Which of the following best describes reverse engineering?",
-            score: 2,
-            type: "multiple-choice",
-            options: [
-              {
-                id: 77,
-                text: "Creating new software from scratch",
-                isCorrect: true,
-              },
-              {
-                id: 78,
-                text: "Disassembling and analyzing software or hardware to understand its design",
-                isCorrect: false,
-              },
-              {
-                id: 79,
-                text: "Writing malware to exploit vulnerabilities",
-                isCorrect: false,
-              },
-              {
-                id: 80,
-                text: "Encrypting data for security",
-                isCorrect: false,
-              },
-            ],
-            studentAnswers: [
-              {
-                id: 20,
-                answerText: "",
-                selectedOption: {
-                  id: 78,
-                  text: "Disassembling and analyzing software or hardware to understand its design",
-                  isCorrect: false,
-                },
-                score: 0,
-                AIFeedback: "",
-              },
-            ],
-          },
-          {
-            id: 26,
-            text: "Which of the following best describes reverse engineering?",
-            score: 2,
-            type: "multiple-choice",
-            options: [
-              {
-                id: 77,
-                text: "Creating new software from scratch",
-                isCorrect: false,
-              },
-              {
-                id: 78,
-                text: "Disassembling and analyzing software or hardware to understand its design",
-                isCorrect: true,
-              },
-              {
-                id: 79,
-                text: "Writing malware to exploit vulnerabilities",
-                isCorrect: false,
-              },
-              {
-                id: 80,
-                text: "Encrypting data for security",
-                isCorrect: false,
-              },
-            ],
-            studentAnswers: [
-              {
-                id: 20,
-                answerText: "",
-                selectedOption: {
-                  id: 78,
-                  text: "Disassembling and analyzing software or hardware to understand its design",
-                  isCorrect: true,
-                },
-                score: 2,
-                AIFeedback: "",
-              },
-            ],
-          },
-          {
-            id: 27,
-            text: "Which of the following best describes reverse engineering?",
-            score: 2,
-            type: "multiple-choice",
-            options: [
-              {
-                id: 77,
-                text: "Creating new software from scratch",
-                isCorrect: false,
-              },
-              {
-                id: 78,
-                text: "Disassembling and analyzing software or hardware to understand its design",
-                isCorrect: true,
-              },
-              {
-                id: 79,
-                text: "Writing malware to exploit vulnerabilities",
-                isCorrect: false,
-              },
-              {
-                id: 80,
-                text: "Encrypting data for security",
-                isCorrect: false,
-              },
-            ],
-            studentAnswers: [
-              {
-                id: 20,
-                answerText: "",
-                selectedOption: {
-                  id: 78,
-                  text: "Disassembling and analyzing software or hardware to understand its design",
-                  isCorrect: true,
-                },
-                score: 2,
-                AIFeedback: "",
-              },
-            ],
-          },
-          {
-            id: 40,
-            text: "Explain the difference between static and dynamic malware analysis. Give examples of tools used for each approach.",
-            score: 2,
-            type: "theory",
-            options: [],
-            modelAnswer:
-              "Static analysis involves examining malware code without executing it. Tools like IDA Pro, Ghidra, and strings help analyze the binary structure, assembly instructions, and embedded text.\n\nDynamic analysis involves executing the malware in a controlled environment to observe its behavior. Tools like Cuckoo Sandbox, Wireshark, and Process Monitor are used for this purpose.",
-            studentAnswers: [
-              {
-                id: 35,
-                answerText:
-                  "Static is when you analyse it without running it, dynamic is when you analyse it while running it in an isolated environment ",
-                selectedOption: null,
-                score: 2,
-                AIFeedback: "This question has been regraded by the lecturer",
-              },
-            ],
-          },
-          {
-            id: 41,
-            text: "Explain the difference between static and dynamic malware analysis. Give examples of tools used for each approach.",
-            score: 2,
-            type: "theory",
-            options: [],
-            modelAnswer:
-              "Static analysis involves examining malware code without executing it. Tools like IDA Pro, Ghidra, and strings help analyze the binary structure, assembly instructions, and embedded text.\n\nDynamic analysis involves executing the malware in a controlled environment to observe its behavior. Tools like Cuckoo Sandbox, Wireshark, and Process Monitor are used for this purpose.",
-            studentAnswers: [
-              {
-                id: 35,
-                answerText:
-                  "Static is when you analyse it without running it, dynamic is when you analyse it while running it in an isolated environment ",
-                selectedOption: null,
-                score: 2,
-                AIFeedback: "This question has been regraded by the lecturer",
-              },
-            ],
-          },
-          {
-            id: "q3",
-            type: "cloze",
-            score: 2,
-            text: "_____________ is a way of life",
-            options: [],
-            modelAnswer: "sdbsbdnsdnbdsnsdn",
-            studentAnswers: [
-              {
-                id: 35,
-                answerText: "hvifiyhf ",
-                selectedOption: null,
-                score: 2,
-                AIFeedback: "This question has been regraded by the lecturer",
-              },
-            ],
-          },
-        ],
-      },
-    },
+    examSubmissions: [],
 
     loading: false,
     error: null,
   },
   reducers: {
-    getExamById: (state, action) => {
-      const examId = action.payload;
-      state.exam = state.allExams.find((exam) => exam.id === examId) || null;
-    },
+    // filterExamByCourse: (state, action) => {
+    //   const courseId = action.payload;
+    //   state.courseExams = state.allExams.filter(
+    //     (exam) => exam.course === Number(courseId)
+    //   );
+    // },
   },
   extraReducers: (builder) => {
     builder
@@ -415,13 +130,74 @@ const examSlice = createSlice({
       .addCase(fetchExams.fulfilled, (state, action) => {
         state.loading = false;
         state.allExams = action.payload;
+        const user = JSON.parse(localStorage.getItem("user"));
+        const teacherId = user.teacherId;
+        state.teacherExams = state.allExams.filter(
+          (exam) => exam.teacher === teacherId
+        );
       })
       .addCase(fetchExams.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      //
+      .addCase(fetchExamDetails.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchExamDetails.fulfilled, (state, action) => {
+        state.loading = false;
+        state.exam = action.payload;
+      })
+      .addCase(fetchExamDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      //
+      .addCase(fetchExamsforACourse.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchExamsforACourse.fulfilled, (state, action) => {
+        state.loading = false;
+        state.courseExams = action.payload;
+      })
+      .addCase(fetchExamsforACourse.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      //
+      .addCase(fetchStudentExams.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchStudentExams.fulfilled, (state, action) => {
+        state.loading = false;
+        state.studentExams = action.payload;
+      })
+      .addCase(fetchStudentExams.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      //
+      .addCase(fetchExamSubmissions.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchExamSubmissions.fulfilled, (state, action) => {
+        state.loading = false;
+        state.examSubmissions = action.payload;
+      })
+      .addCase(fetchExamSubmissions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
   },
 });
 
-export const { getExamById } = examSlice.actions;
+export const { getExamById, filterExamByCourse } = examSlice.actions;
 export default examSlice.reducer;

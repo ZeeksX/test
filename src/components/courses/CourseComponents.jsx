@@ -9,6 +9,7 @@ import {
 } from "../ui/Dialog";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  setShowAddStudentToStudentGroupDialog,
   setShowCreateExaminationRoom,
   setShowCreateNewExamination,
   setShowCreateStudentGroup,
@@ -27,6 +28,7 @@ import {
   FiCopy,
   FiMoreVertical,
   FiPlus,
+  FiSearch,
   FiUpload,
   FiX,
 } from "react-icons/fi";
@@ -53,8 +55,13 @@ import {
 } from "../../features/reducers/courseSlice";
 import Toast from "../modals/Toast";
 import apiCall from "../../utils/apiCall";
-import { fetchStudentGroups } from "../../features/reducers/examRoomSlice";
+import {
+  fetchAllStudents,
+  fetchStudentGroups,
+} from "../../features/reducers/examRoomSlice";
 import { Spinner } from "../ui/Loader";
+import { fetchExams } from "../../features/reducers/examSlice";
+import { SERVER_URL } from "../../utils/constants";
 
 export const CreateExaminationRoom = () => {
   const isOpen = useSelector((state) => state.ui.showCreateExaminationRoom);
@@ -83,7 +90,8 @@ export const CreateExaminationRoom = () => {
       dispatch(createLocalCourse(response));
       // dispatch(setShowCreateExaminationRoom(false));
     } catch (err) {
-      showToast("Failed to create course. Please try again.", "error");
+      const message = err.course_code[0];
+      showToast(message || "Failed to create course. Please try again.", "error");
       console.error("Error creating course:", err);
     }
   };
@@ -144,8 +152,8 @@ export const CreateExaminationRoom = () => {
           <CustomButton
             type="submit"
             loading={loading}
-            className="!text-sm w-[80px]"
-            variant="accent"
+            className="!text-sm w-[100px]"
+            variant="primary"
           >
             Create
           </CustomButton>
@@ -166,9 +174,11 @@ export const CreateNewExam = () => {
   const dispatch = useDispatch();
 
   const { teacherStudentGroups } = useSelector((state) => state.examRooms);
+  const { teacherExams } = useSelector((state) => state.exams);
 
   useEffect(() => {
     dispatch(fetchStudentGroups());
+    dispatch(fetchExams());
   }, [dispatch]);
 
   const [selectedQuestionMethod, setSelectedQuestionMethod] = useState("");
@@ -180,8 +190,8 @@ export const CreateNewExam = () => {
     course: courseId,
     examType: "",
     description: "",
-    scheduleTime: false,
-    dueTime: false,
+    scheduleTime: "",
+    dueTime: "",
     addQuestion: [],
     questionMethod: selectedQuestionMethod,
     questions: [],
@@ -206,6 +216,35 @@ export const CreateNewExam = () => {
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
+      if (
+        currentStep === 1 &&
+        (!examData.name.trim() ||
+          !examData.examType.trim() ||
+          !examData.description.trim())
+      ) {
+        showToast(
+          "Please fill in an Exam name, type and description to move to the next step",
+          "error"
+        );
+        return;
+      }
+      if (currentStep === 2 && examData.questions.length == 0) {
+        showToast(
+          "Please create a question using one of the methods to move to the next step",
+          "error"
+        );
+        return;
+      }
+      if (
+        currentStep === 4 &&
+        (!examData.dueTime.toString().trim() || !examData.scheduleTime.toString().trim())
+      ) {
+        showToast(
+          "Please select a schedule date and due date to move to the next step",
+          "error"
+        );
+        return;
+      }
       setCurrentStep(currentStep + 1);
     } else {
       setExamCreated(true);
@@ -262,12 +301,28 @@ export const CreateNewExam = () => {
 
   const [selectedExam, setSelectedExam] = useState("");
 
+  const setSelectedExamQuestions = (exam) => {
+    setExamData({
+      ...examData,
+      questions: exam.questions,
+    });
+    setSelectedExam(exam);
+  };
+
   const updateExamData = (newData) => {
     setExamData({ ...examData, ...newData });
   };
 
   const [submitting, setSubmitting] = useState(false);
   const handlePublish = async () => {
+    if (currentStep === 5 && examData.studentGroups.length == 0) {
+      showToast(
+        "Please select at least one student group to publish an exam",
+        "error"
+      );
+      return;
+    }
+
     setSubmitting(true);
     const body = {
       title: examData.name,
@@ -277,14 +332,37 @@ export const CreateNewExam = () => {
       status: "Scheduled",
       due_time: new Date(examData.dueTime),
       questions: examData.questions,
-      source_file: examData.uploadedFiles,
+      source_file: "",
       strict: examData.gradingStyle === "strict",
       course: courseId,
+      exam_rooms: examData.studentGroups.map((group) => group.id),
     };
 
     try {
-      // const response = await apiCall.post("/exams/exam-rooms/", body);
-      console.log(body);
+      const response = await apiCall.post("/exams/exams/", body);
+
+      if (response.status === 201) {
+        showToast("Exam created", "success");
+        setExamData({
+          name: "",
+          course: courseId,
+          examType: "",
+          description: "",
+          scheduleTime: false,
+          dueTime: false,
+          addQuestion: [],
+          questionMethod: selectedQuestionMethod,
+          questions: [],
+          uploadedFiles: [],
+          gradingStyle: "strict",
+          numberOfQuestions: 50,
+          questionTypes: [],
+          studentGroups: [],
+          exam_rooms: [],
+        });
+
+        dispatch(setShowCreateNewExamination(false));
+      }
     } catch (error) {
       showToast("Failed to create exam. Please try again.", "error");
       console.error("Error creating exam:", error);
@@ -311,22 +389,24 @@ export const CreateNewExam = () => {
                 {[1, 2, 3, 4, 5].map((step) => (
                   <div key={step} className="flex items-center">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === step
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        currentStep === step
                           ? "bg-blue-600 text-white"
                           : step < currentStep
-                            ? "bg-green-500 text-white"
-                            : "bg-gray-200 text-gray-500"
-                        }`}
+                          ? "bg-green-500 text-white"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
                     >
                       {step}
                     </div>
                     <div
-                      className={`w-16 h-1 ${step < 5
+                      className={`w-16 h-1 ${
+                        step < 5
                           ? step < currentStep
                             ? "bg-green-500"
                             : "bg-gray-200"
                           : "hidden"
-                        }`}
+                      }`}
                     />
                   </div>
                 ))}
@@ -335,58 +415,63 @@ export const CreateNewExam = () => {
             <div className="text-center">
               <div className="flex justify-between w-full max-w-[456px] mx-auto">
                 <div
-                  className={`text-xs w-[80px] ${currentStep === 1
+                  className={`text-xs w-[80px] ${
+                    currentStep === 1
                       ? "text-blue-600"
                       : 1 < currentStep
-                        ? "text-green-500"
-                        : "text-gray-200"
-                    }`}
+                      ? "text-green-500"
+                      : "text-gray-200"
+                  }`}
                 >
                   Examination
                   <br />
                   Metadata
                 </div>
                 <div
-                  className={`text-xs w-[80px]  ${currentStep === 2
+                  className={`text-xs w-[80px]  ${
+                    currentStep === 2
                       ? "text-blue-600"
                       : 2 < currentStep
-                        ? "text-green-500"
-                        : "text-gray-200"
-                    }`}
+                      ? "text-green-500"
+                      : "text-gray-200"
+                  }`}
                 >
                   Create
                   <br />
                   Examination
                 </div>
                 <div
-                  className={`text-xs w-[80px] ${currentStep === 3
+                  className={`text-xs w-[80px] ${
+                    currentStep === 3
                       ? "text-blue-600"
                       : 3 < currentStep
-                        ? "text-green-500"
-                        : "text-gray-200"
-                    }`}
+                      ? "text-green-500"
+                      : "text-gray-200"
+                  }`}
                 >
                   Grading
                   <br />
                   Style
                 </div>
                 <div
-                  className={`text-xs w-[80px] ${currentStep === 4
+                  className={`text-xs w-[80px] ${
+                    currentStep === 4
                       ? "text-blue-600"
                       : 4 < currentStep
-                        ? "text-green-500"
-                        : "text-gray-200"
-                    }`}
+                      ? "text-green-500"
+                      : "text-gray-200"
+                  }`}
                 >
                   Time
                 </div>
                 <div
-                  className={`text-xs w-[80px] ${currentStep === 5
+                  className={`text-xs w-[80px] ${
+                    currentStep === 5
                       ? "text-blue-600"
                       : 5 < currentStep
-                        ? "text-green-500"
-                        : "text-gray-200"
-                    }`}
+                      ? "text-green-500"
+                      : "text-gray-200"
+                  }`}
                 >
                   Student
                   <br />
@@ -515,7 +600,7 @@ export const CreateNewExam = () => {
 
                             <div
                               className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                            // onClick={() => setSelectedQuestionMethod("copy")}
+                              // onClick={() => setSelectedQuestionMethod("copy")}
                             >
                               <div className="flex justify-between items-center mb-4">
                                 <div>
@@ -531,19 +616,26 @@ export const CreateNewExam = () => {
                               </div>
 
                               <Select
-                                value={selectedExam}
-                                onValueChange={setSelectedExam}
+                                value={selectedExam.title}
+                                onValueChange={(value) =>
+                                  setSelectedExamQuestions(value)
+                                }
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Examination 1" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="exam1">
+                                  {/* <SelectItem value="exam1">
                                     Examination 1
                                   </SelectItem>
                                   <SelectItem value="exam2">
                                     Examination 2
-                                  </SelectItem>
+                                  </SelectItem> */}
+                                  {teacherExams?.map((exam) => (
+                                    <SelectItem key={exam.id} value={exam}>
+                                      {exam.title}
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -621,8 +713,8 @@ export const CreateNewExam = () => {
                           value={
                             examData.scheduleTime
                               ? toLocalISOString(
-                                new Date(examData.scheduleTime)
-                              )
+                                  new Date(examData.scheduleTime)
+                                )
                               : ""
                           }
                           onChange={(e) =>
@@ -711,6 +803,7 @@ export const CreateNewExam = () => {
                   </CustomButton> */}
                     </div>
                   )}
+
                   {selectedQuestionMethod == "" && (
                     <div className="flex justify-end gap-6 mt-8">
                       {currentStep === 1 ? (
@@ -733,7 +826,7 @@ export const CreateNewExam = () => {
                           <CustomButton
                             variant="ghost"
                             className=""
-                            onClick={() => handlePublish()}
+                            // onClick={() => handlePublish()}
                           >
                             Save to Draft
                           </CustomButton>
@@ -745,7 +838,9 @@ export const CreateNewExam = () => {
                             Preview
                           </CustomButton>
                           <CustomButton
-                            className="bg-blue-600 hover:bg-blue-700"
+                            loading={submitting}
+                            variant="ghost"
+                            className="w-[100px]"
                             onClick={() => handlePublish()}
                           >
                             Publish
@@ -755,6 +850,7 @@ export const CreateNewExam = () => {
                         <CustomButton
                           className="bg-blue-600 hover:bg-blue-700"
                           onClick={handleNext}
+                          variant="primary"
                         >
                           Next
                         </CustomButton>
@@ -818,6 +914,8 @@ export const CreateStudentGroup = () => {
     severity: "info",
   });
   const [loading, setLoading] = useState();
+  const user = JSON.parse(localStorage.getItem("user"));
+  const teacher = user.teacherId;
 
   const handleCreateStudentGroup = async (e) => {
     e.preventDefault();
@@ -826,7 +924,7 @@ export const CreateStudentGroup = () => {
       name: formData.name,
       description: formData.description,
       course: 1,
-      teacher: 1, // Change it once they send the teacher id from the backend
+      teacher: teacher,
     };
 
     try {
@@ -970,7 +1068,7 @@ export function ExaminationCard({
   return (
     <Link
       to={`${id}/detail`}
-      className="bg-white border w-full max-w-md shadow-sm p-4"
+      className="bg-white border w-full max-w-md shadow-sm p-4 mb-4"
     >
       <div className="flex flex-row items-start justify-between gap-4 space-y-0 pb-2">
         <CustomButton variant="ghost" size="icon" className="h-8 w-8 ">
@@ -997,51 +1095,53 @@ export function ExaminationCard({
 export const JoinStudentGroupDialog = () => {
   const isOpen = useSelector((state) => state.ui.showJoinStudentGroupDialog);
   const dispatch = useDispatch();
-  const { allStudentGroups, loading, error } = useSelector(
-    (state) => state.examRooms
-  );
+  const { allStudentGroups } = useSelector((state) => state.examRooms);
 
   useEffect(() => {
     dispatch(fetchStudentGroups());
   }, [dispatch]);
 
   const [search, setSearch] = useState("");
-  const [isJoining, setIsJoining] = useState(false);
+  const [isJoining, setIsJoining] = useState("");
   const [toast, setToast] = useState({
     open: false,
     message: "",
     severity: "info",
   });
 
-  const filteredStudentGroups = allStudentGroups.filter((studentGroups) =>
-    studentGroups.name.toLowerCase().includes(search.toLowerCase())
+  const filteredStudentGroups = allStudentGroups.filter((studentGroup) =>
+    studentGroup.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const joinGroup = async (studentGroupId) => {
     setIsJoining(studentGroupId);
 
-    const body = {
-      status: "Active",
-      student: 4, // I am supposed to get the student Id during login from the backend and put it in the localhost, but since that has'nt been added, i am using a constant student id
-      exam_room: studentGroupId,
-    };
-
     try {
-      console.log(body);
-      const response = await apiCall.post("/exams/enrollments/", body);
-      if (response.status === 201) {
+      const response = await fetch(
+        `${SERVER_URL}/exams/exam-rooms/${studentGroupId}/join/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
         showToast("Student group joined successfully", "success");
+      } else {
+        const errorData = await response.json();
+        if (errorData.message) {
+          showToast(errorData.message, "error");
+        } else {
+          showToast("Failed to join student group. Please try again.", "error");
+          console.error("Error joining student group:", errorData);
+        }
       }
     } catch (error) {
-      if (
-        error.response.data.non_field_errors[0] ==
-        "The fields student, exam_room must make a unique set."
-      ) {
-        showToast("You are already a member of this student group", "error");
-      } else {
-        showToast("Failed to join student group. Please try again.", "error");
-        console.error("Error joining student group:", error);
-      }
+      showToast("Failed to join student group. Please try again.", "error");
+      console.error("Error joining student group:", error);
     } finally {
       setIsJoining("");
     }
@@ -1058,7 +1158,7 @@ export const JoinStudentGroupDialog = () => {
   return (
     <ButtonDismissDialog
       open={isOpen}
-      onOpenChange={setShowJoinStudentGroupDialog}
+      onOpenChange={(open) => dispatch(setShowJoinStudentGroupDialog(open))}
     >
       <DialogHeader>
         <DialogTitle>Join a Student Group</DialogTitle>
@@ -1069,7 +1169,6 @@ export const JoinStudentGroupDialog = () => {
           <h2 className="font-inter font-medium text-xl mb-4">
             Search for a student group to join
           </h2>
-          {/* <div className="w-full px-4"> */}
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -1092,7 +1191,7 @@ export const JoinStudentGroupDialog = () => {
                     key={studentGroup.id}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="">
+                      <div>
                         <h4 className="font-medium">{studentGroup.name}</h4>
                         <p className="text-xs text-neutral-mediumGray truncate">
                           {studentGroup.description}
@@ -1102,10 +1201,10 @@ export const JoinStudentGroupDialog = () => {
                     <CustomButton
                       type="button"
                       onClick={() => joinGroup(studentGroup.id)}
-                      disabled={isJoining != ""}
+                      disabled={isJoining !== ""}
                       className="w-[78px]"
                     >
-                      {isJoining == studentGroup.id ? <Spinner /> : `Join`}
+                      {isJoining === studentGroup.id ? <Spinner /> : "Join"}
                     </CustomButton>
                   </div>
                 ))}
@@ -1154,5 +1253,148 @@ export const LeaveStudentGroupDialog = ({ title = "Student Group 2" }) => {
         </div>
       </DialogContent>
     </ButtonDismissDialog>
+  );
+};
+
+export const AddNewStudentToStudentGroupDialog = () => {
+  const isOpen = useSelector(
+    (state) => state.ui.showAddStudentToStudentGroupDialog
+  );
+  const dispatch = useDispatch();
+  const { allStudents: students } = useSelector((state) => state.examRooms);
+  const [isSending, setIsSending] = useState("");
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  useEffect(() => {
+    dispatch(fetchAllStudents());
+  }, [dispatch]);
+
+  const [search, setSearch] = useState("");
+  const [willShow, setWillShow] = useState(false);
+
+  const filteredStudents = students.filter((studentGroups) =>
+    studentGroups.email.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const sendCode = (id, email) => {
+    setIsSending(id);
+    try {
+      console.log(email);
+    } catch (error) {
+      showToast("Failed to send code. Please try again.", "error");
+      console.error("Error sendiing code:", error);
+    } finally {
+      setIsSending("");
+    }
+  };
+
+  const toggleShow = () => {
+    if (search.length > 2) {
+      setWillShow(true);
+    } else {
+      showToast("Enter at least three characters", "error");
+    }
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
+  };
+
+  return (
+    <OutsideDismissDialog
+      open={isOpen}
+      onOpenChange={setShowAddStudentToStudentGroupDialog}
+    >
+      <DialogHeader>
+        <DialogTitle>Add Student to Student Group</DialogTitle>
+      </DialogHeader>
+      <DropdownMenuSeparator />
+      <DialogContent className="p-4">
+        <div className="w-full flex flex-col items-start justify-start">
+          <h2 className="font-inter font-medium text-xl mb-4">
+            Search for a student email and send the code
+          </h2>
+          {/* <div className="w-full px-4"> */}
+          <div className="flex w-full gap-2">
+            <Input
+              value={search}
+              onChange={(e) => {
+                setWillShow(false);
+                setSearch(e.target.value);
+              }}
+              required
+              placeholder="Enter email here"
+              className="mb-4"
+              id="examRoomName"
+            />
+            <CustomButton
+              size="icon"
+              className="w-[42px] h-[42px]"
+              onClick={() => toggleShow()}
+            >
+              <FiSearch size={20} />
+            </CustomButton>
+          </div>
+          <p className="font-bold">Student Groups</p>
+          <div className="max-h-[50dvh] overflow-y-auto w-full">
+            {willShow ? (
+              <>
+                {filteredStudents.length === 0 ? (
+                  <p className="text-center text-neutral-mediumGray py-4">
+                    No Students found
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredStudents.map((student) => (
+                      <div
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary-bg"
+                        key={student.id}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="">
+                            <h4 className="font-medium">
+                              {student.last_name}, {student.other_names}
+                            </h4>
+                            <p className="text-xs text-neutral-mediumGray truncate">
+                              {student.email}
+                            </p>
+                          </div>
+                        </div>
+                        <CustomButton
+                          type="button"
+                          onClick={() => sendCode(student.id, student.email)}
+                          disabled={isSending != ""}
+                          className="w-[108px]"
+                        >
+                          {isSending == student.id ? <Spinner /> : `Send Code`}
+                        </CustomButton>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-center text-neutral-mediumGray py-4">
+                Enter a student email and click search to display student
+              </p>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
+    </OutsideDismissDialog>
   );
 };

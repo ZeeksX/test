@@ -22,7 +22,7 @@ import bannerTransparent from "../assets/banner-trans.png";
 import illustration1 from "../assets/illustration-1.svg";
 import illustration2 from "../assets/illustration-2.png";
 import illustration3 from "../assets/illustration-3.png";
-
+import googleLogo from "../assets/google-logo.png";
 export {
   emptyFolderImg,
   brandLogo,
@@ -47,5 +47,6 @@ export {
   bannerTransparent,
   illustration1,
   illustration2,
-  illustration3
+  illustration3,
+  googleLogo
 };

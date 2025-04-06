@@ -11,72 +11,45 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchStudentGroups,
   fetchStudentsStudentGroups,
-  selectStudentGroupById,
 } from "../../features/reducers/examRoomSlice";
 import CustomButton from "../ui/Button";
 import { setShowJoinStudentGroupDialog } from "../../features/reducers/uiSlice";
 import { Loader } from "../ui/Loader";
+import { GoDotFill } from "react-icons/go";
+import { fetchExams } from "../../features/reducers/examSlice";
 
 const Container = () => {
-  //  I am fetching the student group from the redux state now
+  const dispatch = useDispatch();
   const {
     allStudentGroups,
     studentStudentGroups: studentGroup,
     loading,
     error,
   } = useSelector((state) => state.examRooms);
-  const dispatch = useDispatch();
+  const { allExams: examinations, loading: examsLoading } = useSelector(
+    (state) => state.exams
+  );
+
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchStudentsStudentGroups());
-    dispatch(fetchStudentGroups());
-  }, [dispatch]);
-
-  const examinations = [
-    {
-      id: 1,
-      serial_number: 1,
-      exam_name: "Introduction to Computer Science Final Exam",
-      lecturer: "Prof. Ezekiel Ikinwot",
-      course: "CSC 101",
-      date: "2025-03-29 15:00",
-      duration: "2 hours",
-      questions: 50,
-      option: "Start Exam",
-    },
-    {
-      id: 2,
-      serial_number: 2,
-      exam_name: "Data Structures Midterm",
-      lecturer: "Dr. Nsikak Ebong",
-      course: "CSC 201",
-      date: "2025-03-30 13:00",
-      duration: "1 hour",
-      questions: 30,
-      option: "View Details",
-    },
-    {
-      id: 3,
-      serial_number: 3,
-      exam_name: "Algorithms Final Assessment",
-      lecturer: "Dr. Anjola Ajayi",
-      course: "CSC 301",
-      date: "2025-12-10 09:00",
-      duration: "3 hours",
-      questions: 100,
-      option: "Join Waiting Room",
-    },
-  ];
+    if (!dataLoaded) {
+      dispatch(fetchStudentsStudentGroups());
+      dispatch(fetchStudentGroups());
+      dispatch(fetchExams());
+      setDataLoaded(true);
+    }
+  }, [dispatch, dataLoaded]);
 
   const studentCards = [
     {
-      title: "Total Courses",
+      title: "Total Courses Registered",
       icon: <TbSchool size={24} color="#1836B2" />,
       bgColor: "#1836B233",
       count: 0,
     },
     {
-      title: "Student Groups",
+      title: "Student Groups Enrolled",
       icon: <GoChecklist size={24} color="#85C7ED" />,
       bgColor: "#86C6EE33",
       count: studentGroup ? studentGroup.length : 0,
@@ -92,13 +65,13 @@ const Container = () => {
   // State to toggle between upcoming and completed exam tables.
   const [selectedTab, setSelectedTab] = useState("upcoming");
 
-  if (loading) {
+  if (loading || examsLoading) {
     return <Loader />;
   }
 
   return (
     <>
-      <div className="font-inter grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-7">
+      <div className="font-inter bg-[#F9F9F9] grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-7">
         {studentCards.map((card, index) => (
           <Card
             key={index}
@@ -166,10 +139,17 @@ const Container = () => {
                   <p className="text-[#666666] text-[12px] leading-5 line-clamp-2">
                     {studentGroupDetail.description}
                   </p>
-                  <h3 className="text-[#A1A1A1] text-sm">
-                    Prof. Ezekiel Ikinwot.{" "}
-                    <span>{studentGroupDetail.students?.length} students</span> {/* I am waiting to get the number of students in a student group with this */}
+                  <h3 className="text-[#A1A1A1] text-sm flex flex-row gap-1 items-center">
+                    {studentGroupDetail.teacher
+                      ? `${studentGroupDetail.teacher.title} ${studentGroupDetail.teacher.user?.last_name || ""}`
+                      : "No assigned teacher"}
+                    <GoDotFill className="text-sm" />
+                    <span>
+                      {studentGroupDetail.students?.length}{" "}
+                      {studentGroupDetail.students?.length === 1 ? "student" : "students"}
+                    </span>
                   </h3>
+
                 </div>
               </div>
             );
@@ -183,21 +163,19 @@ const Container = () => {
       <div className="flex flex-row gap-4">
         <h1
           onClick={() => setSelectedTab("upcoming")}
-          className={`cursor-pointer text-lg ${
-            selectedTab === "upcoming"
+          className={`cursor-pointer text-lg ${selectedTab === "upcoming"
               ? "text-[#1836B2] border-b-2 border-[#1836B2]"
               : "text-black"
-          }`}
+            }`}
         >
           Upcoming
         </h1>
         <h1
           onClick={() => setSelectedTab("completed")}
-          className={`cursor-pointer text-lg ${
-            selectedTab === "completed"
+          className={`cursor-pointer text-lg ${selectedTab === "completed"
               ? "text-[#1836B2] border-b-2 border-[#1836B2]"
               : "text-black"
-          }`}
+            }`}
         >
           Completed
         </h1>
@@ -215,11 +193,11 @@ const Container = () => {
             </p>
           </div>
         ) : // Conditional rendering based on selected tab.
-        selectedTab === "upcoming" ? (
-          <ExaminationTable examinations={examinations} />
-        ) : (
-          <CompletedExams examinations={examinations} />
-        )}
+          selectedTab === "upcoming" ? (
+            <ExaminationTable examinations={examinations} />
+          ) : (
+            <CompletedExams examinations={examinations} />
+          )}
       </div>
       <hr className="text-[#D0D5DD] mt-4" />
     </>

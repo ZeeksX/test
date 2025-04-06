@@ -3,55 +3,26 @@ import { FaPlus } from "react-icons/fa6";
 import { illustration3 } from "../../utils/images";
 import LecturersTable from "./LecturersTable";
 import { Outlet } from "react-router";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setShowJoinStudentGroupDialog } from "../../features/reducers/uiSlice";
+import { fetchAllTeachersWithTheirExamRooms } from "../../features/reducers/examRoomSlice";
+import { Loader } from "../ui/Loader";
 
 const Lecturers = () => {
   const dispatch = useDispatch();
-  const lecturers = [
-    {
-      id: 1,
-      lecturerName: "Prof. Ezekiel Ikinwot",
-      groupsJoined: 3,
-      options: "View",
-    },
-    {
-      id: 2,
-      lecturerName: "Dr. Nsikak Ebong",
-      groupsJoined: 4,
-      options: "View",
-    },
-    {
-      id: 3,
-      lecturerName: "Dr. Anjola Ajayi",
-      groupsJoined: 2,
-      options: "View",
-    },
-    {
-      id: 4,
-      lecturerName: "Dr. Edward Philip",
-      groupsJoined: 5,
-      options: "View",
-    },
-    {
-      id: 5,
-      lecturerName: "Dr. Chinonso Okeke",
-      groupsJoined: 1,
-      options: "View",
-    },
-    {
-      id: 6,
-      lecturerName: "Dr. Joseph Fadare",
-      groupsJoined: 3,
-      options: "View",
-    },
-    {
-      id: 7,
-      lecturerName: "Mr. Oluseye Bamise",
-      groupsJoined: 2,
-      options: "View",
-    },
-  ];
+
+  const {
+    allTeachersAndExamRooms: lecturers,
+    loading,
+    error,
+  } = useSelector((state) => state.examRooms);
+
+  useEffect(() => {
+    dispatch(fetchAllTeachersWithTheirExamRooms());
+  }, [dispatch]);
+  if (loading) {
+    return <Loader />
+  }
 
   return (
     <>
@@ -60,8 +31,7 @@ const Lecturers = () => {
           <div className="flex flex-col gap-4 py-4 px-11">
             <h3 className="text-[32px] leading-8 font-medium">Teachers</h3>
             <p className="text-sm text-[#222222] font-normal">
-              Lorem ipsum dolor sit amet consectetur. At aliquet pharetra non
-              sociis.
+              See all the lecturers and lecturer groups you have enrolled for
             </p>
           </div>
           <div

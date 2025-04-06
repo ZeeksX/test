@@ -65,7 +65,7 @@ const OTPPage = ({ email }) => {
     } catch (error) {
       showToast(
         error.response?.data?.error ||
-          "Failed to resend OTP. Please try again.",
+        "Failed to resend OTP. Please try again.",
         "error"
       );
     } finally {
@@ -97,7 +97,11 @@ const OTPPage = ({ email }) => {
         // Reset the OTP fields for future attempts
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0].focus();
-        navigate("/login", { replace: true });
+
+        setTimeout(() => {
+          navigate("/login", { replace: true });
+        }, 4000);
+
       }
     } catch (error) {
       showToast(

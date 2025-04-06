@@ -15,7 +15,7 @@ import {
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { TiDeleteOutline } from "react-icons/ti";
 import { useDispatch } from "react-redux";
-import { setShowShareStudentGroupLinkDialog } from "../../features/reducers/uiSlice";
+import { setShowAddStudentToStudentGroupDialog, setShowShareStudentGroupLinkDialog } from "../../features/reducers/uiSlice";
 
 const EnrolledStudents = () => {
   const location = useLocation();
@@ -36,8 +36,8 @@ const EnrolledStudents = () => {
   const rows = group.students?.map((student, index) => {
     return {
       "serial-number": index + 1,
-      name: student.name,
-      "matric-number": student.matricNumber ? student.matricNumber : "N/A",
+      name: student.last_name + ", " + student.other_names,
+      "matric-number": student.matric_number ? student.matric_number : "N/A",
       options: (
         <span className="text-[#EA4335] flex flex-row gap-2 cursor-pointer">
           Remove
@@ -79,7 +79,7 @@ const EnrolledStudents = () => {
             Share
             <FiUpload />
           </button>
-          <button className="bg-[#1835B3] gap-2 text-[white] h-[44px] flex items-center justify-center font-inter font-medium text-sm rounded-lg px-4">
+          <button onClick={() => dispatch(setShowAddStudentToStudentGroupDialog(true))} className="bg-[#1835B3] gap-2 text-[white] h-[44px] flex items-center justify-center font-inter font-medium text-sm rounded-lg px-4">
             Add New Student
             <FaPlus />
           </button>

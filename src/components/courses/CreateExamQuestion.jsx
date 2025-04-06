@@ -21,6 +21,8 @@ import {
 } from "react-icons/fi";
 import { Label } from "../ui/Label";
 import { iconDocx, iconPdf, iconPptx } from "../../utils/images";
+import apiCall from "../../utils/apiCall";
+import Toast from "../modals/Toast";
 
 export const ManualCreateExamQuestion = ({
   examData,
@@ -182,10 +184,10 @@ export const ManualCreateExamQuestion = ({
     if (questions.length >= 1) {
       // updateExamData({
       // });
-      
+
       const uniqueQuestionTypes = [...new Set(questions.map((q) => q.type))];
       const questionStyle = ["manually"];
-      
+
       updateExamData({
         questions: [...questions],
         questionTypes: [uniqueQuestionTypes],
@@ -385,6 +387,13 @@ export const MaterialCreateExamUpdateMetaData = ({
   updateExamData,
   setSelectedQuestionMethod,
 }) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
   const handleQuestionTypeChange = (type) => {
     const currentTypes = [...examData.questionTypes];
     if (currentTypes.includes(type)) {
@@ -404,8 +413,75 @@ export const MaterialCreateExamUpdateMetaData = ({
     setSelectedQuestionMethod();
   };
 
-  const handleDone = () => {
-    setSelectedQuestionMethod();
+  const handleDone = async () => {
+    if (!examData.uploadedFiles[0]?.file) {
+      console.error("No file selected");
+      return;
+    }
+
+    const questionTypes = examData.questionTypes;
+    const numQuestions = examData.numberOfQuestions;
+
+    try {
+      console.log({
+        uploadedFiles: examData.uploadedFiles[0]?.file,
+        questionTypes,
+        numQuestions,
+      });
+      
+      const result = await uploadFile(
+        examData.uploadedFiles[0]?.file,
+        questionTypes,
+        numQuestions
+      );
+
+      updateExamData({ questions: mapQuestions(result.questions) });
+      showToast("Your questions have been generated", "success");
+      setTimeout(() => {
+        setSelectedQuestionMethod();
+      }, 2000);
+    } catch (error) {
+      showToast("Failed to generate questions. Please try again.", "error");
+      console.error("Upload error:", error);
+    }
+  };
+
+  const uploadFile = async (file, questionTypes, numQuestions) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("files", file);
+      questionTypes.forEach((type, index) => {
+        formData.append(`question_types[${index}]`, type);
+      });
+      formData.append("total_questions", numQuestions);
+
+      const response = await apiCall.post(
+        "/exams/generate_questions/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Upload Error:", error);
+      showToast("Failed to generate questions. Please try again.", "error");
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
   };
 
   return (
@@ -431,7 +507,14 @@ export const MaterialCreateExamUpdateMetaData = ({
           <CustomButton variant="clear" onClick={() => handleCancel()}>
             Cancel
           </CustomButton>
-          <CustomButton onClick={() => handleDone()}>Done</CustomButton>
+          <CustomButton
+            disabled={isUploading}
+            loading={isUploading}
+            onClick={() => handleDone()}
+            className="w-[100px]"
+          >
+            Done
+          </CustomButton>
         </div>
       </div>
       <div className="bg-white border rounded-lg p-6 mb-6">
@@ -474,6 +557,7 @@ export const MaterialCreateExamUpdateMetaData = ({
             id="examName"
             name="numberOfQuestions"
             type="number"
+            max={50}
             placeholder="Examination 1"
             value={examData.numberOfQuestions}
             onChange={(e) =>
@@ -482,6 +566,13 @@ export const MaterialCreateExamUpdateMetaData = ({
           />
         </div>
       </div>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </div>
   );
 };
@@ -491,36 +582,30 @@ export const MaterialCreateExamAddMaterial = ({
   updateExamData,
   setSelectedQuestionMethod,
 }) => {
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFile, setUploadedFile] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
-    const newExamFiles = [...examData.uploadedFiles];
-
-    if (newExamFiles.length > 0) {
+    if (uploadedFile) {
       updateExamData({
+        uploadedFiles: [uploadedFile],
         addQuestion: examData.addQuestion.includes("upload")
           ? examData.addQuestion
           : [...examData.addQuestion, "upload"],
       });
-    }
-
-    if (newExamFiles.length === 0) {
+    } else {
       updateExamData({
+        uploadedFiles: [],
         addQuestion: examData.addQuestion.filter((style) => style !== "upload"),
       });
     }
-  }, [examData.uploadedFiles]);
+  }, [uploadedFile]);
 
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    setDragActive(e.type === "dragenter" || e.type === "dragover");
   };
 
   const handleDrop = (e) => {
@@ -528,87 +613,54 @@ export const MaterialCreateExamAddMaterial = ({
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFiles(e.dataTransfer.files);
+      handleFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      handleFiles(e.target.files);
+      handleFile(e.target.files[0]);
     }
   };
 
-  const handleFiles = (files) => {
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (
-        file.type === "application/pdf" ||
-        file.type ===
-          "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
-        file.type ===
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-      ) {
-        // Simulate uploading
-        setUploadingFile({
-          name: file.name,
-          size: `${Math.round(file.size / 1024)} KB of ${Math.round(
-            file.size / 1024
-          )} KB`,
-          type: file.type,
-          progress: 0,
-          status: "uploading",
-        });
+  const handleFile = (file) => {
+    if (
+      [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ].includes(file.type)
+    ) {
+      setUploadingFile({
+        name: file.name,
+        size: `${Math.round(file.size / 1024)} KB`,
+        type: file.type,
+        progress: 0,
+        status: "uploading",
+      });
 
-        // Simulate progress
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          setUploadingFile((prev) => ({
-            ...prev,
-            progress: progress,
-          }));
-
-          if (progress >= 100) {
-            clearInterval(interval);
-            setUploadingFile(null);
-            setUploadedFiles((prev) => [
-              ...prev,
-              {
-                name: file.name,
-                size: `${Math.round(file.size / 1024)} KB of ${Math.round(
-                  file.size / 1024
-                )} KB`,
-                type: file.type,
-                status: "completed",
-              },
-            ]);
-
-            // Update parent component
-            updateExamData({
-              uploadedFiles: [
-                ...examData.uploadedFiles,
-                {
-                  name: file.name,
-                  size: Math.round(file.size / 1024),
-                  type: file.type,
-                  status: "completed",
-                },
-              ],
-            });
-          }
-        }, 300);
-      }
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        setUploadingFile((prev) => ({ ...prev, progress }));
+        if (progress >= 100) {
+          clearInterval(interval);
+          setUploadingFile(null);
+          setUploadedFile({
+            file,
+            name: file.name,
+            size: Math.round(file.size / 1024),
+            type: file.type,
+            status: "completed",
+          });
+        }
+      }, 300);
     }
   };
 
-  const removeFile = (index) => {
-    const newFiles = [...uploadedFiles];
-    newFiles.splice(index, 1);
-    setUploadedFiles(newFiles);
-
-    const newExamFiles = [...examData.uploadedFiles];
-    newExamFiles.splice(index, 1);
-    updateExamData({ uploadedFiles: newExamFiles });
+  const removeFile = () => {
+    setUploadedFile(null);
+    updateExamData({ uploadedFiles: [] });
   };
 
   const fileIcons = {
@@ -618,8 +670,6 @@ export const MaterialCreateExamAddMaterial = ({
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
       iconDocx,
   };
-
-  const getFileIcon = (type) => fileIcons[type] || "";
 
   return (
     <div className="border rounded-lg p-4">
@@ -651,35 +701,28 @@ export const MaterialCreateExamAddMaterial = ({
             <input
               type="file"
               className="hidden"
-              accept=".pdf,.pptx,.docx"
+              accept=".pdf,.docx"
               onChange={handleFileChange}
             />
           </label>{" "}
           to upload
         </p>
         <p className="text-xs text-gray-500 mt-1">
-          Only PDF, PPTX & DOCX are supported
+          Only PDF & DOCX are supported
         </p>
       </div>
 
       {uploadingFile && (
         <div className="mt-4 border rounded-lg p-3">
           <div className="flex items-center">
-            <img src={getFileIcon(uploadingFile.type)} alt="" />
+            <img src={fileIcons[uploadingFile.type]} alt="" />
             <div className="ml-3 flex-grow">
-              <div className="flex justify-between">
-                <p className="text-sm font-medium">{uploadingFile.name}</p>
-                <button className="text-gray-500">
-                  <FiX className="h-4 w-4" />
-                </button>
-              </div>
+              <p className="text-sm font-medium">{uploadingFile.name}</p>
               <p className="text-xs text-gray-500">{uploadingFile.size}</p>
               <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
                 <div
                   className="bg-blue-600 h-1.5 rounded-full"
-                  style={{
-                    width: `${uploadingFile.progress}%`,
-                  }}
+                  style={{ width: `${uploadingFile.progress}%` }}
                 ></div>
               </div>
             </div>
@@ -687,41 +730,61 @@ export const MaterialCreateExamAddMaterial = ({
         </div>
       )}
 
-      {examData.uploadedFiles.length >= 1 && (
-        <div className="">
-          {examData.uploadedFiles.map((file, index) => (
-            <div key={index} className="mt-4 border rounded-lg p-3">
-              <div className="flex items-center">
-                <img src={getFileIcon(file.type)} alt="" />
-                <div className="ml-3 flex-grow">
-                  <div className="flex justify-between">
-                    <p className="text-sm font-medium">{file.name}</p>
-                    <button
-                      className="text-gray-500"
-                      onClick={() => removeFile(index)}
-                    >
-                      <FiTrash2 className="h-4 w-4 text-red-500" />
-                    </button>
-                  </div>
-                  <div className="flex items-center">
-                    <p className="text-xs text-gray-500">{file.size}</p>
-                    <div className="ml-2 flex items-center text-green-600 text-xs">
-                      <FiCheck className="h-3 w-3 mr-1" />
-                      Completed
-                    </div>
-                  </div>
-                </div>
+      {uploadedFile && (
+        <div className="mt-4 border rounded-lg p-3">
+          <div className="flex items-center">
+            <img src={fileIcons[uploadedFile.type]} alt="" />
+            <div className="ml-3 flex-grow">
+              <p className="text-sm font-medium">{uploadedFile.name}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">{uploadedFile.size} KB</p>
+                <button className="text-red-500" onClick={removeFile}>
+                  <FiTrash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
-          ))}
+          </div>
+        </div>
+      )}
 
-          {/* <div className="w-full pt-4 flex items-center justify-end">
-            <CustomButton onClick={setSelectedQuestionMethod}>
-              Customize Exam
-            </CustomButton>
-          </div> */}
+      {uploadedFile && (
+        <div className="w-full pt-4 flex items-center justify-end">
+          <CustomButton onClick={setSelectedQuestionMethod}>
+            Customize Exam
+          </CustomButton>
         </div>
       )}
     </div>
   );
+};
+
+const mapQuestions = (response) => {
+  return response.map((q) => {
+    let mappedQuestion = {
+      id: `q${q.id}`,
+      text: q.question,
+      score: q.max_score,
+    };
+
+    if (q.answer_type === "mcq") {
+      mappedQuestion.type = "multiple-choice";
+      mappedQuestion.options = q.mcq_options.map((option, index) => ({
+        id: `q${q.id}_opt${index + 1}`,
+        text: option,
+        isCorrect: q.model_answer.includes(option),
+      }));
+    } else if (q.answer_type === "theory") {
+      mappedQuestion.type = "theory";
+      mappedQuestion.options = [];
+      mappedQuestion.modelAnswer = q.model_answer;
+    } else if (q.answer_type === "cloze") {
+      mappedQuestion.type = "cloze";
+      mappedQuestion.options = [];
+      mappedQuestion.modelAnswer = Array.isArray(q.model_answer)
+        ? q.model_answer.join(", ")
+        : q.model_answer;
+    }
+
+    return mappedQuestion;
+  });
 };

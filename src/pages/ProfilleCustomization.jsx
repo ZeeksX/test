@@ -40,6 +40,7 @@ const ProfilleCustomization = () => {
 
     // Build the userData object: for teachers use form; for students, use studentNumber
     const userData = {
+      title: form.title,
       role,
       schoolName,
       ...(role === "teacher" ? { form } : { studentNumber }),
@@ -70,7 +71,7 @@ const ProfilleCustomization = () => {
       className="landing flex flex-col items-center lg:justify-center justify-center gap-4 md:gap-2 lg:gap-0 w-full min-h-screen"
       style={{ opacity: loaded ? 1 : 0.9, transition: "opacity 0.5s ease-in" }}
     >
-      <div className="sign-in flex flex-row w-[80%] md:w-auto lg:w-3/5 max-lg:h-[90vh] lg:h-[93vh]">
+      <div className="sign-in flex flex-row w-[80%] md:w-auto lg:w-3/5 max-lg:h-[70vh] lg:h-[93vh]">
         <div className="login relative flex flex-col lg:max-w-screen-lg w-full md:rounded-2xl bg-[white] text-black px-2 md:px-4 lg:px-3 border gap-4 py-2 items-center justify-center">
           {isRoleSelected ? (
             isSchoolSelected ? (
@@ -130,7 +131,7 @@ const RoleSelection = ({ onSubmit, role, setRole }) => {
   };
 
   return (
-    <div className="flex flex-col items-center space-y-5 p-6">
+    <div className="flex flex-col items-center space-y-5 p-6 overflow-scroll hide-scrollbar">
       <img src={logoMobile} className="w-12" alt="" />
       <h2 className="text-xl font-semibold">What is your role?</h2>
       <p className="text-gray-600 text-center text-sm !mt-1">
@@ -187,15 +188,15 @@ const SchoolSelection = ({ onSubmit, onReturn, schoolName, setSchoolName }) => {
   };
 
   return (
-    <div className="flex flex-col items-center space-y-5 p-6">
+    <div className="flex flex-col items-center space-y-5 p-6 overflow-scroll hide-scrollbar">
       <button className="absolute top-4 left-4" onClick={onReturn}>
         <MdOutlineArrowBack size={24} />
       </button>
       <img src={logoMobile} className="w-12" alt="" />
-      <h2 className="text-xl font-semibold">
+      <h2 className="text-xl max-sm:text-base font-semibold text-center">
         What is the name of your school/institution?
       </h2>
-      <p className="text-gray-600 text-center text-sm !mt-1">
+      <p className="text-gray-600 text-center max-sm:hidden text-sm !mt-1">
         Please fill in your school/institution name
       </p>
       <div className="w-full">

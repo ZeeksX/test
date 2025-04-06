@@ -3,7 +3,7 @@ import SidebarWithRoleControl from "../components/SidebarWithRoleControl";
 import { AuthProvider, useAuth } from "../components/Auth";
 import DynamicTopNav from "../components/topnav/DynamicTopNav";
 import { Outlet } from "react-router";
-import { CreateStudentGroup, JoinStudentGroupDialog, LeaveStudentGroupDialog, ShareStudentGroupLinkDialog } from "../components/courses/CourseComponents";
+import { AddNewStudentToStudentGroupDialog, CreateStudentGroup, JoinStudentGroupDialog, LeaveStudentGroupDialog, ShareStudentGroupLinkDialog } from "../components/courses/CourseComponents";
 
 const HomePage = ({ sidebarOpen, toggleSidebar }) => {
   const [scrolling, setScrolling] = useState(false);
@@ -51,6 +51,7 @@ const HomePage = ({ sidebarOpen, toggleSidebar }) => {
         <JoinStudentGroupDialog />
         <LeaveStudentGroupDialog />
         <ShareStudentGroupLinkDialog />
+        <AddNewStudentToStudentGroupDialog />
       </AuthProvider>
     </div>
   );

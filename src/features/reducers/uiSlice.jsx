@@ -10,6 +10,7 @@ const uiSlice = createSlice({
     showShareStudentGroupLinkDialog: false,
     showJoinStudentGroupDialog: false,
     showLeaveStudentGroupDialog: false,
+    showAddStudentToStudentGroupDialog: false,
   },
   reducers: {
     setShowCreateExaminationRoom: (state, action) => {
@@ -33,6 +34,9 @@ const uiSlice = createSlice({
     setShowLeaveStudentGroupDialog: (state, action) => {
       state.showLeaveStudentGroupDialog = action.payload;
     },
+    setShowAddStudentToStudentGroupDialog: (state, action) => {
+      state.showAddStudentToStudentGroupDialog = action.payload;
+    },
   },
 });
 
@@ -44,5 +48,6 @@ export const {
   setShowShareStudentGroupLinkDialog,
   setShowJoinStudentGroupDialog,
   setShowLeaveStudentGroupDialog,
+  setShowAddStudentToStudentGroupDialog,
 } = uiSlice.actions;
 export default uiSlice.reducer;
