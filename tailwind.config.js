@@ -7,7 +7,7 @@ export default {
         primary: {
           main: "#1835B3",
           purple: "#7F56D9",
-          danger: "#EA4335"
+          danger: "#EA4335",
         },
         border: {
           main: "#F9F9F9FE",
@@ -21,7 +21,7 @@ export default {
           bg: "#DBDBDB",
           shadow: "#00000012",
           ghost: "#F2F4F7",
-          border: "#D0D5DD"
+          border: "#D0D5DD",
         },
         text: {
           main: "#1C1D1D",
@@ -31,9 +31,11 @@ export default {
       },
       fontFamily: {
         inter: ["Inter", "sans-serif"],
+        metropolis: ["Metropolis", "sans-serif"],
       },
       boxShadow: {
         cardShadow: "0px 0px 47.58px 0px",
+        navShadow: "0px 0px 20px 4px #36404326"
       },
     },
   },

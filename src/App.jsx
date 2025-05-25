@@ -30,6 +30,9 @@ import StudentResultPage from "./components/lecturer/StudentResultPage";
 import ExaminationInstructions from "./components/students/ExaminationInstructions";
 import ExaminationQuestions from "./components/students/ExaminationQuestions";
 import ExaminationReview from "./components/students/ExaminationReview";
+import Settings from "./components/Settings";
+import Profile from "./components/Profile";
+import JoinStudentGroup from "./pages/JoinStudentGroup";
 
 // ProtectedRoute ensures that the children are rendered only if the user is authenticated.
 const ProtectedRoute = ({ children }) => {
@@ -74,6 +77,14 @@ const App = () => {
               />
             }
           />
+          <Route
+            path="exams/groups/join/:invite_code"
+            element={<JoinStudentGroup />}
+          />
+
+          {/* Catch-all route to redirect to the landing page */}
+          <Route path="*" element={<Navigate to="/" />} />
+
           <Route path="/login" element={<Login isMobile={isMobile} />} />
           <Route path="/users/verify-otp" element={<OTPPage />} />
           <Route
@@ -112,19 +123,18 @@ const App = () => {
                 path=":courseId/questions"
                 element={<ExaminationQuestions />}
               />
-              <Route
-                path=":courseId/result"
-                element={<ExaminationResult />}
-              />
-               <Route
-                path=":courseId/review"
-                element={<ExaminationReview />}
-              />
+              <Route path=":courseId/result" element={<ExaminationResult />} />
+              <Route path=":courseId/review" element={<ExaminationReview />} />
+              <Route path=":courseId/result" element={<ExaminationResult />} />
+              <Route path=":courseId/review" element={<ExaminationReview />} />
             </Route>
+            <Route path="settings" element={<Settings />} />
+            <Route path="profile" element={<Profile />} />
             <Route path="lecturers">
               <Route index element={<Lecturers />} />
               <Route path=":lecturerId/groups" element={<LecturerGroups />} />
             </Route>
+
             <Route path="student-groups" element={<StudentGroups />} />
             <Route
               path="course/:courseId/published/:examId/detail"

@@ -27,8 +27,8 @@ const Lecturers = () => {
   return (
     <>
       <div className="">
-        <div className="flex flex-row justify-between w-full ">
-          <div className="flex flex-col gap-4 py-4 px-11">
+        <div className="flex flex-row max-md:flex-col justify-between w-full ">
+          <div className="flex flex-col gap-4 py-4 px-11 max-md:px-4">
             <h3 className="text-[32px] leading-8 font-medium">Teachers</h3>
             <p className="text-sm text-[#222222] font-normal">
               See all the lecturers and lecturer groups you have enrolled for
@@ -38,7 +38,7 @@ const Lecturers = () => {
             className={
               lecturers.length === 0
                 ? "hidden"
-                : "flex" + " items-center justify-center py-4 px-11"
+                : "flex" + " items-center justify-center max-md:justify-end py-4 max-md:py-1 px-11 max-md:px-4"
             }
           >
             <button
@@ -51,7 +51,7 @@ const Lecturers = () => {
           </div>
         </div>
         <hr className="text-[#D0D5DD] mt-4" />
-        <div className="text-xl px-11 gap-6 py-12">
+        <div className="text-xl px-11 max-md:px-4 gap-6 py-12">
           {lecturers.length === 0 ? (
             <div className="flex flex-col justify-center items-center gap-4 col-span-full">
               <img
@@ -59,7 +59,7 @@ const Lecturers = () => {
                 src={illustration3}
                 alt="Illustration"
               />
-              <h1 className="text-[32px] font-medium leading-8">
+              <h1 className="text-[32px] max-md:text-2xl font-medium leading-8">
                 Oops, this page looks a little lonely. Let’s fill it up
               </h1>
               <p className="text-[#667085] text-lg">

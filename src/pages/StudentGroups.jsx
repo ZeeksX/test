@@ -23,12 +23,6 @@ const StudentGroups = () => {
     dispatch(fetchStudentGroups());
   }, [dispatch]);
 
-  const handleStudentGroupClick = (group) => {
-    navigate(`/student-groups/${group.id}`, {
-      state: { group },
-    });
-  };
-
   if (loading) {
     return <Loader />;
   }
@@ -46,7 +40,7 @@ const StudentGroups = () => {
               students taking the subject(s) you teach
             </p>
           </div>
-          <div className="flex flex-row gap-4 p-4 mr-8 max-md:mr-2">
+          <div className="flex flex-row gap-4 p-4 mr-8 max-md:mr-2 max-md:w-full max-md:justify-end max-md:items-end">
             {/* <button className="bg-[#FFFFFF] gap-2 border shadow-[0_1px_2px_rgba(16,24,40,0.05)] text-[black] h-[44px] flex items-center justify-center font-inter font-medium text-sm rounded-lg px-4">
               Share
               <FiUpload />
@@ -61,21 +55,21 @@ const StudentGroups = () => {
           </div>
         </div>
         <hr className="text-[#98A2B3] border-1" />
-        <div className="flex items-end justify-end gap-4 mr-8 max-md:mr-2 p-4">
+        {/* <div className="flex items-end justify-end gap-4 mr-8 max-md:mr-2 p-4">
           <button className="bg-[#EAECF0] text-[black] h-[44px] font-inter text-base rounded-lg w-[133px]">
             View Results
           </button>
           <button className="rounded-lg bg-[#EAECF0] flex items-center justify-center h-[44px] w-[43px]">
             <MoreHorizIcon className="text-[#667085]" />
           </button>
-        </div>
+        </div> */}
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-2 flex-wrap">
+          <div className="grid grid-cols-2 max-md:grid-cols-1 flex-wrap">
             {StudentGroup.map((group) => (
               <div
                 key={group.id}
-                className="flex flex-col gap-4 cursor-pointer mb-8"
-                onClick={() => handleStudentGroupClick(group)}
+                className="flex flex-col gap-4 mb-8 w-full"
+                // onClick={() => handleStudentGroupClick(group)}
               >
                 <GroupCard group={group} />
               </div>

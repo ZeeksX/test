@@ -1,21 +1,31 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, Suspense, useEffect, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/Auth";
-import { TextField, InputAdornment, IconButton } from "@mui/material";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import "../styles/main.css";
-import ForgotPassword from "../components/modals/ForgotPassword";
-import Toast from "../components/modals/Toast";
-import { brandLogo, googleLogo, logoMobile } from "../utils/images.js";
 import { SERVER_URL } from "../utils/constants.js";
 import { Loader } from "../components/ui/Loader.jsx";
 import { CustomButton } from "../components/ui/Button.jsx";
 import { Input, Password } from "../components/ui/Input.jsx";
 import { Label } from "../components/ui/Label.jsx";
 import { FiHome } from "react-icons/fi";
+import { useDispatch } from "react-redux";
+import { setShowForgotPasswordDialog } from "../features/reducers/uiSlice.jsx";
+import { CheckEmailDialog, ForgotPasswordDialog } from "../components/modals/AuthModals.jsx";
+
+// Lazy load non-critical components
+const ForgotPassword = lazy(() =>
+  import("../components/modals/ForgotPassword")
+);
+const Toast = lazy(() => import("../components/modals/Toast"));
+
+// Preload critical images
+const preloadImage = (src) => {
+  const img = new Image();
+  img.src = src;
+};
 
 const Login = ({ isMobile }) => {
+  const dispatch = useDispatch();
   const [formState, setFormState] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loader, setLoader] = useState(false);
@@ -26,6 +36,31 @@ const Login = ({ isMobile }) => {
     message: "",
     severity: "info",
   });
+
+  // Import images using dynamic import for code splitting
+  const [images, setImages] = useState({
+    brandLogo: null,
+    googleLogo: null,
+    logoMobile: null,
+  });
+
+  useEffect(() => {
+    // Dynamic import images
+    const loadImages = async () => {
+      const imageModule = await import("../utils/images.js");
+      setImages({
+        brandLogo: imageModule.bannerTransparent,
+        googleLogo: imageModule.googleLogo,
+        logoMobile: imageModule.logoMobile,
+      });
+
+      // Preload background images
+      preloadImage(imageModule.brandLogo);
+      preloadImage(imageModule.logoMobile);
+    };
+
+    loadImages();
+  }, []);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -69,6 +104,7 @@ const Login = ({ isMobile }) => {
             teacherId: data.teacher1d,
             access: data.access,
             refresh: data.refresh,
+            other_names: data.other_names
           });
 
           // Show toast on the login page
@@ -132,8 +168,12 @@ const Login = ({ isMobile }) => {
       {loader && <Loader />}
       <div className="sign-in flex flex-row lg:w-3/5 lg:h-[90vh]">
         <div className="signin-image md:w-1/2 hidden md:flex"></div>
-        <div className="login hide-scrollbar flex overflow-y-scroll flex-col w-4/5 mx-auto max-w-96 lg:max-w-screen-lg md:w-full md:rounded-r-2xl bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
-          <Header navigateToSignUp={navigateToSignUp} />
+        <div className="login hide-scrollbar flex overflow-y-scroll flex-col w-[90%] mx-auto max-w-96 lg:max-w-screen-lg md:w-full md:rounded-r-2xl bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
+          <Header
+            navigateToSignUp={navigateToSignUp}
+            brandLogo={images.brandLogo}
+            logoMobile={images.logoMobile}
+          />
           <form
             action="/dashboard"
             onSubmit={handleSubmit}
@@ -165,6 +205,12 @@ const Login = ({ isMobile }) => {
                 onChange={handleInputChange}
               />
             </div>
+            <h3
+              className="!p-0 ml-auto h-auto text-sm hover:text-blue-500 cursor-pointer" 
+              onClick={() => dispatch(setShowForgotPasswordDialog(true))}
+            >
+              Forgot password?
+            </h3>
             <CustomButton
               size="lg"
               loading={isLogging}
@@ -173,7 +219,11 @@ const Login = ({ isMobile }) => {
             >
               Login
             </CustomButton>
-            {isMobile ? <GoogleSignInMobile /> : <GoogleSignInDesktop />}
+            {isMobile ? (
+              <GoogleSignInMobile googleLogo={images.googleLogo} />
+            ) : (
+              <GoogleSignInDesktop />
+            )}
             <p className="flex md:hidden text-[#666666] justify-center w-full my-2 text-[0.75rem] font-normal gap-2 text-center">
               Don't have an account?
               <span
@@ -184,34 +234,54 @@ const Login = ({ isMobile }) => {
               </span>
             </p>
           </form>
-          <ForgotPassword
-            open={forgotPasswordOpen}
-            onClose={() => setForgotPasswordOpen(false)}
-          />
+          {/* <Suspense fallback={<div>Loading...</div>}>
+            {forgotPasswordOpen && (
+              <ForgotPassword
+                open={forgotPasswordOpen}
+                onClose={() => setForgotPasswordOpen(false)}
+              />
+            )}
+          </Suspense> */}
         </div>
       </div>
-      <Toast
-        open={toast.open}
-        message={toast.message}
-        severity={toast.severity}
-        onClose={closeToast}
-      />
+      <Suspense fallback={<div>Loading...</div>}>
+        {toast.open && (
+          <Toast
+            open={toast.open}
+            message={toast.message}
+            severity={toast.severity}
+            onClose={closeToast}
+          />
+        )}
+      </Suspense>
+      <ForgotPasswordDialog />
+      <CheckEmailDialog />
     </div>
   );
 };
 
-const Header = ({ navigateToSignUp }) => (
+const Header = ({ navigateToSignUp, brandLogo, logoMobile }) => (
   <div className="flex flex-col justify-center items-center">
-    <img
-      className="hidden md:flex w-1/3 mb-3"
-      src={brandLogo}
-      alt="Acad AI logo"
-    />
-    <img
-      className="flex md:hidden w-1/2 justify-center items-center"
-      src={logoMobile}
-      alt="Acad AI logo"
-    />
+    {brandLogo && (
+      <img
+        className="hidden md:flex w-1/3 mb-3"
+        src={brandLogo}
+        alt="Acad AI logo"
+        loading="eager"
+        width="150"
+        height="45"
+      />
+    )}
+    {logoMobile && (
+      <img
+        className="flex md:hidden w-1/2 justify-center items-center"
+        src={logoMobile}
+        alt="Acad AI logo"
+        loading="eager"
+        width="100"
+        height="30"
+      />
+    )}
     <h3 className="hidden md:flex text-black font-medium text-[1.75rem]">
       Welcome Back!
     </h3>
@@ -239,18 +309,21 @@ const GoogleSignInDesktop = () => (
   </h3>
 );
 
-const GoogleSignInMobile = () => (
+const GoogleSignInMobile = ({ googleLogo }) => (
   <button
     className="flex md:hidden hover:text-white border-[#666666] border-[1px] md:border-none justify-center gap-2 items-center w-full mt-4 h-12 font-normal md:font-extralight text-sm md:text-base rounded-full bg-white md:bg-[#c3c3c3] hover:bg-blue-800 text-gray-800 md:text-white py-1 px-3 transition-all"
     type="submit"
   >
-    <img
-      className="mr-1"
-      width="25"
-      height="20"
-      src={googleLogo}
-      alt="google-logo"
-    />{" "}
+    {googleLogo && (
+      <img
+        className="mr-1"
+        width="25"
+        height="20"
+        src={googleLogo}
+        alt="google-logo"
+        loading="eager"
+      />
+    )}{" "}
     Sign in with Google
   </button>
 );

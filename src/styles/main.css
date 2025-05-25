@@ -1,16 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+/* Optimized font loading */
+/* Only load the weights we actually use */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
+/* Font display strategy for custom fonts */
 @font-face {
   font-family: 'Metropolis';
-  src: url('Metropolis-Medium.otf') format('opentype');
+  src: url('Metropolis-Medium.woff2') format('woff2'),
+    url('Metropolis-Medium.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
+  /* Ensures text remains visible during font loading */
 }
 
 @font-face {
   font-family: 'Metropolis normal';
-  src: url('Metropolis.otf') format('opentype');
+  src: url('Metropolis.woff2') format('woff2'),
+    url('Metropolis.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -20,32 +26,53 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-
 }
 
 .inter {
-  font-family: "Inter";
+  font-family: "Inter", sans-serif;
 }
 
 .roboto {
-  font-family: "Roboto", serif;
+  font-family: "Roboto", sans-serif;
 }
 
+/* Optimize background images with media queries */
 .landing {
   height: 100%;
   width: 100%;
-  background: url("../assets/Background.png");
-  background-position: center;
-  background-size: 100% 100%;
-  backdrop-filter: blur(5px);
-  background-repeat: no-repeat;
-  font-family: 'Inter';
+  /* Fallback color while image loads */
+  font-family: 'Inter', sans-serif;
+  position: relative;
 }
 
+/* Load appropriate sized images based on screen size */
+@media screen and (max-width: 768px) {
+  .landing {
+    background-image: url("../assets/Background.webp");
+    background-position: center;
+    background-size: cover;
+    backdrop-filter: blur(5px);
+    background-repeat: no-repeat;
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .landing {
+    background-image: url("../assets/Background.webp");
+    background-position: center;
+    background-size: cover;
+    backdrop-filter: blur(5px);
+    background-repeat: no-repeat;
+  }
+}
+
+/* Add low-res background color for signin-image */
 .signin-image {
-  background: url("../assets/signin-img.png");
+  background-color: #e0e0e0;
+  /* Fallback color while image loads */
+  background-image: url("../assets/signin-img.webp");
   background-position: center;
-  background-size: cover;
+  background-size: cover
 }
 
 label {
@@ -53,24 +80,18 @@ label {
 }
 
 .metropolis {
-  font-family: "Metropolis", sans-serif;
+  font-family: "Metropolis", 'Roboto', sans-serif;
 }
 
 .metropolis-normal {
-  font-family: "Metropolis normal", sans-serif;
+  font-family: "Metropolis normal", 'Roboto', sans-serif;
 }
 
 .feature {
   background: #FFFFFF;
   box-shadow: 2px 4px 21px rgba(0, 0, 0, 0.25);
+  max-width: 427px;
 }
-
-/* #name,
-#email {
-  height: 1.5rem;
-  padding: 0.25rem 0.5rem;
-} */
-
 
 @media only screen and (max-width: 767px) {
   .login {

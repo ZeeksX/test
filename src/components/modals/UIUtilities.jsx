@@ -1,3 +1,5 @@
+import apiCall from "../../utils/apiCall";
+
 export const toLocalISOString = (date) => {
   const offset = date.getTimezoneOffset();
   const localDate = new Date(date.getTime() - offset * 60000);
@@ -102,7 +104,7 @@ export function formatScheduleTime(scheduleTime) {
     hour: "numeric",
     minute: "numeric",
     hour12: true,
-    timeZone: "UTC", 
+    timeZone: "UTC",
   };
 
   let formattedDate = date.toLocaleString("en-US", options);
@@ -114,4 +116,57 @@ export function formatScheduleTime(scheduleTime) {
   formattedDate = formattedDate.replace(/\d+/, `${day}${suffix}`);
 
   return formattedDate;
+}
+
+export const parseTimeString = (timeStr) => {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+};
+
+export function setTimeToDate(date, scheduleTime) {
+  const [hours, minutes] = scheduleTime.split(":").map(Number);
+
+  const updatedDate = new Date(date);
+
+  updatedDate.setHours(hours, minutes, 0, 0);
+
+  return updatedDate;
+}
+
+export async function filterExamsByStudentSubmissions(
+  examinations,
+  studentId) {
+  try {
+    const availableExams = [];
+
+    for (const exam of examinations) {
+      try {
+        const response = await apiCall.get(`/exams/${exam.id}/results/`);
+        const submissions = response.data;
+
+        // Check if the student has already submitted for this exam
+        const studentSubmission = submissions.find(
+          (submission) => submission.student.student_id === studentId
+        );
+
+        if (!studentSubmission) {
+          availableExams.push(exam);
+        } else {
+          console.log(
+            `Student ${studentId} has already submitted for exam: ${exam.title} (ID: ${exam.id})`
+          );
+        }
+      } catch (error) {
+        console.error(`Error fetching results for exam ${exam.id}:`, error);
+        availableExams.push(exam);
+      }
+    }
+
+    return availableExams;
+  } catch (error) {
+    console.error("Error filtering exams:", error);
+    return examinations;
+  }
 }

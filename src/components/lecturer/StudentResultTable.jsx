@@ -56,7 +56,7 @@ export default function StudentResultsTable({ studentResults }) {
                           : "bg-green-100 text-green-800"
                       }`}
                     >
-                      {student.score}
+                      {student.score === null ? "Not Graded" : student.score}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">

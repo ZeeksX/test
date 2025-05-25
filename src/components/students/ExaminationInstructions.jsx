@@ -1,12 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLocation } from "react-router";
 import { useNavigate } from "react-router";
 import apiCall from "../../utils/apiCall";
+import Toast from "../modals/Toast";
 
 const ExaminationInstructions = () => {
   const { state } = useLocation();
   const { examination: exam } = state || {};
   const navigate = useNavigate();
+
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
+  };
 
   if (!exam) {
     return (
@@ -15,7 +30,7 @@ const ExaminationInstructions = () => {
       </div>
     );
   }
-  
+
   const handleClick = async (exam) => {
     try {
       const response = await apiCall.post(`/exams/start/${exam.id}/`);
@@ -26,6 +41,9 @@ const ExaminationInstructions = () => {
       }
     } catch (error) {
       console.error("Error starting exam:", error);
+      if (error.status == 400) {
+        showToast("You have already started this exam.", "error");
+      }
     }
   };
 
@@ -72,6 +90,12 @@ const ExaminationInstructions = () => {
           </button>
         </div>
       </div>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </div>
   );
 };

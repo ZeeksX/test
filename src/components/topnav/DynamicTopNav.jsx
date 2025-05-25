@@ -1,20 +1,26 @@
 import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar";
-import { bannerTransparent } from "../../utils/images.js";
+import { bannerTransparent, profileImageDefault } from "../../utils/images.js";
 import { FiBell, FiSettings } from "react-icons/fi";
 import { useAuth } from "../Auth.jsx";
 import DensityMediumIcon from "@mui/icons-material/DensityMedium";
 import MobileSidebar from "../lecturer/MobileSidebar.jsx";
+import StudentMobileSidebar from "../students/StudentMobileSidebar.jsx";
 import Dropdown from "./Dropdown.jsx";
+import { useNavigate } from "react-router-dom";
 
 const DynamicTopNav = () => {
-  const [src, setSrc] = useState("");
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [showDropDown, setShowDropDown] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const toggleSidebar = () => setShowSidebar((prev) => !prev);
 
   const handleClick = () => setShowDropDown((prev) => !prev);
+
+  const handleSettingsClick = () => {
+    navigate("/settings")
+  }
 
   return (
     <>
@@ -31,15 +37,25 @@ const DynamicTopNav = () => {
         </div>
         <div className="flex items-center justify-start gap-6">
           <FiBell size={20} className="cursor-pointer max-md:hidden" />
-          <FiSettings size={20} className="cursor-pointer max-md:hidden" />
+          <FiSettings size={20} className="cursor-pointer max-md:hidden" onClick={() => { handleSettingsClick() }} />
+          <div>
+            <div className="hidden md:flex flex-col items-right justify-right">
+              <h1 className="text-xs font-semibold text-[#222222] text-right">
+                {user?.other_names} {user?.last_name}
+              </h1>
+              <p className="text-[8px] text-[#A1A1A1] text-right">
+                {user?.role === "teacher" ? "Teacher" : "Student"}
+              </p>
+            </div>
+          </div>
           <div
             className="cursor-pointer"
             onClick={() => { handleClick() }}
           >
             <Avatar
             >
-              {src ? (
-                <AvatarImage src={src} alt="Profile" />
+              {profileImageDefault ? (
+                <AvatarImage src={profileImageDefault} alt="Profile" />
               ) : (
                 <AvatarFallback>
                   {user?.last_name ? user?.last_name.charAt(0) : "A"}
@@ -49,8 +65,12 @@ const DynamicTopNav = () => {
           </div>
         </div>
       </div>
-      <MobileSidebar showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
-      <Dropdown showDropDown={showDropDown} setShowDropDown={setShowDropDown}/>
+      {showSidebar && user?.role === "teacher" ? (
+        <MobileSidebar showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
+      ) : user?.role === "student" ? (
+        <StudentMobileSidebar showSidebar={showSidebar} toggleSidebar={toggleSidebar} />
+      ) : null}
+      <Dropdown showDropDown={showDropDown} setShowDropDown={setShowDropDown} />
     </>
   );
 };

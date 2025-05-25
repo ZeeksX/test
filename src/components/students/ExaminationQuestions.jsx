@@ -5,9 +5,13 @@ import Visibility from "@mui/icons-material/Visibility";
 import { useLocation, useNavigate } from "react-router-dom";
 import { submitExamForGrading } from "./ExamComponents";
 import apiCall from "../../utils/apiCall";
+import { useDispatch } from "react-redux";
+import { setShowExamConcludedDialog } from "../../features/reducers/uiSlice";
+import { ExamConcludedDialog } from "../modals/AuthModals";
 
 const ExaminationQuestions = () => {
   const location = useLocation();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const exam = location.state?.exam || {};
   // State to manage current question index
@@ -19,6 +23,7 @@ const ExaminationQuestions = () => {
   // Timer state
   const [timeRemaining, setTimeRemaining] = useState("00:00:00");
   const [isTimeUp, setIsTimeUp] = useState(false);
+  const [tabLeaveCount, setTabLeaveCount] = useState(0);
 
   // Submission status state
   const [submissionStatus, setSubmissionStatus] = useState("");
@@ -107,6 +112,33 @@ const ExaminationQuestions = () => {
     };
   }, [exam.due_time]);
 
+  // useEffect(() => {
+  //     const handleVisibilityChange = () => {
+  //       if (document.visibilityState === "hidden") {
+  //         setTabLeaveCount((prev) => prev + 1);
+  //       } else if (tabLeaveCount > 0) {
+  //         alert("Please do not leave the tab during the exam!");
+  //         if (tabLeaveCount >= 3) {
+  //           handleSubmit();
+  //         }
+  //       }
+  //     };
+  //     document.addEventListener("visibilitychange", handleVisibilityChange);
+  //     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  //   }, [tabLeaveCount]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      alert(
+        "All exam data will be lost if you refresh the page. Are you sure?"
+      );
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
   // Function to handle when time is up
   const handleTimeUp = async () => {
     if (isTimeUp || isSubmitting) return;
@@ -144,30 +176,41 @@ const ExaminationQuestions = () => {
     try {
       setSubmissionStatus("Submitting your answers...");
 
-      const gradingResults = await submitExamForGrading(
-        exam.id,
-        userAnswers,
-        exam
-      );
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      const studentNumber = userData.studentNumber;
+
+      // const gradingResults = await submitExamForGrading(
+      //   exam.id,
+      //   userAnswers,
+      //   exam
+      // );
 
       const body = {
-        score: gradingResults.total_scores["1"],
-        answers: { gradingResults, userAnswers },
+        student: {
+          matric_number: studentNumber,
+        },
+        exam: exam.id,
+        answers: userAnswers,
+        gradingStatus: "Not Graded",
+        is_approved: false,
       };
 
-      const response = await apiCall.post(`/exams/submit/${exam.id}/`, body);
-      if (response.status === 200) {
+      const response = await apiCall.post(`/exams/student-exams/submit_exam/`, body);
+      if (response.status === 201) {
         setSubmissionStatus("Submitted successfully!");
       }
 
-      setTimeout(() => {
-        navigate(`/examinations/${exam.id}/result`, {
-          state: { results: gradingResults, exam, userAnswers },
-        });
-      }, 2000);
+      dispatch(setShowExamConcludedDialog(true));
+
+      // setTimeout(() => {
+      //   navigate(`/examinations/${exam.id}/result`, {
+      //     state: { results: gradingResults, exam, userAnswers },
+      //   });
+      // }, 2000);
     } catch (error) {
       console.error("Error submitting exam:", error);
       setSubmissionStatus("Failed to submit answers. Please try again.");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -380,6 +423,8 @@ const ExaminationQuestions = () => {
           <ChevronRight className="ml-1" />
         </button>
       </div>
+
+      <ExamConcludedDialog />
     </div>
   );
 };

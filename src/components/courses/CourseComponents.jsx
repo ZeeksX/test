@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ButtonDismissDialog,
+  CustomBlurBgDialog,
   DialogContent,
   DialogHeader,
   DialogSubTitle,
@@ -13,12 +14,19 @@ import {
   setShowCreateExaminationRoom,
   setShowCreateNewExamination,
   setShowCreateStudentGroup,
+  setShowDeleteExamDialog,
   setShowJoinStudentGroupDialog,
   setShowLeaveStudentGroupDialog,
+  setShowPostExamWarningDialog,
   setShowShareStudentGroupLinkDialog,
   setShowStudentGroupWarnDialog,
 } from "../../features/reducers/uiSlice";
-import { DropdownMenuSeparator } from "../ui/Dropdown";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "../ui/Dropdown";
 import { Label } from "../ui/Label";
 import { Input } from "../ui/Input";
 import { CustomButton } from "../ui/Button";
@@ -32,7 +40,7 @@ import {
   FiUpload,
   FiX,
 } from "react-icons/fi";
-import { copyToClipboard } from "../../utils/minorUtilities";
+import { copyToClipboard, sleep } from "../../utils/minorUtilities";
 import {
   Select,
   SelectContent,
@@ -47,7 +55,7 @@ import {
   MaterialCreateExamAddMaterial,
   MaterialCreateExamUpdateMetaData,
 } from "./CreateExamQuestion";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import CourseExamPreview from "./CourseExamPreview";
 import {
   createCourse,
@@ -60,8 +68,12 @@ import {
   fetchStudentGroups,
 } from "../../features/reducers/examRoomSlice";
 import { Spinner } from "../ui/Loader";
-import { fetchExams } from "../../features/reducers/examSlice";
+import { deleteExam, fetchExams } from "../../features/reducers/examSlice";
 import { SERVER_URL } from "../../utils/constants";
+import DateTimeSelector from "../DateTimeSelector";
+import { PostExamWarningDialog } from "../modals/AuthModals";
+import ConfirmationModal from "../modals/ConfirmationModal";
+import { CardDescription } from "../ui/Card";
 
 export const CreateExaminationRoom = () => {
   const isOpen = useSelector((state) => state.ui.showCreateExaminationRoom);
@@ -88,10 +100,16 @@ export const CreateExaminationRoom = () => {
       setFormData({ name: "", code: "" });
       showToast("Course Created", "success");
       dispatch(createLocalCourse(response));
-      // dispatch(setShowCreateExaminationRoom(false));
+      setTimeout(() => {
+        dispatch(setShowCreateExaminationRoom(false));
+        closeToast();
+      }, 2000);
     } catch (err) {
       const message = err.course_code[0];
-      showToast(message || "Failed to create course. Please try again.", "error");
+      showToast(
+        message || "Failed to create course. Please try again.",
+        "error"
+      );
       console.error("Error creating course:", err);
     }
   };
@@ -197,7 +215,7 @@ export const CreateNewExam = () => {
     questions: [],
     uploadedFiles: [],
     gradingStyle: "strict",
-    numberOfQuestions: 50,
+    numberOfQuestions: 15,
     questionTypes: [],
     studentGroups: [],
   });
@@ -237,7 +255,8 @@ export const CreateNewExam = () => {
       }
       if (
         currentStep === 4 &&
-        (!examData.dueTime.toString().trim() || !examData.scheduleTime.toString().trim())
+        (!examData.dueTime.toString().trim() ||
+          !examData.scheduleTime.toString().trim())
       ) {
         showToast(
           "Please select a schedule date and due date to move to the next step",
@@ -323,14 +342,13 @@ export const CreateNewExam = () => {
       return;
     }
 
-    setSubmitting(true);
     const body = {
       title: examData.name,
       exam_type: examData.examType,
       description: examData.description,
-      schedule_time: new Date(examData.scheduleTime),
+      schedule_time: new Date(examData.scheduleTime).toISOString(),
       status: "Scheduled",
-      due_time: new Date(examData.dueTime),
+      due_time: new Date(examData.dueTime).toISOString(),
       questions: examData.questions,
       source_file: "",
       strict: examData.gradingStyle === "strict",
@@ -338,37 +356,41 @@ export const CreateNewExam = () => {
       exam_rooms: examData.studentGroups.map((group) => group.id),
     };
 
-    try {
-      const response = await apiCall.post("/exams/exams/", body);
+    dispatch(setShowPostExamWarningDialog({ willShow: true, exam: body }));
 
-      if (response.status === 201) {
-        showToast("Exam created", "success");
-        setExamData({
-          name: "",
-          course: courseId,
-          examType: "",
-          description: "",
-          scheduleTime: false,
-          dueTime: false,
-          addQuestion: [],
-          questionMethod: selectedQuestionMethod,
-          questions: [],
-          uploadedFiles: [],
-          gradingStyle: "strict",
-          numberOfQuestions: 50,
-          questionTypes: [],
-          studentGroups: [],
-          exam_rooms: [],
-        });
+    // setSubmitting(true);
 
-        dispatch(setShowCreateNewExamination(false));
-      }
-    } catch (error) {
-      showToast("Failed to create exam. Please try again.", "error");
-      console.error("Error creating exam:", error);
-    } finally {
-      setSubmitting(false);
-    }
+    // try {
+    //   const response = await apiCall.post("/exams/exams/", body);
+
+    //   if (response.status === 201) {
+    //     showToast("Exam created", "success");
+    //     setExamData({
+    //       name: "",
+    //       course: courseId,
+    //       examType: "",
+    //       description: "",
+    //       scheduleTime: false,
+    //       dueTime: false,
+    //       addQuestion: [],
+    //       questionMethod: selectedQuestionMethod,
+    //       questions: [],
+    //       uploadedFiles: [],
+    //       gradingStyle: "strict",
+    //       numberOfQuestions: 50,
+    //       questionTypes: [],
+    //       studentGroups: [],
+    //       exam_rooms: [],
+    //     });
+
+    //     dispatch(setShowCreateNewExamination(false));
+    //   }
+    // } catch (error) {
+    //   showToast("Failed to create exam. Please try again.", "error");
+    //   console.error("Error creating exam:", error);
+    // } finally {
+    //   setSubmitting(false);
+    // }
   };
 
   const showToast = (message, severity = "info") => {
@@ -400,7 +422,7 @@ export const CreateNewExam = () => {
                       {step}
                     </div>
                     <div
-                      className={`w-16 h-1 ${
+                      className={`w-16 max-md:w-10 h-1 ${
                         step < 5
                           ? step < currentStep
                             ? "bg-green-500"
@@ -488,6 +510,7 @@ export const CreateNewExam = () => {
                   <CourseExamPreview
                     examData={examData}
                     setPreview={() => setExamPreview(false)}
+                    updateExamData={updateExamData}
                   />
                 </>
               ) : (
@@ -549,6 +572,11 @@ export const CreateNewExam = () => {
                           setSelectedQuestionMethod={() =>
                             setSelectedQuestionMethod("")
                           }
+                          currentStep={currentStep}
+                          setCurrentStep={() => setCurrentStep(currentStep + 1)}
+                          setPreviousStep={() =>
+                            setCurrentStep(currentStep - 1)
+                          }
                         />
                       )}
 
@@ -558,6 +586,27 @@ export const CreateNewExam = () => {
                           updateExamData={updateExamData}
                           setSelectedQuestionMethod={() =>
                             setSelectedQuestionMethod("")
+                          }
+                          currentStep={currentStep}
+                          setCurrentStep={() => setCurrentStep(currentStep + 1)}
+                          setPreviousStep={() =>
+                            setCurrentStep(currentStep - 1)
+                          }
+                        />
+                      )}
+
+                      {selectedQuestionMethod === "copy" && (
+                        <ManualCreateExamQuestion
+                          examData={examData}
+                          updateExamData={updateExamData}
+                          setSelectedQuestionMethod={() =>
+                            setSelectedQuestionMethod("")
+                          }
+                          currentStep={currentStep}
+                          style="copied exam"
+                          setCurrentStep={() => setCurrentStep(currentStep + 1)}
+                          setPreviousStep={() =>
+                            setCurrentStep(currentStep - 1)
                           }
                         />
                       )}
@@ -569,6 +618,7 @@ export const CreateNewExam = () => {
                           </p>
 
                           <div className="space-y-4">
+                            {/* Create exam manuLLy */}
                             <div
                               className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
                               onClick={() =>
@@ -590,6 +640,7 @@ export const CreateNewExam = () => {
                               </div>
                             </div>
 
+                            {/* Create exam with material */}
                             <MaterialCreateExamAddMaterial
                               examData={examData}
                               updateExamData={updateExamData}
@@ -598,6 +649,7 @@ export const CreateNewExam = () => {
                               }
                             />
 
+                            {/* Create Exam by copying another exam */}
                             <div
                               className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
                               // onClick={() => setSelectedQuestionMethod("copy")}
@@ -625,15 +677,16 @@ export const CreateNewExam = () => {
                                   <SelectValue placeholder="Examination 1" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {/* <SelectItem value="exam1">
-                                    Examination 1
-                                  </SelectItem>
-                                  <SelectItem value="exam2">
-                                    Examination 2
-                                  </SelectItem> */}
                                   {teacherExams?.map((exam) => (
                                     <SelectItem key={exam.id} value={exam}>
-                                      {exam.title}
+                                      <p
+                                        className=""
+                                        onClick={() =>
+                                          setSelectedQuestionMethod("copy")
+                                        }
+                                      >
+                                        {exam.title}
+                                      </p>
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -702,7 +755,7 @@ export const CreateNewExam = () => {
 
                   {currentStep === 4 && (
                     <div className="space-y-6">
-                      <div className="flex-1">
+                      {/* <div className="flex-1">
                         <Label htmlFor="startTIme" className={`mb-2`}>
                           Schedule Time
                         </Label>
@@ -750,7 +803,11 @@ export const CreateNewExam = () => {
                           placeholder="Select Date"
                           required
                         />
-                      </div>
+                      </div> */}
+                      <DateTimeSelector
+                        examData={examData}
+                        updateExamData={updateExamData}
+                      />
                     </div>
                   )}
 
@@ -804,11 +861,12 @@ export const CreateNewExam = () => {
                     </div>
                   )}
 
-                  {selectedQuestionMethod == "" && (
+                  {(currentStep === 2 && selectedQuestionMethod) == "" && (
                     <div className="flex justify-end gap-6 mt-8">
                       {currentStep === 1 ? (
                         <CustomButton
                           variant="clear"
+                          className="w-1/5"
                           onClick={() =>
                             dispatch(setShowCreateNewExamination(false))
                           }
@@ -816,7 +874,11 @@ export const CreateNewExam = () => {
                           Cancel
                         </CustomButton>
                       ) : (
-                        <CustomButton variant="clear" onClick={handleBack}>
+                        <CustomButton
+                          variant="clear"
+                          className="w-1/5"
+                          onClick={handleBack}
+                        >
                           Cancel
                         </CustomButton>
                       )}
@@ -825,14 +887,14 @@ export const CreateNewExam = () => {
                         <div className="flex gap-3 ml-auto">
                           <CustomButton
                             variant="ghost"
-                            className=""
+                            className="w-1/3"
                             // onClick={() => handlePublish()}
                           >
-                            Save to Draft
+                            Draft
                           </CustomButton>
                           <CustomButton
                             variant="ghost"
-                            className=""
+                            className="w-1/3"
                             onClick={() => setExamPreview(true)}
                           >
                             Preview
@@ -840,8 +902,9 @@ export const CreateNewExam = () => {
                           <CustomButton
                             loading={submitting}
                             variant="ghost"
-                            className="w-[100px]"
+                            className="w-1/3"
                             onClick={() => handlePublish()}
+                            // onClick={() => dispatch(setShowPostExamWarningDialog({willShow: true, exam: }))}
                           >
                             Publish
                           </CustomButton>
@@ -870,6 +933,8 @@ export const CreateNewExam = () => {
         severity={toast.severity}
         onClose={closeToast}
       />
+
+      <PostExamWarningDialog setExamData={setExamData} />
     </div>
   );
 };
@@ -905,7 +970,7 @@ export const StudentGroupWarnDialog = () => {
 };
 
 export const CreateStudentGroup = () => {
-  const { courseId } = useParams();
+  // const { courseId } = useParams();
   const isOpen = useSelector((state) => state.ui.showCreateStudentGroup);
   const [formData, setFormData] = useState({ name: "", description: "" });
   const [toast, setToast] = useState({
@@ -919,6 +984,7 @@ export const CreateStudentGroup = () => {
 
   const handleCreateStudentGroup = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const body = {
       name: formData.name,
@@ -957,14 +1023,14 @@ export const CreateStudentGroup = () => {
       maxWidth="400px"
     >
       <DialogHeader>
-        <DialogTitle>Create Student Group</DialogTitle>
-        <DialogSubTitle>
+        <h2 className="!font-semibold text-xl">Create Student Group</h2>
+        <p className="opacity-80">
           Set up a student group to organize and manage your tests easily.
-        </DialogSubTitle>
+        </p>
       </DialogHeader>
       <DropdownMenuSeparator />
       <form action="" onSubmit={handleCreateStudentGroup}>
-        <DialogContent className="p-6">
+        <DialogContent className="p-6 py-2">
           <Label htmlFor="examRoomName">Student Group Name</Label>
           <Input
             value={formData.name}
@@ -1009,21 +1075,25 @@ export const CreateStudentGroup = () => {
   );
 };
 
-export const ShareStudentGroupLinkDialog = ({ link = "wbfefebi" }) => {
+export const ShareStudentGroupLinkDialog = () => {
   const isOpen = useSelector(
+    (state) => state.ui.showShareStudentGroupLinkDialog.willShow
+  );
+
+  const { link, code } = useSelector(
     (state) => state.ui.showShareStudentGroupLinkDialog
   );
   const dispatch = useDispatch();
 
   return (
-    <ButtonDismissDialog
+    <OutsideDismissDialog
       open={isOpen}
       onOpenChange={setShowShareStudentGroupLinkDialog}
       maxWidth="400px"
     >
       <DialogHeader>
-        <DialogTitle className="whitespace-pre-line">
-          {"Here’s your link to this\nStudent group"}
+        <DialogTitle className="whitespace-pre-line text-center">
+          Here’s your link and code to this Student Group
         </DialogTitle>
       </DialogHeader>
       <DropdownMenuSeparator />
@@ -1035,7 +1105,19 @@ export const ShareStudentGroupLinkDialog = ({ link = "wbfefebi" }) => {
           </button>
         </div>
       </DialogContent>
-      <DropdownMenuSeparator />
+      <div className="flex w-full items-center">
+        <div className="flex-1 h-[1px] bg-[#D0D5DD]"></div>
+        <p className="mx-2 text-[#D0D5DD]">OR</p>
+        <div className="flex-1 h-[1px] bg-[#D0D5DD]"></div>
+      </div>
+      <DialogContent className="p-4">
+        <div className="px-4 py-2 flex items-center justify-start w-full bg-[#F2F4F7] rounded-md">
+          <p className="flex-1 text-[#155EEF]">{code}</p>
+          <button onClick={() => copyToClipboard(code)}>
+            <FiCopy color="#155EEF" />
+          </button>
+        </div>
+      </DialogContent>
       <DialogContent className="p-6 pt-4 flex items-center justify-center gap-4">
         <CustomButton
           className="!text-sm gap-3"
@@ -1054,7 +1136,7 @@ export const ShareStudentGroupLinkDialog = ({ link = "wbfefebi" }) => {
           Done
         </CustomButton>
       </DialogContent>
-    </ButtonDismissDialog>
+    </OutsideDismissDialog>
   );
 };
 
@@ -1065,16 +1147,58 @@ export function ExaminationCard({
   studentGroups = 5,
   dueTime = "Mar 22nd, 8:00 PM",
 }) {
+  const dispatch = useDispatch();
+  const [isOpen, setIsOpen] = useState(false);
+  const [idToShow, setIdToShow] = useState(0);
+
+  const toggleDropdown = () => {
+    setIsOpen((prev) => !prev);
+  };
+
   return (
-    <Link
-      to={`${id}/detail`}
+    <div
+      // to={`${id}/detail`}
       className="bg-white border w-full max-w-md shadow-sm p-4 mb-4"
     >
       <div className="flex flex-row items-start justify-between gap-4 space-y-0 pb-2">
-        <CustomButton variant="ghost" size="icon" className="h-8 w-8 ">
-          <FiMoreVertical className="h-5 w-5 text-gray-500" />
-          <span className="sr-only">Menu</span>
-        </CustomButton>
+        <DropdownMenu>
+          <CustomButton
+            onClick={toggleDropdown}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 "
+          >
+            <FiMoreVertical className="h-5 w-5" />
+            <span className="sr-only">Menu</span>
+          </CustomButton>
+          <DropdownMenuContent
+            className="!w-[200px]"
+            open={isOpen}
+            setOpen={setIsOpen}
+            align="end"
+          >
+            <DropdownMenuItem>
+              <Link
+                to={`${id}/detail`}
+                className="w-full h-full px-4 py-2 flex items-center justify-start"
+              >
+                View Details
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <button
+                className="w-full h-full px-4 py-2 flex items-center justify-start"
+                onClick={() => {
+                  setIdToShow(id);
+                  dispatch(setShowDeleteExamDialog(true));
+                }}
+              >
+                Delete Examination
+              </button>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <div className="w-full">
           <h3 className="text-lg font-medium">{title}</h3>
         </div>
@@ -1088,64 +1212,115 @@ export function ExaminationCard({
           <p className="text-sm text-gray-500">Due Date & Time - {dueTime}</p>
         </div>
       </div>
-    </Link>
+
+      {idToShow != 0 && <DeleteExamDialog title={title} id={idToShow} />}
+    </div>
   );
 }
 
 export const JoinStudentGroupDialog = () => {
   const isOpen = useSelector((state) => state.ui.showJoinStudentGroupDialog);
   const dispatch = useDispatch();
-  const { allStudentGroups } = useSelector((state) => state.examRooms);
-
-  useEffect(() => {
-    dispatch(fetchStudentGroups());
-  }, [dispatch]);
-
-  const [search, setSearch] = useState("");
-  const [isJoining, setIsJoining] = useState("");
+  const navigate = useNavigate();
+  // const { allStudentGroups } = useSelector((state) => state.examRooms);
   const [toast, setToast] = useState({
     open: false,
     message: "",
     severity: "info",
   });
 
-  const filteredStudentGroups = allStudentGroups.filter((studentGroup) =>
-    studentGroup.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const [otp, setOtp] = useState(["", "", "", "", "", "", "", ""]);
+  const [loader, setLoader] = useState(false);
+  const inputRefs = useRef([]);
 
-  const joinGroup = async (studentGroupId) => {
-    setIsJoining(studentGroupId);
+  const handleChange = (index, value) => {
+    if (!/^[a-zA-Z0-9]?$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
 
-    try {
-      const response = await fetch(
-        `${SERVER_URL}/exams/exam-rooms/${studentGroupId}/join/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        showToast("Student group joined successfully", "success");
-      } else {
-        const errorData = await response.json();
-        if (errorData.message) {
-          showToast(errorData.message, "error");
-        } else {
-          showToast("Failed to join student group. Please try again.", "error");
-          console.error("Error joining student group:", errorData);
-        }
-      }
-    } catch (error) {
-      showToast("Failed to join student group. Please try again.", "error");
-      console.error("Error joining student group:", error);
-    } finally {
-      setIsJoining("");
+    if (value && index < otp.length - 1) {
+      inputRefs.current[index + 1].focus();
     }
   };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1].focus();
+    }
+  };
+
+  const handleSubmit = async (otpValue) => {
+    const invite_code = otpValue || otp.join("");
+
+    if (invite_code.length !== 8) {
+      showToast("Please fill all the fields with valid digits", "error");
+      return;
+    }
+
+    setLoader(true);
+
+    try {
+      const response = await apiCall.post(`/exams/groups/join/${invite_code}/`);
+
+      if (response.status === 201 || response.status === 200) {
+        showToast(`You have joined the student group`, "success");
+        await sleep(2000);
+        dispatch(setShowJoinStudentGroupDialog(false));
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      showToast("Failed to join group. Please try again.", "error");
+      console.error("Error sending code:", error);
+    } finally {
+      setLoader(false);
+    }
+  };
+
+  // useEffect(() => {
+  //   dispatch(fetchStudentGroups());
+  // }, [dispatch]);
+
+  // const [search, setSearch] = useState("");
+  // const [isJoining, setIsJoining] = useState("");
+
+  // const filteredStudentGroups = allStudentGroups.filter((studentGroup) =>
+  //   studentGroup.name.toLowerCase().includes(search.toLowerCase())
+  // );
+
+  // const joinGroup = async (studentGroupId) => {
+  //   setIsJoining(studentGroupId);
+
+  //   try {
+  //     const response = await fetch(
+  //       `${SERVER_URL}/exams/exam-rooms/${studentGroupId}/join/`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+  //         },
+  //       }
+  //     );
+
+  //     if (response.ok) {
+  //       showToast("Student group joined successfully", "success");
+  //     } else {
+  //       const errorData = await response.json();
+  //       if (errorData.message) {
+  //         showToast(errorData.message, "error");
+  //       } else {
+  //         showToast("Failed to join student group. Please try again.", "error");
+  //         console.error("Error joining student group:", errorData);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     showToast("Failed to join student group. Please try again.", "error");
+  //     console.error("Error joining student group:", error);
+  //   } finally {
+  //     setIsJoining("");
+  //   }
+  // };
 
   const showToast = (message, severity = "info") => {
     setToast({ open: true, message, severity });
@@ -1156,62 +1331,104 @@ export const JoinStudentGroupDialog = () => {
   };
 
   return (
-    <ButtonDismissDialog
+    // <ButtonDismissDialog
+    //   open={isOpen}
+    //   onOpenChange={(open) => dispatch(setShowJoinStudentGroupDialog(open))}
+    // >
+    //   <DialogHeader>
+    //     <DialogTitle>Join a Student Group</DialogTitle>
+    //   </DialogHeader>
+    //   <DropdownMenuSeparator />
+    //   <DialogContent className="p-4">
+    //     <div className="w-full flex flex-col items-start justify-start">
+    //       <h2 className="font-inter font-medium text-xl mb-4">
+    //         Search for a student group to join
+    //       </h2>
+    //       <Input
+    //         value={search}
+    //         onChange={(e) => setSearch(e.target.value)}
+    //         required
+    //         placeholder="Enter query here"
+    //         className="mb-4"
+    //         id="examRoomName"
+    //       />
+    //       <p className="">Student Groups</p>
+    //       <div className="max-h-[50dvh] overflow-y-auto w-full">
+    //         {filteredStudentGroups.length === 0 ? (
+    //           <p className="text-center text-neutral-mediumGray py-4">
+    //             No Student Group found
+    //           </p>
+    //         ) : (
+    //           <div className="space-y-3">
+    //             {filteredStudentGroups.map((studentGroup) => (
+    //               <div
+    //                 className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary-bg"
+    //                 key={studentGroup.id}
+    //               >
+    //                 <div className="flex items-center gap-3">
+    //                   <div>
+    //                     <h4 className="font-medium">{studentGroup.name}</h4>
+    //                     <p className="text-xs text-neutral-mediumGray truncate">
+    //                       {studentGroup.description}
+    //                     </p>
+    //                   </div>
+    //                 </div>
+    //                 <CustomButton
+    //                   type="button"
+    //                   onClick={() => joinGroup(studentGroup.id)}
+    //                   disabled={isJoining !== ""}
+    //                   className="w-[78px]"
+    //                 >
+    //                   {isJoining === studentGroup.id ? <Spinner /> : "Join"}
+    //                 </CustomButton>
+    //               </div>
+    //             ))}
+    //           </div>
+    //         )}
+    //       </div>
+    //     </div>
+    //   </DialogContent>
+    //   <Toast
+    //     open={toast.open}
+    //     message={toast.message}
+    //     severity={toast.severity}
+    //     onClose={closeToast}
+    //   />
+    // </ButtonDismissDialog>
+    <OutsideDismissDialog
       open={isOpen}
-      onOpenChange={(open) => dispatch(setShowJoinStudentGroupDialog(open))}
+      onOpenChange={setShowJoinStudentGroupDialog}
+      maxWidth="600px"
     >
       <DialogHeader>
-        <DialogTitle>Join a Student Group</DialogTitle>
+        <h2 className="text-xl whitespace-pre-line !text-center">
+          Enter the code provided by the Teacher
+        </h2>
       </DialogHeader>
       <DropdownMenuSeparator />
-      <DialogContent className="p-4">
-        <div className="w-full flex flex-col items-start justify-start">
-          <h2 className="font-inter font-medium text-xl mb-4">
-            Search for a student group to join
-          </h2>
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            required
-            placeholder="Enter query here"
-            className="mb-4"
-            id="examRoomName"
-          />
-          <p className="">Student Groups</p>
-          <div className="max-h-[50dvh] overflow-y-auto w-full">
-            {filteredStudentGroups.length === 0 ? (
-              <p className="text-center text-neutral-mediumGray py-4">
-                No Student Group found
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {filteredStudentGroups.map((studentGroup) => (
-                  <div
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary-bg"
-                    key={studentGroup.id}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <h4 className="font-medium">{studentGroup.name}</h4>
-                        <p className="text-xs text-neutral-mediumGray truncate">
-                          {studentGroup.description}
-                        </p>
-                      </div>
-                    </div>
-                    <CustomButton
-                      type="button"
-                      onClick={() => joinGroup(studentGroup.id)}
-                      disabled={isJoining !== ""}
-                      className="w-[78px]"
-                    >
-                      {isJoining === studentGroup.id ? <Spinner /> : "Join"}
-                    </CustomButton>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      <DialogContent className="p-6">
+        <div className="flex space-x-2 mx-auto items-center justify-center">
+          {otp.map((digit, index) => (
+            <input
+              key={index}
+              ref={(el) => (inputRefs.current[index] = el)}
+              type="text"
+              value={digit}
+              onChange={(e) => handleChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              maxLength="1"
+              className="w-14 h-12 max-md:w-10 max-md:h-10 max-[330px]:w-1/6 max-[330px]:h-auto text-xl text-center border-2 rounded-md focus:outline-none focus:border-none focus:ring-2 focus:ring-primary-main"
+            />
+          ))}
         </div>
+        <CustomButton
+          type="button"
+          loading={loader}
+          onClick={() => handleSubmit()}
+          className="w-[200px] h-10 py-2 bg-gray-400 text-white rounded-md mt-6 !mx-auto"
+        >
+          Join Student Group
+        </CustomButton>
       </DialogContent>
       <Toast
         open={toast.open}
@@ -1219,7 +1436,7 @@ export const JoinStudentGroupDialog = () => {
         severity={toast.severity}
         onClose={closeToast}
       />
-    </ButtonDismissDialog>
+    </OutsideDismissDialog>
   );
 };
 
@@ -1231,14 +1448,15 @@ export const LeaveStudentGroupDialog = ({ title = "Student Group 2" }) => {
     <ButtonDismissDialog
       open={isOpen}
       onOpenChange={setShowLeaveStudentGroupDialog}
+      maxWidth="400px"
     >
       <DialogHeader></DialogHeader>
       <DialogContent className="p-8 pt-4">
         <div className="w-full flex flex-col py-4 items-center justify-center">
           <h2 className="font-inter font-medium text-xl mb-4 text-center">
-            Are we sure you want to leave <strong>{title}</strong>
+            Are you sure you want to leave <strong>{title}</strong>
           </h2>
-          <div className="w-full flex gap-4">
+          <div className="w-full flex gap-4 px-5">
             <CustomButton
               variant="clear"
               className="gap-2 mt-4 flex-1"
@@ -1257,7 +1475,7 @@ export const LeaveStudentGroupDialog = ({ title = "Student Group 2" }) => {
 };
 
 export const AddNewStudentToStudentGroupDialog = () => {
-  const isOpen = useSelector(
+  const { isOpen, groupId } = useSelector(
     (state) => state.ui.showAddStudentToStudentGroupDialog
   );
   const dispatch = useDispatch();
@@ -1280,13 +1498,24 @@ export const AddNewStudentToStudentGroupDialog = () => {
     studentGroups.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const sendCode = (id, email) => {
+  const sendCode = async (id, email) => {
     setIsSending(id);
+
     try {
-      console.log(email);
+      const body = { student_email: email };
+      const response = await apiCall.post(
+        `/exams/groups/${groupId}/send-code/`,
+        body
+      );
+
+      if (response.status === 200) {
+        showToast(`Email sent to ${email}`, "success");
+        setWillShow(false);
+        setSearch("");
+      }
     } catch (error) {
       showToast("Failed to send code. Please try again.", "error");
-      console.error("Error sendiing code:", error);
+      console.error("Error sending code:", error);
     } finally {
       setIsSending("");
     }
@@ -1396,5 +1625,79 @@ export const AddNewStudentToStudentGroupDialog = () => {
         onClose={closeToast}
       />
     </OutsideDismissDialog>
+  );
+};
+
+export const DeleteExamDialog = ({ title = "Student Group 2", id = 0 }) => {
+  const isOpen = useSelector((state) => state.ui.showDeleteExamDialog);
+  const { deleteExamLoading: isLoading } = useSelector((state) => state.exams);
+  const dispatch = useDispatch();
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  const handleDeleteExam = (examId) => {
+    dispatch(deleteExam({ id: examId }))
+      .unwrap()
+      .then(() => {
+        showToast("Exam deleted successfully!", "success");
+        dispatch(setShowDeleteExamDialog(false));
+      })
+      .catch((error) => {
+        console.log(error);
+        showToast("Failed to delete exam. Please try again!", "error");
+      });
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
+  };
+
+  return (
+    <CustomBlurBgDialog
+      open={isOpen}
+      // onOpenChange={setShowDeleteExamDialog}
+      maxWidth="400px"
+    >
+      <DialogHeader>Delete Examination</DialogHeader>
+      <DropdownMenuSeparator />
+      <DialogContent className="p-6 pt-2">
+        <CardDescription>
+          Are you sure you want to delete the examination{" "}
+          <strong>{title}</strong>. This action cannot be undone
+        </CardDescription>
+        <div className="w-1/2 flex gap-5 ml-auto">
+          <CustomButton
+            variant="clear"
+            className="gap-2 mt-4 flex-1"
+            disabled={isLoading}
+            onClick={() => dispatch(setShowDeleteExamDialog(false))}
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            onClick={() => handleDeleteExam(id)}
+            loading={isLoading}
+            variant="danger"
+            className="gap-2 mt-4 flex-1"
+          >
+            Delete
+          </CustomButton>
+        </div>
+      </DialogContent>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
+    </CustomBlurBgDialog>
   );
 };

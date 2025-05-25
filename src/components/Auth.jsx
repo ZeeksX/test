@@ -1,130 +1,251 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return !!localStorage.getItem("access_token"); // Check if token exists
-  });
+  // Safely load initial state from localStorage
+  const getInitialAuthState = () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const userStr = localStorage.getItem("user");
+      return {
+        token: token || null,
+        user: userStr ? JSON.parse(userStr) : null,
+        isAuthenticated: Boolean(token && userStr)
+      };
+    } catch (e) {
+      console.error("Error loading initial auth state", e);
+      return { token: null, user: null, isAuthenticated: false };
+    }
+  };
 
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+  // Initialize states with values from localStorage to prevent flashing of unauthenticated state
+  const initialState = getInitialAuthState();
+  const [isAuthenticated, setIsAuthenticated] = useState(initialState.isAuthenticated);
+  const [user, setUser] = useState(initialState.user);
+  const [isLoading, setIsLoading] = useState(true);
+  const hasRedirected = useRef(false);
+  const refreshTimerRef = useRef(null);
 
-  // Function to decode JWT token and extract expiration time
-  const getTokenExpiryTime = (token) => {
+  // Function to decode JWT token and extract data
+  const decodeToken = (token) => {
     if (!token) return null;
     try {
-      // JWT tokens are split into three parts by dots
       const payload = token.split('.')[1];
-      // The middle part needs to be base64 decoded
-      const decodedPayload = JSON.parse(atob(payload));
-      // exp is the expiration time in seconds
-      return decodedPayload.exp * 1000; // Convert to milliseconds
+      return JSON.parse(atob(payload));
     } catch (error) {
       console.error("Error decoding token", error);
       return null;
     }
   };
 
-  // Function to refresh the access token using the refresh token
+  // Check if token is expired
+  const isTokenExpired = (token) => {
+    const decodedToken = decodeToken(token);
+    if (!decodedToken) return true;
+
+    const expiryTime = decodedToken.exp * 1000; // Convert to milliseconds
+    const currentTime = Date.now();
+
+    return currentTime >= expiryTime;
+  };
+
+  // Function to refresh the access token
   const refreshToken = async () => {
     const refresh_token = localStorage.getItem("refresh_token");
-    if (!refresh_token) {
-      logout();
-      return false;
-    }
+    if (!refresh_token) return false;
+
     try {
-      const response = await fetch("https://backend-acad-ai.onrender.com/users/token/refresh/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refresh: refresh_token }),
-      });
-      const data = await response.json();
-      if (response.ok && data.access) {
-        localStorage.setItem("access_token", data.access);
-        setupTokenRefresh(data.access); // Setup the next refresh
-        return true;
-      } else {
-        // If refresh fails, log out the user.
-        logout();
+      const res = await fetch(
+        "https://backend-acad-ai.onrender.com/users/token/refresh/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh: refresh_token }),
+        }
+      );
+
+      if (!res.ok) {
+        console.error("Token refresh failed with status:", res.status);
         return false;
       }
-    } catch (error) {
-      console.error("Error refreshing token", error);
-      logout();
+
+      const data = await res.json();
+
+      // Update tokens in localStorage
+      localStorage.setItem("access_token", data.access);
+      if (data.refresh) {
+        localStorage.setItem("refresh_token", data.refresh);
+      }
+
+      // Schedule the next token refresh
+      scheduleTokenRefresh(data.access);
+
+      return true;
+    } catch (err) {
+      console.error("Token refresh error:", err);
       return false;
     }
   };
 
-  // Setup token refresh timer based on expiration time
-  const setupTokenRefresh = (accessToken) => {
-    const expiryTime = getTokenExpiryTime(accessToken);
-    if (!expiryTime) return;
+  // Schedule token refresh before it expires
+  const scheduleTokenRefresh = (token) => {
+    if (!token) return;
 
-    // Calculate time until 5 minutes before expiry
-    const currentTime = Date.now();
-    const timeUntilRefresh = Math.max(0, expiryTime - currentTime - (5 * 60 * 1000));
-
-    // Clear any existing timer
-    if (window.refreshTimer) {
-      clearTimeout(window.refreshTimer);
+    // Clear existing timer if any
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
     }
 
-    // Set up the new timer
-    window.refreshTimer = setTimeout(() => {
-      refreshToken();
-    }, timeUntilRefresh);
+    try {
+      const decodedToken = decodeToken(token);
+      if (!decodedToken || !decodedToken.exp) return;
 
+      const expiresAt = decodedToken.exp * 1000; // in milliseconds
+      const now = Date.now();
+
+      // Refresh 5 minutes before expiry or immediately if less than 5 minutes left
+      const timeUntilRefresh = Math.max(0, expiresAt - now - (5 * 60 * 1000));
+
+      refreshTimerRef.current = setTimeout(() => {
+        refreshToken().then(success => {
+          if (success) {
+            console.log("Scheduled token refresh succeeded");
+          } else {
+            console.error("Scheduled token refresh failed");
+          }
+        });
+      }, timeUntilRefresh);
+    } catch (e) {
+      console.error("Error scheduling token refresh:", e);
+    }
   };
 
-  // Update authentication state on mount and set up token refresh
+  // Initialize auth on mount and handle page refreshes
   useEffect(() => {
-    const accessToken = localStorage.getItem("access_token");
-    const storedUser = localStorage.getItem("user");
+    const initAuth = async () => {
+      setIsLoading(true);
 
-    if (accessToken && storedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(storedUser));
-      setupTokenRefresh(accessToken);
-    }
+      try {
+        const accessToken = localStorage.getItem("access_token");
+        const refreshTokenValue = localStorage.getItem("refresh_token");
+        const userStr = localStorage.getItem("user");
 
-    // Cleanup function to clear the timer on unmount
-    return () => {
-      if (window.refreshTimer) {
-        clearTimeout(window.refreshTimer);
+        let userObj = null;
+        try {
+          userObj = userStr ? JSON.parse(userStr) : null;
+        } catch (e) {
+          console.error("Error parsing user data:", e);
+        }
+
+        // Check if we have both token and user data
+        if (accessToken && userObj) {
+
+          // Check if token is expired
+          if (!isTokenExpired(accessToken)) {
+            setIsAuthenticated(true);
+            setUser(userObj);
+            scheduleTokenRefresh(accessToken);
+          } else if (refreshTokenValue) {
+            const refreshed = await refreshToken();
+            if (refreshed) {
+              setIsAuthenticated(true);
+              setUser(userObj);
+            } else {
+              setIsAuthenticated(false);
+              // Don't clear localStorage here
+            }
+          } else {
+            setIsAuthenticated(false);
+            // Don't clear localStorage here
+          }
+        } else if (refreshTokenValue && userObj) {
+          const refreshed = await refreshToken();
+          if (refreshed) {
+            setIsAuthenticated(true);
+            setUser(userObj);
+          } else {
+            setIsAuthenticated(false);
+            // Don't clear localStorage here
+          }
+        } else {
+          setIsAuthenticated(false);
+          // Don't clear localStorage here
+        }
+      } catch (error) {
+        console.error("Error during auth initialization:", error);
+        setIsAuthenticated(false);
+        // Don't clear localStorage on error
+      } finally {
+        setIsLoading(false);
       }
     };
-  }, []);
+
+    // Run auth initialization
+    initAuth();
+
+    // This function happens when the component is unmounted
+    return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+    };
+  }, []); // Empty dependencies array = run once on mount
 
   const login = (userData) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("access_token", userData.access);
-    localStorage.setItem("refresh_token", userData.refresh);
+    if (!userData) {
+      console.error("Cannot login with undefined user data");
+      return;
+    }
 
-    setUser(userData);
-    setIsAuthenticated(true);
-    setupTokenRefresh(userData.access);
+    try {
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("access_token", userData.access);
+      localStorage.setItem("refresh_token", userData.refresh);
+
+      setUser(userData);
+      setIsAuthenticated(true);
+      scheduleTokenRefresh(userData.access);
+      hasRedirected.current = false;
+    } catch (error) {
+      console.error("Error during login:", error);
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+  const logout = (redirect = true) => {
+    try {
+      localStorage.removeItem("user");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
 
-    setUser(null);
-    setIsAuthenticated(false);
+      setUser(null);
+      setIsAuthenticated(false);
 
-    if (window.refreshTimer) {
-      clearTimeout(window.refreshTimer);
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+
+      if (redirect && !hasRedirected.current) {
+        hasRedirected.current = true;
+        window.location.href = "/login";
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, user, refreshToken }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        isLoading,
+        login,
+        logout,
+        user,
+        refreshToken
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

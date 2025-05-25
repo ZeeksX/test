@@ -28,6 +28,10 @@ export const ManualCreateExamQuestion = ({
   examData,
   updateExamData,
   setSelectedQuestionMethod,
+  currentStep,
+  style = "manually",
+  setCurrentStep,
+  setPreviousStep,
 }) => {
   // const oldQuestions = [...examData.questions];
 
@@ -186,15 +190,17 @@ export const ManualCreateExamQuestion = ({
       // });
 
       const uniqueQuestionTypes = [...new Set(questions.map((q) => q.type))];
-      const questionStyle = ["manually"];
+      const questionStyle = [style];
 
       updateExamData({
         questions: [...questions],
         questionTypes: [uniqueQuestionTypes],
         addQuestion: [...questionStyle],
       });
+
+      setCurrentStep();
     }
-    setSelectedQuestionMethod();
+    // setSelectedQuestionMethod();
   };
 
   return (
@@ -211,17 +217,17 @@ export const ManualCreateExamQuestion = ({
           <Input
             name="description"
             placeholder="Exam Description"
-            value={examData.description}
-            onChange={(e) => updateExamData({ description: e.target.value })}
+            value={examData.examType}
+            onChange={(e) => updateExamData({ examType: e.target.value })}
             className="text-gray-500 border-none !p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
         <div className="flex justify-end mb-4 space-x-2">
-          <CustomButton variant="clear" onClick={setSelectedQuestionMethod}>
+          <CustomButton variant="clear" onClick={setPreviousStep}>
             Cancel
           </CustomButton>
           <CustomButton
-            variant={questions.length > 1 ? "" : "ghost"}
+            variant={questions.length > 1 ? "primary" : "ghost"}
             disabled={questions.length < 2}
             onClick={() => handleFinishSetQuestion()}
           >
@@ -386,6 +392,9 @@ export const MaterialCreateExamUpdateMetaData = ({
   examData,
   updateExamData,
   setSelectedQuestionMethod,
+  currentStep,
+  setCurrentStep,
+  setPreviousStep,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [toast, setToast] = useState({
@@ -419,6 +428,11 @@ export const MaterialCreateExamUpdateMetaData = ({
       return;
     }
 
+    if (examData.numberOfQuestions > 15) {
+      showToast("You cannot create more than 15 questions", "error");
+      return;
+    }
+
     const questionTypes = examData.questionTypes;
     const numQuestions = examData.numberOfQuestions;
 
@@ -428,7 +442,7 @@ export const MaterialCreateExamUpdateMetaData = ({
         questionTypes,
         numQuestions,
       });
-      
+
       const result = await uploadFile(
         examData.uploadedFiles[0]?.file,
         questionTypes,
@@ -437,9 +451,9 @@ export const MaterialCreateExamUpdateMetaData = ({
 
       updateExamData({ questions: mapQuestions(result.questions) });
       showToast("Your questions have been generated", "success");
-      setTimeout(() => {
-        setSelectedQuestionMethod();
-      }, 2000);
+      // setTimeout(() => {
+      //   setSelectedQuestionMethod();
+      // }, 2000);
     } catch (error) {
       showToast("Failed to generate questions. Please try again.", "error");
       console.error("Upload error:", error);
@@ -484,6 +498,20 @@ export const MaterialCreateExamUpdateMetaData = ({
     setToast({ open: false, message: "", severity: "info" });
   };
 
+  if (examData.questions.length > 0) {
+    return (
+      <ManualCreateExamQuestion
+        examData={examData}
+        updateExamData={updateExamData}
+        setSelectedQuestionMethod={() => setSelectedQuestionMethod("")}
+        currentStep={currentStep}
+        style="uploaded material"
+        setCurrentStep={() => setCurrentStep()}
+        setPreviousStep={() => setPreviousStep()}
+      />
+    );
+  }
+
   return (
     <div className="">
       <div className="flex justify-between items-start">
@@ -498,8 +526,8 @@ export const MaterialCreateExamUpdateMetaData = ({
           <Input
             name="description"
             placeholder="Exam Description"
-            value={examData.description}
-            onChange={(e) => updateExamData({ description: e.target.value })}
+            value={examData.examType}
+            onChange={(e) => updateExamData({ examType: e.target.value })}
             className="text-gray-500 border-none !p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
@@ -557,7 +585,7 @@ export const MaterialCreateExamUpdateMetaData = ({
             id="examName"
             name="numberOfQuestions"
             type="number"
-            max={50}
+            max={15}
             placeholder="Examination 1"
             value={examData.numberOfQuestions}
             onChange={(e) =>

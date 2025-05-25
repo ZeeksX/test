@@ -24,7 +24,6 @@ const Container = () => {
   if (loading) {
     return <Loader />;
   }
-  console.log("Teacher Student Groups: ", teacherStudentGroups)
 
   return (
     <>

@@ -54,7 +54,7 @@ const ExaminationTable = ({ examinations }) => {
     };
 
     fetchData();
-  }, [courses]);
+  }, []);
 
   const courseMap = useMemo(() => {
     return courses.reduce((acc, course) => {
@@ -128,7 +128,7 @@ const ExaminationTable = ({ examinations }) => {
               opacity: isNow ? 1 : 0.4,
               cursor: isNow ? "pointer" : "not-allowed",
             }}
-            className="bg-[#1835B3] w-[120px] h-11 gap-2 text-white flex items-center justify-center font-inter font-semibold text-base rounded-md px-4 hover:ring-2"
+            className="text-primary-main underline-offset-4 hover:underline"
             disabled={!isNow}
             onClick={() => navigate(`/examinations/${exam.id}/instructions`, { state: { examination: exam } })}
           >
@@ -148,7 +148,7 @@ const ExaminationTable = ({ examinations }) => {
   return upcomingExams.length === 0 ? (
     <div className="flex flex-col justify-center items-center gap-4 col-span-full ">
       <img className="w-32 h-32" src={illustration2} alt="Illustration" />
-      <h1 className="text-[32px] font-medium leading-8">
+      <h1 className="text-[32px] max-md:text-2xl font-medium leading-8">
         Nothing to see here… yet!
       </h1>
       <p className="text-[#667085] text-lg">

@@ -33,9 +33,9 @@ const CoursePublishedExams = () => {
 
   if (courseExams.length == 0) {
     return (
-      <div className="w-full h-full gap-1 flex flex-col items-center justify-center">
+      <div className="w-full h-full gap-1 flex flex-col items-center justify-center p-4">
         <img src={emptyFolderImg} alt="" />
-        <h3 className="font-medium text-2xl">
+        <h3 className="font-medium text-2xl max-md:text-xl">
           Your journey starts here! Add your first examination now.
         </h3>
         <h5 className="text-text-ghost font-normal text-sm">
@@ -49,7 +49,7 @@ const CoursePublishedExams = () => {
               : setShowStudentGroupWarnDialog
           }
         >
-          <CustomButton className="gap-2 mt-2">
+          <CustomButton className="gap-2 mt-2 max-md:mt-4">
             Create Examination <FiPlus size={20} />
           </CustomButton>
         </DialogTrigger>

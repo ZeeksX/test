@@ -61,6 +61,47 @@ export const fetchAllStudents = createAsyncThunk(
   }
 );
 
+export const updateExamRoom = createAsyncThunk(
+  "examRooms/updateExamRoom",
+  async ({ id, examRoomData }, thunkApi) => {
+    try {
+      const response = await apiCall.put(
+        `/exams/exam-rooms/${id}/`,
+        examRoomData
+      );
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const removeStudentFromExamRoom = createAsyncThunk(
+  "examRooms/removeStudentFromExamRoom",
+  async ({ groupId, studentId }, thunkApi) => {
+    try {
+      await apiCall.delete(
+        `/exams/exam-rooms/${groupId}/remove-student/${studentId}/`
+      );
+      return { groupId, studentId };
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const deleteExamRoom = createAsyncThunk(
+  "examRooms/deleteExamRoom",
+  async ({ id }, thunkApi) => {
+    try {
+      await apiCall.delete(`/exams/exam-rooms/${id}/`);
+      return { id };
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const examRoomSlice = createSlice({
   name: "examRooms",
   initialState: {
@@ -85,6 +126,15 @@ const examRoomSlice = createSlice({
     hasStudentGroups: false,
     loading: false,
     error: null,
+
+    deleteStudentGroupLoading: false,
+    deleteStudentGroupError: null,
+
+    updateStudentGroupLoading: false,
+    updateStudentGroupError: null,
+
+    removeStudentLoading: false,
+    removeStudentError: null,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -166,6 +216,95 @@ const examRoomSlice = createSlice({
       .addCase(fetchAllStudents.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      //
+      .addCase(updateExamRoom.pending, (state) => {
+        state.updateStudentGroupLoading = true;
+        state.updateStudentGroupError = null;
+      })
+      .addCase(updateExamRoom.fulfilled, (state, action) => {
+        state.updateStudentGroupLoading = false;
+        const updatedGroup = action.payload;
+
+        // Update in allStudentGroups array
+        state.allStudentGroups = state.allStudentGroups.map((group) =>
+          group.id === updatedGroup.id ? updatedGroup : group
+        );
+
+        // Update in teacherStudentGroups array
+        state.teacherStudentGroups = state.teacherStudentGroups.map((group) =>
+          group.id === updatedGroup.id ? updatedGroup : group
+        );
+
+        // Update in studentStudentGroups array
+        state.studentStudentGroups = state.studentStudentGroups.map((group) =>
+          group.id === updatedGroup.id ? updatedGroup : group
+        );
+
+        // Update studentGroup if it's the currently selected one
+        if (state.studentGroup.id === updatedGroup.id) {
+          state.studentGroup = updatedGroup;
+        }
+      })
+      .addCase(updateExamRoom.rejected, (state, action) => {
+        state.updateStudentGroupLoading = false;
+        state.updateStudentGroupError = action.payload;
+      })
+
+      //
+      .addCase(deleteExamRoom.pending, (state) => {
+        state.deleteStudentGroupLoading = true;
+        state.deleteStudentGroupError = null;
+      })
+      .addCase(deleteExamRoom.fulfilled, (state, action) => {
+        state.deleteStudentGroupLoading = false;
+        const { id } = action.payload;
+        state.allStudentGroups = state.allStudentGroups.filter(
+          (group) => group.id !== id
+        );
+        state.teacherStudentGroups = state.teacherStudentGroups.filter(
+          (group) => group.id !== id
+        );
+        state.studentStudentGroups = state.studentStudentGroups.filter(
+          (group) => group.id !== id
+        );
+      })
+      .addCase(deleteExamRoom.rejected, (state, action) => {
+        state.deleteStudentGroupLoading = false;
+        state.deleteStudentGroupError = action.payload;
+      })
+
+      .addCase(removeStudentFromExamRoom.pending, (state) => {
+        state.removeStudentLoading = true;
+        state.removeStudentError = null;
+      })
+      .addCase(removeStudentFromExamRoom.fulfilled, (state, action) => {
+        state.removeStudentLoading = false;
+        const { groupId, studentId } = action.payload;
+        const updateGroup = (group) => ({
+          ...group,
+          students: group.students.filter(
+            (student) => student.id !== studentId
+          ),
+        });
+
+        state.allStudentGroups = state.allStudentGroups.map((g) =>
+          g.id === groupId ? updateGroup(g) : g
+        );
+        state.teacherStudentGroups = state.teacherStudentGroups.map((g) =>
+          g.id === groupId ? updateGroup(g) : g
+        );
+        state.studentStudentGroups = state.studentStudentGroups.map((g) =>
+          g.id === groupId ? updateGroup(g) : g
+        );
+        if (state.studentGroup.id === groupId) {
+          state.studentGroup = updateGroup(state.studentGroup);
+        }
+      })
+      .addCase(removeStudentFromExamRoom.rejected, (state, action) => {
+        state.removeStudentLoading = false;
+        state.removeStudentError = action.payload;
       });
   },
 });

@@ -66,10 +66,13 @@ export const OutsideDismissDialog = ({
   if (!open) return null;
 
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999] cursor-pointer" onClick={() => dispatch(onOpenChange(false))}>
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999] cursor-pointer"
+      onClick={() => dispatch(onOpenChange(false))}
+    >
       <div
         ref={ref}
-        className="bg-white cursor-default rounded-lg shadow-lg w-full relative"
+        className="bg-white cursor-default rounded-lg shadow-lg w-full relative max-md:w-[90%]"
         style={{ maxWidth, height }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -82,10 +85,55 @@ export const OutsideDismissDialog = ({
 
 OutsideDismissDialog.propTypes = {
   open: PropTypes.bool.isRequired,
-  onOpenChange: PropTypes.func.isRequired,
+  onOpenChange: PropTypes.func,
   children: PropTypes.node.isRequired,
   maxWidth: PropTypes.string,
   height: PropTypes.string,
+};
+
+export const CustomBlurBgDialog = ({
+  open,
+  onOpenChange,
+  children,
+}) => {
+  const dispatch = useDispatch();
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (ref.current && !ref.current.contains(event.target)) {
+        // dispatch(onOpenChange(false));
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dispatch, onOpenChange]);
+
+  if (!open) return null;
+
+  return ReactDOM.createPortal(
+    <div
+      className="fixed max-w-[100vw] inset-0 flex items-center justify-center backdrop-blur-sm bg-white bg-opacity-30 z-[9999] cursor-pointer"
+      onClick={() => dispatch(onOpenChange(false))}
+    >
+      <div
+        ref={ref}
+        className="bg-white overflow-hidden cursor-default rounded-[20px] shadow-2xl w-full relative md:max-w-[448px] max-w-[85vw]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+CustomBlurBgDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onOpenChange: PropTypes.func.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 export const DialogTrigger = ({ children, onClick }) => {
@@ -111,7 +159,9 @@ DialogContent.propTypes = {
 };
 
 export const DialogHeader = ({ children }) => (
-  <div className="dialog-header mb-4 p-6 pb-0 flex flex-col gap-2">{children}</div>
+  <div className="dialog-header mb-4 p-6 pb-0 flex flex-col gap-2">
+    {children}
+  </div>
 );
 
 DialogHeader.propTypes = {

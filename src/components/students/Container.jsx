@@ -17,18 +17,24 @@ import { setShowJoinStudentGroupDialog } from "../../features/reducers/uiSlice";
 import { Loader } from "../ui/Loader";
 import { GoDotFill } from "react-icons/go";
 import { fetchExams } from "../../features/reducers/examSlice";
+import { filterExamsByStudentSubmissions } from "../modals/UIUtilities";
 
 const Container = () => {
   const dispatch = useDispatch();
+  const user = JSON.parse(localStorage.getItem("user"));
+  const studentId = user.studentId;
+  const [availableExams, setAvailableExams] = useState([]);
   const {
     allStudentGroups,
     studentStudentGroups: studentGroup,
     loading,
     error,
   } = useSelector((state) => state.examRooms);
-  const { allExams: examinations, loading: examsLoading } = useSelector(
-    (state) => state.exams
-  );
+  const {
+    allExams: examinations,
+    examSubmissions,
+    loading: examsLoading,
+  } = useSelector((state) => state.exams);
 
   const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -40,6 +46,22 @@ const Container = () => {
       setDataLoaded(true);
     }
   }, [dispatch, dataLoaded]);
+
+  useEffect(() => {
+    const fetchAvailableExams = async () => {
+      try {
+        const filteredExams = await filterExamsByStudentSubmissions(
+          examinations,
+          studentId
+        );
+        setAvailableExams(filteredExams);
+      } catch (error) {
+        console.error("Error fetching exams:", error);
+      }
+    };
+
+    fetchAvailableExams();
+  }, [examinations, studentId]);
 
   const studentCards = [
     {
@@ -100,7 +122,7 @@ const Container = () => {
         {studentGroup.length === 0 ? (
           <div className="flex flex-col justify-center items-center gap-4 col-span-full">
             <img className="w-32 h-32" src={illustration1} alt="Illustration" />
-            <h1 className="text-[32px] font-medium">
+            <h1 className="text-[32px] max-md:text-2xl font-medium">
               No content here yet. Let’s change that!
             </h1>
             <p className="text-[#667085] text-lg">
@@ -127,13 +149,16 @@ const Container = () => {
             return (
               <div
                 key={studentGroupDetail.id}
-                className="flex flex-row py-4 pl-1 pr-6 w-full max-w-[309px] h-max bg-white border rounded-xl border-[#D0D5DD] items-start gap-4"
+                className="flex flex-row py-4 pl-1 pr-6 w-full max-w-[309px] h-max bg-white border rounded-xl border-[#D0D5DD] items-start gap-2"
               >
                 <div>
-                  <BsThreeDotsVertical className="text-xl" />
+                  <BsThreeDotsVertical />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <h1 className="text-xl leading-5 text-[#222222] font-medium">
+                <div className="flex-1 flex flex-col gap-2">
+                  <h1
+                    className="max-w-[250px] text-xl leading-5 text-[#222222] font-medium truncate"
+                    title={studentGroupDetail.name}
+                  >
                     {studentGroupDetail.name}
                   </h1>
                   <p className="text-[#666666] text-[12px] leading-5 line-clamp-2">
@@ -141,15 +166,18 @@ const Container = () => {
                   </p>
                   <h3 className="text-[#A1A1A1] text-sm flex flex-row gap-1 items-center">
                     {studentGroupDetail.teacher
-                      ? `${studentGroupDetail.teacher.title} ${studentGroupDetail.teacher.user?.last_name || ""}`
+                      ? `${studentGroupDetail.teacher.title} ${
+                          studentGroupDetail.teacher.user?.last_name || ""
+                        }`
                       : "No assigned teacher"}
                     <GoDotFill className="text-sm" />
                     <span>
                       {studentGroupDetail.students?.length}{" "}
-                      {studentGroupDetail.students?.length === 1 ? "student" : "students"}
+                      {studentGroupDetail.students?.length === 1
+                        ? "student"
+                        : "students"}
                     </span>
                   </h3>
-
                 </div>
               </div>
             );
@@ -160,7 +188,7 @@ const Container = () => {
       <hr className="text-[#D0D5DD] mt-4" />
       <h1 className="text-[#222222] text-2xl my-4">Examinations</h1>
       {/* Tabs for Upcoming and Completed */}
-      <div className="flex flex-row gap-4">
+      {/* <div className="flex flex-row gap-4">
         <h1
           onClick={() => setSelectedTab("upcoming")}
           className={`cursor-pointer text-lg ${selectedTab === "upcoming"
@@ -179,13 +207,13 @@ const Container = () => {
         >
           Completed
         </h1>
-      </div>
+      </div> */}
       <hr className="text-[#D0D5DD] mt-4" />
       <div className="text-xl pt-4 flex justify-center">
         {examinations.length === 0 ? (
           <div className="flex flex-col items-center gap-4">
             <img className="w-32 h-32" src={illustration2} alt="Illustration" />
-            <h1 className="text-[32px] font-medium">
+            <h1 className="text-[32px] max-md:text-2xl font-medium">
               Nothing to see here… yet!
             </h1>
             <p className="text-[#667085] text-lg">
@@ -193,11 +221,11 @@ const Container = () => {
             </p>
           </div>
         ) : // Conditional rendering based on selected tab.
-          selectedTab === "upcoming" ? (
-            <ExaminationTable examinations={examinations} />
-          ) : (
-            <CompletedExams examinations={examinations} />
-          )}
+        selectedTab === "upcoming" ? (
+          <ExaminationTable examinations={availableExams} />
+        ) : (
+          <CompletedExams examinations={examinations} />
+        )}
       </div>
       <hr className="text-[#D0D5DD] mt-4" />
     </>

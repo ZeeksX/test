@@ -2,7 +2,7 @@ import { LuLayoutDashboard } from "react-icons/lu";
 import { Link, useLocation } from "react-router";
 import { CourseDropdownMenu } from "./ui/Dropdown";
 import ExaminationDropdown from "./ui/ExaminationDropdown";
-import { FiHome, FiUsers } from "react-icons/fi";
+import { FiFileText, FiHome, FiUsers } from "react-icons/fi";
 
 const SidebarWithRoleControl = ({ role }) => {
   const { pathname } = useLocation();
@@ -15,6 +15,7 @@ const SidebarWithRoleControl = ({ role }) => {
   const studentLinks = [
     { icon: FiHome, title: "Dashboard", href: "/dashboard" },
     { icon: FiUsers, title: "Teachers", href: "/lecturers" },
+    { icon: FiFileText, title: "Examinations", href: "/examinations" },
   ];
 
   return (
@@ -65,9 +66,9 @@ const SidebarWithRoleControl = ({ role }) => {
               </div>
             ))}
             {/* Add ExaminationDropdown for students */}
-            <div className="w-full flex flex-col items-center justify-center">
+            {/* <div className="w-full flex flex-col items-center justify-center">
               <ExaminationDropdown />
-            </div>
+            </div> */}
           </>
         ) : null}
       </div>

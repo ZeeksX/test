@@ -11,17 +11,29 @@ import StudentResultsTable from "./StudentResultTable";
 import { fetchStudentGroups } from "../../features/reducers/examRoomSlice";
 import { Loader } from "../ui/Loader";
 import { emptyFolderImg } from "../../utils/images";
+import Toast from "../modals/Toast";
+import { areAllSubmissionsScored } from "../../utils/minorUtilities";
+import apiCall from "../../utils/apiCall";
 
 const ExamDetails = () => {
   const { examId } = useParams();
   const dispatch = useDispatch();
+  const [publishing, setPublishing] = useState(false);
   const { allStudentGroups, loading: studentGroupLoading } = useSelector(
     (state) => state.examRooms
   );
   const { exam, examSubmissions, loading, error } = useSelector(
     (state) => state.exams
   );
-  const [activeStudentGroup, setActiveStudentGroup] = useState("");
+
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  console.log({ exam, examSubmissions, allStudentGroups });
+  const [activeStudentGroup, setActiveStudentGroup] = useState(true);
   const [studentGroupResults, setStudentGroupResults] = useState([]);
 
   useEffect(() => {
@@ -30,9 +42,43 @@ const ExamDetails = () => {
     dispatch(fetchExamSubmissions({ examid: examId }));
   }, [dispatch, examId]);
 
+  const handlePublish = async (submissions) => {
+    if (areAllSubmissionsScored(submissions)) {
+      setPublishing(true);
+
+      try {
+        const response = await apiCall.post(
+          `/exams/results/approve/${examId}/`
+        );
+
+        if (response.status === 201 || response.status === 200) {
+          showToast("Exam approved successfully", "success");
+        }
+      } catch (error) {
+        showToast("Failed to create student group. Please try again.", "error");
+        console.error("Error creating student group:", error);
+      } finally {
+        setPublishing(false);
+      }
+    } else {
+      showToast(
+        "You will be able to publish the results once they all have been graded",
+        "error"
+      );
+    }
+  };
+
   if (loading || studentGroupLoading) {
     return <Loader />;
   }
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
+  };
 
   return (
     <div className="bg-[#F9F9F9] h-full">
@@ -43,12 +89,16 @@ const ExamDetails = () => {
             <FileExportIcon className="h-4 w-4" />
             Export Result
           </CustomButton>
-          {/* <CustomButton className="bg-blue-600 hover:bg-blue-700">
+          <CustomButton
+            onClick={() => handlePublish(examSubmissions)}
+            loading={publishing}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             Publish
-          </CustomButton> */}
-          <CustomButton variant="outline" size="icon">
-            <FiMoreHorizontal className="h-4 w-4" />
           </CustomButton>
+          {/* <CustomButton variant="outline" size="icon">
+            <FiMoreHorizontal className="h-4 w-4" />
+          </CustomButton> */}
         </div>
       </div>
 
@@ -72,14 +122,15 @@ const ExamDetails = () => {
               >
                 <div
                   className={`p-2 px-3 text-sm ${
-                    activeStudentGroup === studentGroupDetail.id
-                      ? " text-white bg-primary-main"
+                    activeStudentGroup
+                      ? //  === studentGroupDetail.id
+                        " text-white bg-primary-main"
                       : "text-black bg-white hover:bg-secondary-bg"
                   }`}
                 >
                   {studentGroupDetail.name}
                 </div>
-                <div
+                {/* <div
                   className={`p-2 flex items-center justify-center ${
                     activeStudentGroup === studentGroupDetail.id
                       ? "text-primary-main bg-secondary-bg"
@@ -87,7 +138,7 @@ const ExamDetails = () => {
                   }`}
                 >
                   <FiMoreVertical />
-                </div>
+                </div> */}
               </button>
             );
           })}
@@ -95,10 +146,22 @@ const ExamDetails = () => {
       </div>
 
       <div className="p-4 pt-0 h-[calc(100%_-_168px)]">
-        {activeStudentGroup != "" ? (
+        {examSubmissions.length > 0 ? (
+          <StudentResultsTable studentResults={examSubmissions} />
+        ) : (
+          <div className="w-full h-full gap-1 flex flex-col items-center justify-center">
+            <img src={emptyFolderImg} alt="" />
+            <h3 className="font-medium text-2xl">
+              There are no submissions for this exam
+            </h3>
+            <h5 className="text-text-ghost font-normal text-sm">
+              You will see the submissions once the students turns it in
+            </h5>
+          </div>
+        )}
+        {/* {activeStudentGroup != "" ? (
           <>
             {studentGroupResults.length > 0 ? (
-              <StudentResultsTable studentResults={studentGroupResults} />
             ) : (
               <div className="">
                 There are no results for this student group
@@ -115,8 +178,14 @@ const ExamDetails = () => {
               Select a student group to view the results for that student group
             </h5>
           </div>
-        )}
+        )} */}
       </div>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </div>
   );
 };
@@ -143,29 +212,5 @@ function FileExportIcon(props) {
     </svg>
   );
 }
-
-// Expanded sample data with 20 students
-// const studentData = [
-//   { id: 1, name: "Coleman Trevor", matricNumber: "20251019954", score: 92 },
-//   { id: 2, name: "Femi James", matricNumber: "20251019345", score: 88 },
-//   { id: 3, name: "Joy Agatha", matricNumber: "20251019429", score: 43 },
-//   { id: 4, name: "Natalie Spencer", matricNumber: "20251019113", score: 95 },
-//   { id: 5, name: "Obafemi Chinedu", matricNumber: "20251019028", score: 84 },
-//   { id: 6, name: "Jerome Opara", matricNumber: "20251019635", score: 99 },
-//   { id: 7, name: "Duru Christopher", matricNumber: "20251019625", score: 70 },
-//   { id: 8, name: "Anjolaoluwa Ajayi", matricNumber: "20251019615", score: 90 },
-//   { id: 9, name: "Obasi Michael", matricNumber: "20251019424", score: 63 },
-//   { id: 10, name: "Adebayo Tunde", matricNumber: "20251019111", score: 78 },
-//   { id: 11, name: "Chioma Eze", matricNumber: "20251019222", score: 82 },
-//   { id: 12, name: "David Okonkwo", matricNumber: "20251019333", score: 45 },
-//   { id: 13, name: "Elizabeth Bello", matricNumber: "20251019444", score: 91 },
-//   { id: 14, name: "Francis Adeyemi", matricNumber: "20251019555", score: 87 },
-//   { id: 15, name: "Grace Nwachukwu", matricNumber: "20251019666", score: 76 },
-//   { id: 16, name: "Henry Okafor", matricNumber: "20251019777", score: 68 },
-//   { id: 17, name: "Ifeoma Onyeka", matricNumber: "20251019888", score: 93 },
-//   { id: 18, name: "John Olawale", matricNumber: "20251019999", score: 59 },
-//   { id: 19, name: "Kemi Adeleke", matricNumber: "20251020000", score: 81 },
-//   { id: 20, name: "Lanre Ogunleye", matricNumber: "20251020111", score: 74 },
-// ];
 
 export default ExamDetails;

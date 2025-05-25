@@ -13,3 +13,17 @@ export const copyToClipboard = async (text) => {
     console.error("Failed to copy: ", err);
   }
 };
+
+export const areAllSubmissionsScored = (examSubmissions) => {
+  // Return false if no submissions exist
+  if (!examSubmissions || examSubmissions.length === 0) {
+    return false;
+  }
+  
+  // Check if every submission has a non-null score
+  return examSubmissions.every(submission => 
+    submission.score !== null && submission.score !== undefined
+  );
+};
+
+export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

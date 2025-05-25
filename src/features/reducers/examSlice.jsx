@@ -81,6 +81,18 @@ export const fetchExamSubmissions = createAsyncThunk(
   }
 );
 
+export const deleteExam = createAsyncThunk(
+  "exams/deleteExam",
+  async ({ id }, thunkApi) => {
+    try {
+      await apiCall.delete(`/exams/exams/${id}/`);
+      return { id };
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const examSlice = createSlice({
   name: "exams",
   initialState: {
@@ -112,6 +124,9 @@ const examSlice = createSlice({
 
     loading: false,
     error: null,
+
+    deleteExamLoading: false,
+    deleteExamError: null,
   },
   reducers: {
     // filterExamByCourse: (state, action) => {
@@ -120,6 +135,16 @@ const examSlice = createSlice({
     //     (exam) => exam.course === Number(courseId)
     //   );
     // },
+    removeExam: (state, action) => {
+      const examId = action.payload;
+      state.allExams = state.allExams.filter((exam) => exam.id !== examId);
+      state.teacherExams = state.teacherExams.filter(
+        (exam) => exam.id !== examId
+      );
+      state.courseExams = state.courseExams.filter(
+        (exam) => exam.id !== examId
+      );
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -190,14 +215,59 @@ const examSlice = createSlice({
       })
       .addCase(fetchExamSubmissions.fulfilled, (state, action) => {
         state.loading = false;
-        state.examSubmissions = action.payload;
+        const filteredSubmissions = action.payload.reduce((acc, submission) => {
+          const studentId = submission.student.student_id;
+          const existingSubmission = acc.find(
+            (sub) => sub.student.student_id === studentId
+          );
+
+          if (!existingSubmission) {
+            acc.push(submission);
+          } else {
+            if (
+              submission.answers !== null &&
+              existingSubmission.answers === null
+            ) {
+              const index = acc.findIndex(
+                (sub) => sub.student.student_id === studentId
+              );
+              acc[index] = submission;
+            }
+          }
+
+          return acc;
+        }, []);
+
+        state.examSubmissions = filteredSubmissions;
       })
       .addCase(fetchExamSubmissions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      //
+      .addCase(deleteExam.pending, (state) => {
+        state.deleteExamLoading = true;
+        state.deleteExamError = null;
+      })
+      .addCase(deleteExam.fulfilled, (state, action) => {
+        state.deleteExamLoading = false;
+        const { id } = action.payload;
+        state.allExams = state.allExams.filter((exam) => exam.id !== id);
+        state.teacherExams = state.teacherExams.filter(
+          (exam) => exam.id !== id
+        );
+        state.courseExams = state.courseExams.filter((exam) => exam.id !== id);
+        state.studentExams = state.studentExams.filter(
+          (exam) => exam.id !== id
+        );
+      })
+      .addCase(deleteExam.rejected, (state, action) => {
+        state.deleteExamLoading = false;
+        state.deleteExamError = action.payload;
       });
   },
 });
 
-export const { getExamById, filterExamByCourse } = examSlice.actions;
+export const { removeExam } = examSlice.actions;
 export default examSlice.reducer;

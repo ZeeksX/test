@@ -1,11 +1,16 @@
 import React from "react";
 import { formatDate } from "../modals/UIUtilities";
+import CustomButton from "../ui/Button";
+import { useDispatch } from "react-redux";
+import { setShowLeaveStudentGroupDialog } from "../../features/reducers/uiSlice";
+import { LeaveStudentGroupDialog } from "../courses/CourseComponents";
 
 const GroupCard = ({ group }) => {
+  const dispatch = useDispatch();
   const Students = group.students || [];
 
   return (
-    <div className="flex flex-col font-inter rounded-[20px] w-full max-w-[422px] h-[378px] border shadow-white bg-white p-1">
+    <div className="flex flex-col font-inter rounded-[20px] w-full h-[378px] border shadow-white bg-white p-1">
       <div className="h-[278px] w-full">
         <div className="mt-10 flex flex-col items-center justify-between gap-4">
           {Students.map((student, index) => (
@@ -15,7 +20,8 @@ const GroupCard = ({ group }) => {
             >
               <div className="flex flex-row flex-1 gap-3 items-center">
                 <h1 className="text-base font-normal text-black">
-                  {index + 1} {/* Add +1 to start numbering from 1 instead of 0 */}
+                  {index + 1}{" "}
+                  {/* Add +1 to start numbering from 1 instead of 0 */}
                 </h1>
                 <h1 className="text-base font-normal text-black truncate">
                   {student.last_name} {student.other_names}
@@ -35,12 +41,17 @@ const GroupCard = ({ group }) => {
             Last Edited {formatDate(new Date(group.updated_at))}
           </span>
         </div>
-        <div className="flex">
-          <span className="flex cursor-pointer items-center gap-2 text-[#EA4335]">
+        <div className="flex items-start justify-start h-full pt-4">
+          <CustomButton
+            variant="link"
+            onClick={() => dispatch(setShowLeaveStudentGroupDialog(true))}
+            className="!p-0 flex cursor-pointer items-center gap-2 !text-primary-danger"
+          >
             Leave Group
-          </span>
+          </CustomButton>
         </div>
       </div>
+      {/* <LeaveStudentGroupDialog /> */}
     </div>
   );
 };

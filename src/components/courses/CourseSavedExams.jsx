@@ -3,9 +3,9 @@ import { emptyFolderImg } from "../../utils/images";
 
 const CourseSavedExams = () => {
   return (
-    <div className="w-full h-full gap-1 flex flex-col items-center justify-center">
+    <div className="w-full h-full gap-1 flex flex-col items-center justify-center p-4">
       <img src={emptyFolderImg} alt="" />
-      <h3 className="font-medium text-2xl">
+      <h3 className="font-medium text-2xl max-md:text-xl">
         Your have no Exams Saved to Draft
       </h3>
       <h5 className="text-text-ghost font-normal text-sm">

@@ -1,17 +1,19 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useAuth } from "../components/Auth";
 import "../styles/main.css";
 import ForgotPassword from "../components/modals/ForgotPassword";
 import Toast from "../components/modals/Toast";
-import { brandLogo } from "../utils/images.js";
+import { bannerTransparent } from "../utils/images.js";
 import { SERVER_URL } from "../utils/constants.js";
 import { Input, Password } from "../components/ui/Input.jsx";
 import { Label } from "../components/ui/Label.jsx";
-import OTPPage from "./OTPPage.jsx";
 import { Loader } from "../components/ui/Loader.jsx";
 import { CustomButton } from "../components/ui/Button.jsx";
 import axios from "axios";
+
+// Lazy load the OTPPage component
+const OTPPage = lazy(() => import("./OTPPage.jsx"));
 
 const SignUp = () => {
   const [lastName, setLastName] = useState("");
@@ -38,10 +40,18 @@ const SignUp = () => {
     message: "",
     severity: "info",
   });
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const auth = useAuth();
   const { login } = auth;
   const navigate = useNavigate();
+
+  // Preload the logo image
+  useEffect(() => {
+    const img = new Image();
+    img.src = bannerTransparent;
+    img.onload = () => setImageLoaded(true);
+  }, []);
 
   useEffect(() => {
     const storedData = localStorage.getItem("userData");
@@ -143,16 +153,6 @@ const SignUp = () => {
 
     setLoader(true);
 
-    console.log({
-      title: title,
-      last_name: lastName,
-      other_names: otherNames,
-      email: email,
-      role: role,
-      password: password,
-      confirm_password: confirmPassword,
-    });
-
     try {
       // Prepare the request body based on role
       const requestBody = {
@@ -179,7 +179,6 @@ const SignUp = () => {
 
       const data = await res.json();
 
-      console.log("Response from backend:", data);
       if (
         data.error ==
         "User already exists but is not verified. Please check your email for the OTP or request a new one."
@@ -320,8 +319,13 @@ const SignUp = () => {
               <div className="flex flex-col justify-center items-center gap-1 lg:gap-2">
                 <img
                   className="w-1/4 max-sm:w-1/2 max-2xl:w-1/3"
-                  src={brandLogo}
+                  src={bannerTransparent}
+                  loading="lazy"
                   alt="Acad AI logo"
+                  width="150"
+                  height="60"
+                  fetchPriority="high"
+                  onLoad={() => setImageLoaded(true)}
                 />
                 <h3 className="text-black mt-3 font-medium text-[1.75rem] max-sm:text-[1.65rem] max-sm:font-semibold leading-[1rem]">
                   Create an account
@@ -433,7 +437,9 @@ const SignUp = () => {
           </div>
         </div>
       ) : (
-        <OTPPage email={email} />
+        <Suspense fallback={<Loader />}>
+          <OTPPage email={email} />
+        </Suspense>
       )}
       <Toast
         open={toast.open}

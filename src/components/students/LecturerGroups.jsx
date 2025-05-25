@@ -30,7 +30,7 @@ const LecturerGroups = () => {
 
   return (
     <div className="">
-      <div className="py-6 px-11 flex flex-col gap-4">
+      <div className="p-6 pb-2 flex flex-col gap-4">
         <h1 className="text-[32px] leading-8 font-medium">
           {lecturer.title} {lecturer.last_name} {lecturer.other_names}
         </h1>
@@ -40,7 +40,7 @@ const LecturerGroups = () => {
       </div>
       <hr className="text-[#D0D5DD] mt-4" />
 
-      <div className="px-11 grid grid-cols-1 md:grid-cols-2 gap-6 py-8">
+      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
         {loading ? (
           <div>Loading...</div>
         ) : error ? (

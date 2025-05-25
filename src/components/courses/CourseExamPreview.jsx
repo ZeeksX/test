@@ -1,12 +1,60 @@
 import { CustomButton } from "../ui/Button";
-import { FiEdit, FiTrash2 } from "react-icons/fi";
+import { FiCheck, FiEdit, FiTrash2, FiX } from "react-icons/fi";
 import { Input, Textarea } from "../ui/Input";
 import { RadioGroup, RadioGroupItem } from "../ui/Radio";
 import { Label } from "../ui/Label";
 import { Badge } from "../ui/Badge";
 import { formatDate } from "../modals/UIUtilities";
+import { useState } from "react";
 
-const CourseExamPreview = ({ examData, setPreview }) => {
+const CourseExamPreview = ({ examData, setPreview, updateExamData }) => {
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+
+  const handleEditQuestion = (question) => {
+    setEditingQuestionId(question.id);
+    setEditingQuestion({ ...question });
+  };
+
+  const handleSaveQuestion = () => {
+    const updatedQuestions = examData.questions.map((q) =>
+      q.id === editingQuestionId ? editingQuestion : q
+    );
+
+    updateExamData({ questions: updatedQuestions });
+    setEditingQuestionId(null);
+    setEditingQuestion(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingQuestionId(null);
+    setEditingQuestion(null);
+  };
+
+  const handleDeleteQuestion = (questionId) => {
+    const updatedQuestions = examData.questions.filter(
+      (q) => q.id !== questionId
+    );
+    updateExamData({ questions: updatedQuestions });
+  };
+
+  const handleQuestionChange = (field, value) => {
+    setEditingQuestion((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleOptionChange = (optionIndex, value) => {
+    const updatedOptions = editingQuestion.options.map((option, index) =>
+      index === optionIndex ? { ...option, text: value } : option
+    );
+    setEditingQuestion((prev) => ({
+      ...prev,
+      options: updatedOptions,
+    }));
+  };
+
   return (
     <div>
       <div className="flex justify-between items-start mb-6">
@@ -30,7 +78,9 @@ const CourseExamPreview = ({ examData, setPreview }) => {
           </span>
           <span className="text-gray-500 ml-4">Question types:</span>
           <span className="text-primary-main font-medium">
-            {examData.questionTypes.map((type) => String(type).trim()).join(", ")}
+            {examData.questionTypes
+              .map((type) => String(type).trim())
+              .join(", ")}
           </span>
         </div>
 
@@ -41,21 +91,19 @@ const CourseExamPreview = ({ examData, setPreview }) => {
           </span>
           <span className="text-gray-500 ml-4">Schedule time:</span>
           <span className="text-primary-main font-medium">
-            {examData.scheduleTime
-              ? formatDate(examData.scheduleTime)
-              : ""}
+            {examData.scheduleTime ? formatDate(examData.scheduleTime) : ""}
           </span>
           <span className="text-gray-500 ml-4">Due time:</span>
           <span className="text-primary-main font-medium">
-            {examData.dueTime
-              ? formatDate(examData.dueTime)
-              : ""}
+            {examData.dueTime ? formatDate(examData.dueTime) : ""}
           </span>
         </div>
 
         <div className="flex items-center gap-2 text-sm">
           <span className="text-gray-500">Number of Questions:</span>
-          <span className="text-primary-main font-medium">{examData.questions.length}</span>
+          <span className="text-primary-main font-medium">
+            {examData.questions.length}
+          </span>
         </div>
       </div>
 
@@ -64,11 +112,15 @@ const CourseExamPreview = ({ examData, setPreview }) => {
           {examData.questions.map((question) => (
             <QuestionCard
               key={question.id}
-              type={question.type}
-              marks={2}
-              question={question.text}
-              options={question.options?.map((option) => option.text)}
-              questionType={question.type}
+              question={question}
+              isEditing={editingQuestionId === question.id}
+              editingQuestion={editingQuestion}
+              onEdit={() => handleEditQuestion(question)}
+              onSave={handleSaveQuestion}
+              onCancel={handleCancelEdit}
+              onDelete={() => handleDeleteQuestion(question.id)}
+              onQuestionChange={handleQuestionChange}
+              onOptionChange={handleOptionChange}
             />
           ))}
         </div>
@@ -81,52 +133,105 @@ const CourseExamPreview = ({ examData, setPreview }) => {
   );
 };
 
-function QuestionCard({ type, marks, question, options, questionType }) {
+function QuestionCard({
+  question,
+  isEditing,
+  editingQuestion,
+  onEdit,
+  onSave,
+  onCancel,
+  onDelete,
+  onQuestionChange,
+  onOptionChange,
+}) {
+  const currentQuestion = isEditing ? editingQuestion : question;
+  const marks = question.marks || 2; // Default to 2 if not specified
+
   return (
     <div className="border rounded-lg overflow-hidden">
       <div className="flex items-center justify-between p-3">
         <div className="flex items-center space-x-2">
           <Badge className="text-sm text-[#A29A9A] bg-[#EEEEEE] rounded-[2px] font-medium">
-            {type}
+            {currentQuestion.type}
           </Badge>
           <Badge className="text-sm text-[#A29A9A] bg-[#EEEEEE] rounded-[2px] font-medium">
             {marks} marks
           </Badge>
         </div>
         <div className="flex items-center space-x-2">
-          <CustomButton variant="ghost" size="icon">
-            <FiEdit className="h-4 w-4" />
-          </CustomButton>
-          <CustomButton variant="ghost" size="icon">
-            <FiTrash2 className="h-4 w-4" />
-          </CustomButton>
+          {isEditing ? (
+            <>
+              <CustomButton variant="ghost" size="icon" className="hover:!bg-green-600 hover:!text-white" onClick={onSave}>
+                <FiCheck className="h-4 w-4 " />
+              </CustomButton>
+              <CustomButton variant="ghost" className="hover:!bg-red-600 hover:!text-white" size="icon" onClick={onCancel}>
+                <FiX className="h-4 w-4" />
+              </CustomButton>
+            </>
+          ) : (
+            <>
+              <CustomButton variant="ghost" size="icon" onClick={onEdit}>
+                <FiEdit className="h-4 w-4" />
+              </CustomButton>
+              <CustomButton
+                variant="ghost"
+                size="icon"
+                onClick={onDelete}
+                className="hover:bg-red-600 hover:!text-white"
+              >
+                <FiTrash2 className="h-4 w-4" />
+              </CustomButton>
+            </>
+          )}
         </div>
       </div>
       <div className="p-4">
-        <p className="mb-4">{question}</p>
-
-        {questionType === "multiple-choice" && (
-          <RadioGroup defaultValue="" className="space-y-2">
-            {options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <RadioGroupItem
-                  value={`option-${index + 1}`}
-                  id={`option-${index + 1}`}
-                />
-                <Label htmlFor={`option-${index + 1}`}>{option}</Label>
-              </div>
-            ))}
-          </RadioGroup>
+        {isEditing ? (
+          <Textarea
+            value={currentQuestion.text}
+            onChange={(e) => onQuestionChange("text", e.target.value)}
+            className="mb-4 w-full p-2 border rounded resize-none min-h-[60px]"
+            placeholder="Enter question text"
+          />
+        ) : (
+          <p className="mb-4">{currentQuestion.text}</p>
         )}
 
-        {questionType === "cloze" && (
-          <Input className="mt-4" placeholder="Short answer" />
+        {currentQuestion.type === "multiple-choice" && (
+          <div className="space-y-2">
+            <RadioGroup>
+              {currentQuestion.options?.map((option, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <RadioGroupItem
+                    value={`option-${index + 1}`}
+                    id={`option-${index + 1}`}
+                    disabled={isEditing}
+                  />
+                  {isEditing ? (
+                    <Input
+                      value={option.text}
+                      onChange={(e) => onOptionChange(index, e.target.value)}
+                      className="flex-1"
+                      placeholder={`Option ${index + 1}`}
+                    />
+                  ) : (
+                    <Label htmlFor={`option-${index + 1}`}>{option.text}</Label>
+                  )}
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
         )}
 
-        {questionType === "theory" && (
+        {currentQuestion.type === "cloze" && (
+          <Input className="mt-4" placeholder="Short answer" disabled />
+        )}
+
+        {currentQuestion.type === "theory" && (
           <Textarea
             className="w-full p-2 border-b outline-none mt-2 resize-none border-black focus:outline-none focus:border-primary-main min-h-[70px]"
             placeholder="Long answer"
+            disabled
           />
         )}
       </div>

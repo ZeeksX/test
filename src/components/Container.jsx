@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar";
+import { AvatarFallback, AvatarImage } from "./ui/Avatar";
+import Avatar from '@mui/material/Avatar';
 import { useAuth } from "./Auth.jsx";
 import StudentContainer from "./students/Container.jsx";
 import LecturerContainer from "./lecturer/Container.jsx";
@@ -8,6 +9,7 @@ import { CustomButton } from "./ui/Button.jsx";
 import { useDispatch } from "react-redux";
 import { setShowJoinStudentGroupDialog } from "../features/reducers/uiSlice.jsx";
 import { SERVER_URL } from "../utils/constants.js";
+import { profileImageDefault } from "../utils/images.js";
 
 const Container = () => {
   const [src, setSrc] = useState("");
@@ -48,7 +50,7 @@ const Container = () => {
 
           // Remove userData and user after successful post
           localStorage.removeItem("userData");
-          
+
         }
       } catch (error) {
         console.error("Error posting course data:", error);
@@ -56,19 +58,18 @@ const Container = () => {
     };
 
     postCourseDetails();
-  }, );
+  },);
 
   return (
     <div className="w-full h-full p-5 overflow-auto bg-[#F9F9F9]">
       <div className="flex items-center justify-start gap-5 mb-5">
-        <Avatar>
-          {src ? (
-            <AvatarImage src={src} className="!w-[53px] !h-[53px]" alt="Profile" />
-          ) : (
-            <AvatarFallback className="!w-[53px] !h-[53px]">
-              {user?.last_name ? user?.last_name.charAt(0) : "A"}
-            </AvatarFallback>
-          )}
+        <Avatar
+          sx={{ bgcolor: "blue" }}
+          className="!w-[60px] !h-[60px] rounded-full"
+          alt="Profile Image"
+          src={user.profile_image ? user.profile_image : profileImageDefault}
+        >
+          {user?.last_name ? user?.last_name.charAt(0) : "A"}
         </Avatar>
         <div className="flex flex-row justify-between h-[60px] w-full">
           <div className="flex flex-col justify-between">
