@@ -2,7 +2,7 @@ import React from 'react';
 
 const Features = () => {
     return (
-        <div className='flex flex-col gap-6 justify-center items-center w-full py-0 lg:py-12'>
+        <div id="features" className='flex flex-col gap-6 justify-center items-center w-full py-0 lg:py-12'>
             <h1 className='text-center text-4xl font-bold mb-8'>Our Features</h1>
             <div className='flex flex-col lg:flex-row lg:justify-between justify-center  items-center gap-8 w-[90vw]'>
                 {/* Feature 1 */}

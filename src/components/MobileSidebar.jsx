@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { bannerTransparent } from "../utils/images";
+// import { Link } from "react-router-dom";
+// import { bannerTransparent } from "../utils/images";
 import HomeIcon from "@mui/icons-material/Home";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import BeenhereIcon from "@mui/icons-material/Beenhere";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import { Fax } from "@mui/icons-material";
+// import { Fax } from "@mui/icons-material";
 import { MdClose } from "react-icons/md";
 
 const MobileSidebar = ({ toggleSidebar, sidebarOpen }) => {
@@ -13,7 +13,7 @@ const MobileSidebar = ({ toggleSidebar, sidebarOpen }) => {
   const navItems = [
     { name: "Home", icon: <HomeIcon />, link: "#home" },
     { name: "Our why", icon: <LibraryBooksIcon />, link: "#our-why" },
-    { name: "Beta waitlist", icon: <BeenhereIcon />, link: "#beta-waitlist" },
+    { name: "Features", icon: <BeenhereIcon />, link: "#features" },
     { name: "Contact Us", icon: <AccountCircleIcon />, link: "#contact-us" },
   ];
 

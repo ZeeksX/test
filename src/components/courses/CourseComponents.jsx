@@ -66,6 +66,7 @@ import apiCall from "../../utils/apiCall";
 import {
   fetchAllStudents,
   fetchStudentGroups,
+  removeStudentFromExamRoom,
 } from "../../features/reducers/examRoomSlice";
 import { Spinner } from "../ui/Loader";
 import { deleteExam, fetchExams } from "../../features/reducers/examSlice";
@@ -1440,9 +1441,54 @@ export const JoinStudentGroupDialog = () => {
   );
 };
 
-export const LeaveStudentGroupDialog = ({ title = "Student Group 2" }) => {
-  const isOpen = useSelector((state) => state.ui.showLeaveStudentGroupDialog);
+export const LeaveStudentGroupDialog = () => {
+  const {
+    isOpen,
+    groupName: title,
+    groupId,
+  } = useSelector((state) => state.ui.showLeaveStudentGroupDialog);
+  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const user = JSON.parse(localStorage.getItem("user"));
+  const studentId = user.studentId;
+
+  const { removeStudentLoading: removing } = useSelector(
+    (state) => state.examRooms
+  );
+
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  const handleLeave = async () => {
+    dispatch(removeStudentFromExamRoom({ groupId, studentId }))
+      .unwrap()
+      .then(() => {
+        showToast("You have left the student group!", "success");
+        setTimeout(() => {
+          setShowLeaveStudentGroupDialog({
+            isOpen: false,
+            groupName: "",
+            groupId: "",
+          });
+          navigate("/dashboard");
+        }, 2000);
+      })
+      .catch((error) => {
+        console.log(error);
+        showToast("Failed to leave student group. Please try again!", "error");
+      });
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
+  };
 
   return (
     <ButtonDismissDialog
@@ -1464,12 +1510,23 @@ export const LeaveStudentGroupDialog = ({ title = "Student Group 2" }) => {
             >
               Cancel
             </CustomButton>
-            <CustomButton variant="danger" className="gap-2 mt-4 flex-1">
+            <CustomButton
+              variant="danger"
+              // onClick={handleLeave}
+              loading={removing}
+              className="gap-2 mt-4 flex-1"
+            >
               Leave Group
             </CustomButton>
           </div>
         </div>
       </DialogContent>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </ButtonDismissDialog>
   );
 };

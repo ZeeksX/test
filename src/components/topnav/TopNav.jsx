@@ -8,7 +8,7 @@ const TopNav = () => {
   const navLinks = [
     { title: "Home", link: "#home" },
     { title: "Our Why", link: "#our-why" },
-    { title: "Beta Waitlist", link: "#beta-waitlist" },
+    { title: "Features", link: "#features" },
     { title: "Contact Us", link: "#contact-us" },
   ];
   const navigate = useNavigate();
@@ -48,8 +48,8 @@ const TopNav = () => {
           />
         </div>
       </a>
-      <div className="hidden md:flex flex-row w-1/3 items-center justify-between">
-        <ul className="flex flex-row w-full md:gap-6 justify-between">
+      <div className="hidden md:flex flex-row lg:w-1/3 items-center justify-between">
+        <ul className="flex flex-row w-full md:gap-4 lg:gap-6 justify-between">
           {navLinks.map((link, index) => (
             <a
               key={index}
@@ -61,14 +61,20 @@ const TopNav = () => {
           ))}
         </ul>
       </div>
-      {/* <button
-        onClick={handleClick}
-        className="hidden md:flex flex-row gap-3 hover:ring-2 rounded-[10px] w-[120px] h-[45px] font-normal text-sm md:text-base leading-[19.43px] text-white justify-center items-center bg-[#1836B2]"
-      >
-        Sign in
-      </button> */}
-
       <button
+        onClick={handleClick}
+        className="hidden md:flex flex-row gap-3 hover:ring-2 rounded-[10px] w-[143px] h-[50px] font-normal text-sm md:text-base leading-[19.43px] text-white justify-center items-center bg-[#1836B2]"
+      >
+        Get Started {""}
+        <img
+          src={arrow}
+          alt="arrow"
+          className={`w-4 h-4 object-contain ${arrowLoaded ? "block" : "hidden"}`}
+          loading="lazy"
+        />
+      </button>
+
+      {/* <button
         onClick={() => dispatch(setShowSendmeUpdatesDialog(true))}
         className="hidden md:flex flex-row gap-3 hover:ring-2 rounded-[10px] w-max px-4 h-[45px] font-normal text-sm md:text-sm leading-[19.43px] text-white justify-center items-center bg-[#1836B2]"
       >
@@ -79,7 +85,7 @@ const TopNav = () => {
           className={`w-4 h-4 object-contain ${arrowLoaded ? "block" : "hidden"}`}
           loading="lazy"
         />
-      </button>
+      </button> */}
     </div>
   );
 };

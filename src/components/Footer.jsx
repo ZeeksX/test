@@ -1,8 +1,8 @@
-import React from "react";
-import { Link } from "react-router-dom";
+// import React from "react";
+// import { Link } from "react-router-dom";
 import { GrLinkedinOption } from "react-icons/gr";
-import { TiSocialFacebookCircular } from "react-icons/ti";
-import { faceb, footerLogo, insta, link, twit, yout } from "../utils/images";
+// import { TiSocialFacebookCircular } from "react-icons/ti";
+import { footerLogo } from "../utils/images";
 import { FaFacebookF, FaXTwitter } from "react-icons/fa6";
 import { BsInstagram } from "react-icons/bs";
 
@@ -10,7 +10,7 @@ const Footer = () => {
   const footerItems = [
     { title: "Home", link: "#home" },
     { title: "Our Why", link: "#our-why" },
-    { title: "Beta Waitlist", link: "#beta-waitlist" },
+    { title: "Features", link: "#features" },
     { title: "Contact Us", link: "#contact-us" },
   ];
 

@@ -13,7 +13,11 @@ const uiSlice = createSlice({
       code: "m39s10g",
     },
     showJoinStudentGroupDialog: false,
-    showLeaveStudentGroupDialog: false,
+    showLeaveStudentGroupDialog: {
+      isOpen: false,
+      groupName: "",
+      groupId: null,
+    },
     showAddStudentToStudentGroupDialog: {
       isOpen: false,
       groupId: null,
@@ -65,7 +69,11 @@ const uiSlice = createSlice({
       state.showJoinStudentGroupDialog = action.payload;
     },
     setShowLeaveStudentGroupDialog: (state, action) => {
-      state.showLeaveStudentGroupDialog = action.payload;
+      state.showLeaveStudentGroupDialog.isOpen = action.payload.isOpen || false;
+      state.showLeaveStudentGroupDialog.groupName =
+        action.payload.groupName || "";
+      state.showLeaveStudentGroupDialog.groupId =
+        action.payload.groupId || null;
     },
     setShowAddStudentToStudentGroupDialog: (state, action) => {
       state.showAddStudentToStudentGroupDialog.isOpen =
@@ -81,7 +89,7 @@ const uiSlice = createSlice({
     setShowCheckEmailDialog: (state, action) => {
       state.showCheckEmailDialog.willShow = action.payload.willShow || false;
       state.showCheckEmailDialog.email = action.payload.email;
-  },
+    },
     setShowResetPasswordDialog: (state, action) => {
       state.showResetPasswordDialog = action.payload;
     },

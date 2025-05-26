@@ -4,6 +4,7 @@ import CustomButton from "../ui/Button";
 import { useDispatch } from "react-redux";
 import { setShowLeaveStudentGroupDialog } from "../../features/reducers/uiSlice";
 import { LeaveStudentGroupDialog } from "../courses/CourseComponents";
+import { Iso } from "@mui/icons-material";
 
 const GroupCard = ({ group }) => {
   const dispatch = useDispatch();
@@ -44,7 +45,15 @@ const GroupCard = ({ group }) => {
         <div className="flex items-start justify-start h-full pt-4">
           <CustomButton
             variant="link"
-            onClick={() => dispatch(setShowLeaveStudentGroupDialog(true))}
+            onClick={() =>
+              dispatch(
+                setShowLeaveStudentGroupDialog({
+                  isOpen: true,
+                  groupName: group.name,
+                  groupId: group.id,
+                })
+              )
+            }
             className="!p-0 flex cursor-pointer items-center gap-2 !text-primary-danger"
           >
             Leave Group

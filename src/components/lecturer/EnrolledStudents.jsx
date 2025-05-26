@@ -45,6 +45,7 @@ import { Label } from "../ui/Label";
 import { Input } from "../ui/Input";
 
 const EnrolledStudents = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const group = location.state?.group;
   const dispatch = useDispatch();
@@ -82,17 +83,16 @@ const EnrolledStudents = () => {
     dispatch(removeStudentFromExamRoom({ groupId: group.id, studentId }))
       .unwrap()
       .then(() => {
-        showToast("Student Group deleted successfully!", "success");
-        // setTimeout(() => {
-        //   dispatch(setShowDeleteStudentGroupDialog(false));
-        //   navigate("/student-groups");
-        // }, 2000);
+        showToast("Student has been removed successfully!", "success");
+        setRemoveId(null);
+        setTimeout(() => {
+          navigate("/student-groups");
+        }, 2000);
       })
       .catch((error) => {
         console.log(error);
         showToast("Failed to delete student group. Please try again!", "error");
       });
-    setRemoveId(null);
   };
 
   const rows = group.students?.map((student, index) => {
@@ -101,7 +101,7 @@ const EnrolledStudents = () => {
       name: student.last_name + ", " + student.other_names,
       "matric-number": student.matric_number ? student.matric_number : "N/A",
       options:
-        removing && removeId === student.student_id ? (
+        removing == true && removeId == student.student_id ? (
           <span className="text-[#EA4335] flex flex-row gap-2 cursor-pointer">
             Removing
           </span>
@@ -308,18 +308,17 @@ const EnrolledStudents = () => {
           >
             Add New Student <FiPlus size={20} />
           </CustomButton>
-
-          <Toast
-            open={toast.open}
-            message={toast.message}
-            severity={toast.severity}
-            onClose={closeToast}
-          />
         </div>
       )}
 
       <DeleteStudentGroupDialog title={group.name} id={group.id} />
       <EditStudentGroup group={group} />
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </div>
   );
 };
