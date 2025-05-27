@@ -11,6 +11,8 @@ import { FiHome } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import { setShowForgotPasswordDialog } from "../features/reducers/uiSlice.jsx";
 import { CheckEmailDialog, ForgotPasswordDialog } from "../components/modals/AuthModals.jsx";
+import { useGoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 
 // Lazy load non-critical components
 const ForgotPassword = lazy(() =>
@@ -30,7 +32,6 @@ const Login = ({ isMobile }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loader, setLoader] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
-  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [toast, setToast] = useState({
     open: false,
     message: "",
@@ -47,16 +48,20 @@ const Login = ({ isMobile }) => {
   useEffect(() => {
     // Dynamic import images
     const loadImages = async () => {
-      const imageModule = await import("../utils/images.js");
-      setImages({
-        brandLogo: imageModule.bannerTransparent,
-        googleLogo: imageModule.googleLogo,
-        logoMobile: imageModule.logoMobile,
-      });
+      try {
+        const imageModule = await import("../utils/images.js");
+        setImages({
+          brandLogo: imageModule.bannerTransparent,
+          googleLogo: imageModule.googleLogo,
+          logoMobile: imageModule.logoMobile,
+        });
 
-      // Preload background images
-      preloadImage(imageModule.brandLogo);
-      preloadImage(imageModule.logoMobile);
+        // Preload background images
+        preloadImage(imageModule.brandLogo);
+        preloadImage(imageModule.logoMobile);
+      } catch (error) {
+        console.error("Error loading images:", error);
+      }
     };
 
     loadImages();
@@ -74,6 +79,32 @@ const Login = ({ isMobile }) => {
     setShowPassword((prev) => !prev);
   }, []);
 
+  // Helper function to show toast and handle navigation
+  const handleSuccessfulLogin = useCallback((message = "Login successful!") => {
+    // Show toast on the login page
+    showToast(message, "success");
+
+    // Store the toast message for the dashboard
+    try {
+      localStorage.setItem(
+        "toastMessage",
+        JSON.stringify({
+          message,
+          severity: "success",
+        })
+      );
+    } catch (error) {
+      console.error("Error storing toast message:", error);
+    }
+
+    setLoader(true);
+    // Delay navigation
+    setTimeout(() => {
+      navigate("/dashboard");
+    }, 2000);
+  }, [navigate]);
+
+  // Regular email/password login
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
@@ -92,42 +123,34 @@ const Login = ({ isMobile }) => {
         const data = await res.json();
 
         if (res.ok) {
-          localStorage.setItem("access_token", data.access);
-          localStorage.setItem("refresh_token", data.refresh);
+          // Store tokens
+          try {
+            localStorage.setItem("access_token", data.access);
+            localStorage.setItem("refresh_token", data.refresh);
+          } catch (error) {
+            console.error("Error storing tokens:", error);
+          }
 
+          // Login with complete user data
           login({
             email: formState.email,
             last_name: data.last_name,
             role: data.role,
             id: data.id,
             studentId: data.studentId,
-            teacherId: data.teacher1d,
+            teacherId: data.teacherId,
             access: data.access,
             refresh: data.refresh,
-            other_names: data.other_names
+            other_names: data.other_names,
+            first_name: data.first_name
           });
 
-          // Show toast on the login page
-          showToast("Login successful!", "success");
-
-          // Store the toast message in local storage for the dashboard
-          localStorage.setItem(
-            "toastMessage",
-            JSON.stringify({
-              message: "Login successful!",
-              severity: "success",
-            })
-          );
-
-          setLoader(true);
-          // Delay navigation by 1 second
-          setTimeout(() => {
-            navigate("/dashboard");
-          }, 3000);
+          handleSuccessfulLogin();
         } else {
-          setLoader(false);
           console.log("Login failed:", data);
           showToast(data.detail || "Login failed. Please try again.", "error");
+
+          // Handle email verification case
           if (
             data.detail ===
             "Account is not verified. Please verify your email via OTP."
@@ -142,17 +165,79 @@ const Login = ({ isMobile }) => {
         showToast("An error occurred. Please try again later.", "error");
       } finally {
         setIsLogging(false);
+        setLoader(false);
       }
     },
-    [formState, navigate, login]
+    [formState, navigate, login, handleSuccessfulLogin]
   );
+
+  // Google OAuth login handler
+  const handleGoogleLogin = useGoogleLogin({
+    flow: 'auth-code',
+    onSuccess: async (codeResponse) => {
+      setIsLogging(true);
+
+      try {
+        console.log('Google auth code received:', codeResponse.code);
+        console.log("code response", codeResponse);
+
+        const response = await axios.post(`${SERVER_URL}/users/auth/google/`, {
+          code: codeResponse.code
+        });
+        console.log("response", response)
+        const data = response.data;
+        console.log('Google login success:', data);
+
+        if (data.access && data.refresh) {
+          // Store tokens
+          try {
+            localStorage.setItem("access_token", data.access);
+            localStorage.setItem("refresh_token", data.refresh);
+          } catch (error) {
+            console.error("Error storing tokens:", error);
+          }
+
+          // Login with complete user data from Google response
+          login({
+            email: data.email,
+            last_name: data.last_name,
+            role: data.role,
+            id: data.id,
+            studentId: data.studentId,
+            teacherId: data.teacherId,
+            access: data.access,
+            refresh: data.refresh,
+            other_names: data.other_names,
+            first_name: data.first_name,
+            picture: data.picture
+          });
+
+          handleSuccessfulLogin("Google login successful!");
+        } else {
+          console.log("Google login failed - missing tokens:", data);
+          showToast("Google login failed. Please try again.", "error");
+        }
+      } catch (error) {
+        console.error("Error during Google login:", error);
+        const errorMessage = error.response?.data?.detail ||
+          error.response?.data?.error ||
+          "Google login failed. Please try again.";
+        showToast(errorMessage, "error");
+      } finally {
+        setIsLogging(false);
+        setLoader(false);
+      }
+    },
+    onError: (error) => {
+      console.error("Google login error:", error);
+      showToast("Google login failed. Please try again.", "error");
+      setIsLogging(false);
+      setLoader(false);
+    }
+  });
 
   const navigateToSignUp = () => {
     navigate("/onboarding");
-  };
-
-  const navigateToOTP = () => {
-    navigate("/users/verify-otp");
   };
 
   const showToast = (message, severity = "info") => {
@@ -191,6 +276,7 @@ const Login = ({ isMobile }) => {
                 placeholder="E.g email@example.com"
                 autoComplete="email"
                 onChange={handleInputChange}
+                required
               />
             </div>
             <div className="w-full mb-2">
@@ -203,10 +289,11 @@ const Login = ({ isMobile }) => {
                 placeholder="Enter your password"
                 value={formState.password}
                 onChange={handleInputChange}
+                required
               />
             </div>
             <h3
-              className="!p-0 ml-auto h-auto text-sm hover:text-blue-500 cursor-pointer" 
+              className="!p-0 ml-auto h-auto text-sm hover:text-blue-500 cursor-pointer"
               onClick={() => dispatch(setShowForgotPasswordDialog(true))}
             >
               Forgot password?
@@ -216,14 +303,40 @@ const Login = ({ isMobile }) => {
               loading={isLogging}
               className="w-full"
               type="submit"
+              disabled={isLogging}
             >
               Login
             </CustomButton>
-            {isMobile ? (
-              <GoogleSignInMobile googleLogo={images.googleLogo} />
-            ) : (
-              <GoogleSignInDesktop />
-            )}
+
+            {/* Google Login Section */}
+            <div className="w-full flex flex-col gap-2 mt-2">
+              <div className="flex items-center gap-2 w-full">
+                <hr className="flex-1 border-gray-300" />
+                <span className="text-gray-500 text-sm">or</span>
+                <hr className="flex-1 border-gray-300" />
+              </div>
+
+              <div className="w-full">
+                <CustomButton
+                  size="lg"
+                  loading={isLogging}
+                  className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-blue-700 hover:bg-gray-50"
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={isLogging}
+                >
+                  {images.googleLogo && (
+                    <img
+                      src={images.googleLogo}
+                      alt="Google"
+                      className="w-5 h-5"
+                    />
+                  )}
+                  Continue with Google
+                </CustomButton>
+              </div>
+            </div>
+
             <p className="flex md:hidden text-[#666666] justify-center w-full my-2 text-[0.75rem] font-normal gap-2 text-center">
               Don't have an account?
               <span
@@ -234,16 +347,9 @@ const Login = ({ isMobile }) => {
               </span>
             </p>
           </form>
-          {/* <Suspense fallback={<div>Loading...</div>}>
-            {forgotPasswordOpen && (
-              <ForgotPassword
-                open={forgotPasswordOpen}
-                onClose={() => setForgotPasswordOpen(false)}
-              />
-            )}
-          </Suspense> */}
         </div>
       </div>
+
       <Suspense fallback={<div>Loading...</div>}>
         {toast.open && (
           <Toast
@@ -254,6 +360,7 @@ const Login = ({ isMobile }) => {
           />
         )}
       </Suspense>
+
       <ForgotPasswordDialog />
       <CheckEmailDialog />
     </div>
@@ -301,31 +408,6 @@ const Header = ({ navigateToSignUp, brandLogo, logoMobile }) => (
       Turn Grading Hours into Minutes
     </p>
   </div>
-);
-
-const GoogleSignInDesktop = () => (
-  <h3 className="hidden md:flex w-full justify-center text-[#666666] cursor-pointer">
-    Or, continue with <u className="ml-2">Google</u>
-  </h3>
-);
-
-const GoogleSignInMobile = ({ googleLogo }) => (
-  <button
-    className="flex md:hidden hover:text-white border-[#666666] border-[1px] md:border-none justify-center gap-2 items-center w-full mt-4 h-12 font-normal md:font-extralight text-sm md:text-base rounded-full bg-white md:bg-[#c3c3c3] hover:bg-blue-800 text-gray-800 md:text-white py-1 px-3 transition-all"
-    type="submit"
-  >
-    {googleLogo && (
-      <img
-        className="mr-1"
-        width="25"
-        height="20"
-        src={googleLogo}
-        alt="google-logo"
-        loading="eager"
-      />
-    )}{" "}
-    Sign in with Google
-  </button>
 );
 
 export default Login;

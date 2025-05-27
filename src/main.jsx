@@ -7,15 +7,18 @@ import "./App.css";
 import { Provider } from "react-redux";
 import store from "./features/store.jsx";
 import { HelmetProvider } from "react-helmet-async";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const root = createRoot(document.getElementById("root"));
 
 root.render(
   <StrictMode>
-    <Provider store={store}>
-      <HelmetProvider>
-        <App />
-      </HelmetProvider>
-    </Provider>
-  </StrictMode>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <Provider store={store}>
+        <HelmetProvider>
+          <App />
+        </HelmetProvider>
+      </Provider>
+    </GoogleOAuthProvider>
+  </StrictMode >
 );
