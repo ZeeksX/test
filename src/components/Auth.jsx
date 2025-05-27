@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 
 const AuthContext = createContext();
 
@@ -11,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       return {
         token: token || null,
         user: userStr ? JSON.parse(userStr) : null,
-        isAuthenticated: Boolean(token && userStr)
+        isAuthenticated: Boolean(token && userStr),
       };
     } catch (e) {
       console.error("Error loading initial auth state", e);
@@ -21,7 +27,9 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize states with values from localStorage to prevent flashing of unauthenticated state
   const initialState = getInitialAuthState();
-  const [isAuthenticated, setIsAuthenticated] = useState(initialState.isAuthenticated);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    initialState.isAuthenticated
+  );
   const [user, setUser] = useState(initialState.user);
   const [isLoading, setIsLoading] = useState(true);
   const hasRedirected = useRef(false);
@@ -31,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   const decodeToken = (token) => {
     if (!token) return null;
     try {
-      const payload = token.split('.')[1];
+      const payload = token.split(".")[1];
       return JSON.parse(atob(payload));
     } catch (error) {
       console.error("Error decoding token", error);
@@ -111,7 +119,7 @@ export const AuthProvider = ({ children }) => {
       const now = Date.now();
 
       // Refresh 5 minutes before expiry or immediately if less than 5 minutes left
-      const timeUntilRefresh = Math.max(0, expiresAt - now - (5 * 60 * 1000));
+      const timeUntilRefresh = Math.max(0, expiresAt - now - 5 * 60 * 1000);
 
       refreshTimerRef.current = setTimeout(async () => {
         const success = await refreshToken();
@@ -296,8 +304,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Check if user is a specific type (student/teacher)
-  const isStudent = () => hasRole('student');
-  const isTeacher = () => hasRole('teacher');
+  const isStudent = () => hasRole("student");
+  const isTeacher = () => hasRole("teacher");
 
   return (
     <AuthContext.Provider
@@ -311,7 +319,7 @@ export const AuthProvider = ({ children }) => {
         updateUser,
         hasRole,
         isStudent,
-        isTeacher
+        isTeacher,
       }}
     >
       {children}

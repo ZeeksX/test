@@ -90,6 +90,18 @@ export const removeStudentFromExamRoom = createAsyncThunk(
   }
 );
 
+export const leaveExamRoom = createAsyncThunk(
+  "examRooms/leaveExamRoom",
+  async ({ room_id }, thunkApi) => {
+    try {
+      await apiCall.post(`/exams/exam-rooms/${room_id}/leave_room/`);
+      return { groupId: room_id };
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
 export const deleteExamRoom = createAsyncThunk(
   "examRooms/deleteExamRoom",
   async ({ id }, thunkApi) => {
@@ -303,6 +315,41 @@ const examRoomSlice = createSlice({
         }
       })
       .addCase(removeStudentFromExamRoom.rejected, (state, action) => {
+        state.removeStudentLoading = false;
+        state.removeStudentError = action.payload;
+      })
+
+      .addCase(leaveExamRoom.pending, (state) => {
+        state.removeStudentLoading = true;
+        state.removeStudentError = null;
+      })
+      .addCase(leaveExamRoom.fulfilled, (state, action) => {
+        state.removeStudentLoading = false;
+        const user = JSON.parse(localStorage.getItem("user"));
+        const studentId = user.studentId;
+        
+        const { groupId } = action.payload;
+        const updateGroup = (group) => ({
+          ...group,
+          students: group.students.filter(
+            (student) => student.id !== studentId
+          ),
+        });
+
+        state.allStudentGroups = state.allStudentGroups.map((g) =>
+          g.id === groupId ? updateGroup(g) : g
+        );
+        state.teacherStudentGroups = state.teacherStudentGroups.map((g) =>
+          g.id === groupId ? updateGroup(g) : g
+        );
+        state.studentStudentGroups = state.studentStudentGroups.map((g) =>
+          g.id === groupId ? updateGroup(g) : g
+        );
+        if (state.studentGroup.id === groupId) {
+          state.studentGroup = updateGroup(state.studentGroup);
+        }
+      })
+      .addCase(leaveExamRoom.rejected, (state, action) => {
         state.removeStudentLoading = false;
         state.removeStudentError = action.payload;
       });

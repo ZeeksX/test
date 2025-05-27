@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-// import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 // import { bannerTransparent } from "../utils/images";
 import HomeIcon from "@mui/icons-material/Home";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
@@ -61,14 +61,14 @@ const MobileSidebar = ({ toggleSidebar, sidebarOpen }) => {
               ))}
             </ul>
           </div>
-          <div className="flex flex-col gap-6 items-start w-full">
-            <Link to="/login" className="w-4/5">
-              <button className="w-full cursor-pointer rounded-lg py-2 px-3 font-medium text-sm text-white bg-[#1836B2] hover:bg-[#0061A2]">
+          <div className="flex flex-row gap-4 items-center justify-center w-full">
+            <Link to="/login" className="w-full flex justify-end">
+              <button className="w-3/5 cursor-pointer rounded-lg py-2 px-3 font-medium text-sm bg-white text-[#1836B2]">
                 Login
               </button>
             </Link>
-            <Link to="/onboarding" className="w-4/5">
-              <button className="w-full cursor-pointer rounded-lg py-2 px-3 font-medium text-sm text-white bg-[#1836B2] hover:bg-[#0061A2]">
+            <Link to="/onboarding" className="w-full">
+              <button className="w-3/5 cursor-pointer rounded-lg py-2 px-3 font-medium text-sm bg-white text-[#1836B2]">
                 Sign up
               </button>
             </Link>

@@ -10,14 +10,10 @@ import { Label } from "../components/ui/Label.jsx";
 import { FiHome } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import { setShowForgotPasswordDialog } from "../features/reducers/uiSlice.jsx";
-import { CheckEmailDialog, ForgotPasswordDialog } from "../components/modals/AuthModals.jsx";
+import { CheckEmailDialog, ForgotPasswordDialog, ResetPasswordDialog, PasswordUpdatedDialog } from "../components/modals/AuthModals.jsx";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 
-// Lazy load non-critical components
-const ForgotPassword = lazy(() =>
-  import("../components/modals/ForgotPassword")
-);
 const Toast = lazy(() => import("../components/modals/Toast"));
 
 // Preload critical images
@@ -80,29 +76,32 @@ const Login = ({ isMobile }) => {
   }, []);
 
   // Helper function to show toast and handle navigation
-  const handleSuccessfulLogin = useCallback((message = "Login successful!") => {
-    // Show toast on the login page
-    showToast(message, "success");
+  const handleSuccessfulLogin = useCallback(
+    (message = "Login successful!") => {
+      // Show toast on the login page
+      showToast(message, "success");
 
-    // Store the toast message for the dashboard
-    try {
-      localStorage.setItem(
-        "toastMessage",
-        JSON.stringify({
-          message,
-          severity: "success",
-        })
-      );
-    } catch (error) {
-      console.error("Error storing toast message:", error);
-    }
+      // Store the toast message for the dashboard
+      try {
+        localStorage.setItem(
+          "toastMessage",
+          JSON.stringify({
+            message,
+            severity: "success",
+          })
+        );
+      } catch (error) {
+        console.error("Error storing toast message:", error);
+      }
 
-    setLoader(true);
-    // Delay navigation
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 2000);
-  }, [navigate]);
+      setLoader(true);
+      // Delay navigation
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 2000);
+    },
+    [navigate]
+  );
 
   // Regular email/password login
   const handleSubmit = useCallback(
@@ -138,11 +137,11 @@ const Login = ({ isMobile }) => {
             role: data.role,
             id: data.id,
             studentId: data.studentId,
-            teacherId: data.teacherId,
+            teacherId: data.teacher1d, // The type was necessary, that is how the backend sends it
             access: data.access,
             refresh: data.refresh,
             other_names: data.other_names,
-            first_name: data.first_name
+            first_name: data.first_name,
           });
 
           handleSuccessfulLogin();
@@ -204,7 +203,7 @@ const Login = ({ isMobile }) => {
             role: data.role,
             id: data.id,
             studentId: data.studentId,
-            teacherId: data.teacherId,
+            teacherId: data.teacher1d,
             access: data.access,
             refresh: data.refresh,
             other_names: data.other_names,
@@ -320,7 +319,8 @@ const Login = ({ isMobile }) => {
                 <CustomButton
                   size="lg"
                   loading={isLogging}
-                  className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-blue-700 hover:bg-gray-50"
+                  variant="ghost"
+                  className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50"
                   type="button"
                   onClick={handleGoogleLogin}
                   disabled={isLogging}
@@ -363,6 +363,8 @@ const Login = ({ isMobile }) => {
 
       <ForgotPasswordDialog />
       <CheckEmailDialog />
+      <ResetPasswordDialog />
+      <PasswordUpdatedDialog />
     </div>
   );
 };

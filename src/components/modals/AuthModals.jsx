@@ -17,7 +17,7 @@ import {
 import { Label } from "../ui/Label";
 import { Input, Password } from "../ui/Input";
 import CustomButton from "../ui/Button";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { check_email, green_tick } from "../../utils/images";
 import Toast from "./Toast";
 import { DialogContent } from "@mui/material";
@@ -39,21 +39,25 @@ export const ForgotPasswordDialog = () => {
 
   const handleSubmitEmail = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const body = {
       email,
     };
 
     try {
-      const response = await fetch("https://backend-acad-ai.onrender.com/users/password-reset/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      })
+      const response = await fetch(
+        "https://backend-acad-ai.onrender.com/users/password-reset/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
       if (response.ok) {
-        console.log(await response.json())
+        console.log(await response.json());
         dispatch(setShowForgotPasswordDialog(false));
         dispatch(setShowCheckEmailDialog({ willShow: true, email: email }));
       }
@@ -132,12 +136,19 @@ export const CheckEmailDialog = () => {
     };
 
     try {
-      //   const response = await apiCall.post("/exams/exam-rooms/", body);
-
-      //   if (response.status === 201) {
-      //     showToast("Student group created", "success");
-      //   }
-      console.log(body);
+      const response = await fetch(
+        "https://backend-acad-ai.onrender.com/users/password-reset/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+      if (response.ok) {
+        showToast("Your OTP has been sent.", "success");
+      }
     } catch (error) {
       showToast("Failed to submit email. Please try again.", "error");
       console.error("Error submitting email:", error);
@@ -203,6 +214,32 @@ export const ResetPasswordDialog = () => {
   const email = useSelector((state) => state.ui.showResetPasswordDialog.email);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState();
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const inputRefs = useRef([]);
+
+  const handleChange = (index, value) => {
+    // Only allow empty string or a single digit (0-9)
+    if (!/^[0-9]?$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    if (value && index < otp.length - 1) {
+      inputRefs.current[index + 1].focus();
+    }
+
+    // Automatically submit when all 6 digits are entered
+    // if (newOtp.every((digit) => /^\d$/.test(digit))) {
+    //   handleSubmit(newOtp.join(""));
+    // }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1].focus();
+    }
+  };
+
   const [formData, setFormData] = useState({
     newPassword: "",
     confirmPassword: "",
@@ -215,22 +252,32 @@ export const ResetPasswordDialog = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const body = {
-      formData,
+      email: email,
+      otp: otp.join(""),
+      new_password: formData.newPassword,
     };
 
     try {
-      //   const response = await apiCall.post("/exams/exam-rooms/", body);
+      const response = await apiCall.post(
+        "/users/password-reset-confirm/",
+        body
+      );
 
-      //   if (response.status === 201) {
-      //     showToast("Student group created", "success");
-      //   }
-      console.log(body);
-      dispatch(setShowResetPasswordDialog({ willShow: false, email: email }));
-      dispatch(setShowPasswordUpdatedDialog(true));
+      if (response.status === 200) {
+        setOtp(["", "", "", "", "", ""]);
+        setFormData({
+          newPassword: "",
+          confirmPassword: "",
+        });
+        dispatch(setShowResetPasswordDialog({ willShow: false, email: email }));
+        dispatch(setShowPasswordUpdatedDialog(true));
+      }
+      // console.log(body);
     } catch (error) {
-      showToast("Failed to submit email. Please try again.", "error");
+      showToast("Failed to update password. Please try again.", "error");
       console.error("Error submitting email:", error);
     } finally {
       setLoading(false);
@@ -255,6 +302,21 @@ export const ResetPasswordDialog = () => {
           Reset Your Password
         </h1>
         <form action="" className="" onSubmit={handleSubmit}>
+          <Label>Enter your OTP</Label>
+          <div className="flex items-center justify-between mb-4 w-full">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => (inputRefs.current[index] = el)}
+                type="text"
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                maxLength="1"
+                className="w-12 h-12 max-md:w-10 max-md:h-10 max-[330px]:w-1/6 max-[330px]:h-auto text-xl text-center border-2 rounded-md focus:outline-none focus:border-none focus:ring-2 focus:ring-primary-main"
+              />
+            ))}
+          </div>
           <div className="mb-5">
             <Label>New Password</Label>
             <Password
@@ -274,7 +336,7 @@ export const ResetPasswordDialog = () => {
               You’ll use this to log in going forward.
             </p>
           </div>
-          <div className="mb-8">
+          {/* <div className="mb-8">
             <Label>Confirm New Password</Label>
             <Password
               placeholder="********"
@@ -287,7 +349,8 @@ export const ResetPasswordDialog = () => {
               }
               required
             />
-          </div>
+          </div> */}
+
           <CustomButton type="submit" loading={loading} className="w-full h-10">
             Reset Password
           </CustomButton>

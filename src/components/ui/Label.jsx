@@ -10,7 +10,7 @@ export const Label = ({ htmlFor, children, className = "" }) => (
 );
 
 Label.propTypes = {
-  htmlFor: PropTypes.string.isRequired,
+  htmlFor: PropTypes.string,
   children: PropTypes.node.isRequired,
   className: PropTypes.string,
 };

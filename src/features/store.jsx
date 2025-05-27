@@ -4,6 +4,7 @@ import examRoomReducer from "./reducers/examRoomSlice";
 import uiReducer from "./reducers/uiSlice";
 import examReducer from "./reducers/examSlice";
 import examinationReducer from "./reducers/examinationSlice";
+import userReducer from "./reducers/userSlice";
 
 const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ const store = configureStore({
     examRooms: examRoomReducer,
     ui: uiReducer,
     exams: examReducer,
+    users: userReducer,
   },
 });
 
