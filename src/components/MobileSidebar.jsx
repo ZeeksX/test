@@ -61,7 +61,7 @@ const MobileSidebar = ({ toggleSidebar, sidebarOpen }) => {
               ))}
             </ul>
           </div>
-          {/* <div className="flex flex-col gap-6 items-start w-full">
+          <div className="flex flex-col gap-6 items-start w-full">
             <Link to="/login" className="w-4/5">
               <button className="w-full cursor-pointer rounded-lg py-2 px-3 font-medium text-sm text-white bg-[#1836B2] hover:bg-[#0061A2]">
                 Login
@@ -72,7 +72,7 @@ const MobileSidebar = ({ toggleSidebar, sidebarOpen }) => {
                 Sign up
               </button>
             </Link>
-          </div> */}
+          </div>
         </div>
       </div>
       {sidebarOpen && (
