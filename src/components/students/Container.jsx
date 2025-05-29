@@ -116,6 +116,52 @@ const Container = () => {
           </Card>
         ))}
       </div>
+      
+
+      <hr className="text-[#D0D5DD] mt-4" />
+      <h1 className="text-[#222222] text-2xl my-4">Examinations</h1>
+      {/* Tabs for Upcoming and Completed */}
+      {/* <div className="flex flex-row gap-4">
+        <h1
+          onClick={() => setSelectedTab("upcoming")}
+          className={`cursor-pointer text-lg ${selectedTab === "upcoming"
+              ? "text-[#1836B2] border-b-2 border-[#1836B2]"
+              : "text-black"
+            }`}
+        >
+          Upcoming
+        </h1>
+        <h1
+          onClick={() => setSelectedTab("completed")}
+          className={`cursor-pointer text-lg ${selectedTab === "completed"
+              ? "text-[#1836B2] border-b-2 border-[#1836B2]"
+              : "text-black"
+            }`}
+        >
+          Completed
+        </h1>
+      </div> */}
+      <hr className="text-[#D0D5DD] mt-4" />
+      <div className="text-xl pt-4 flex justify-center">
+        {examinations.length === 0 ? (
+          <div className="flex flex-col items-center gap-4">
+            <img className="w-32 h-32" src={illustration2} alt="Illustration" />
+            <h1 className="text-[32px] max-md:text-2xl font-medium">
+              Nothing to see here… yet!
+            </h1>
+            <p className="text-[#667085] text-lg">
+              Join a student group and start taking examinations.
+            </p>
+          </div>
+        ) : // Conditional rendering based on selected tab.
+        selectedTab === "upcoming" ? (
+          <ExaminationTable examinations={availableExams} />
+        ) : (
+          <CompletedExams examinations={examinations} />
+        )}
+      </div>
+      <hr className="text-[#D0D5DD] mt-4" />
+
       <h1 className="text-[#222222] text-2xl">Student Groups</h1>
       <hr className="text-[#D0D5DD] mt-4" />
       <div className="text-xl grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
@@ -184,50 +230,6 @@ const Container = () => {
           })
         )}
       </div>
-
-      <hr className="text-[#D0D5DD] mt-4" />
-      <h1 className="text-[#222222] text-2xl my-4">Examinations</h1>
-      {/* Tabs for Upcoming and Completed */}
-      {/* <div className="flex flex-row gap-4">
-        <h1
-          onClick={() => setSelectedTab("upcoming")}
-          className={`cursor-pointer text-lg ${selectedTab === "upcoming"
-              ? "text-[#1836B2] border-b-2 border-[#1836B2]"
-              : "text-black"
-            }`}
-        >
-          Upcoming
-        </h1>
-        <h1
-          onClick={() => setSelectedTab("completed")}
-          className={`cursor-pointer text-lg ${selectedTab === "completed"
-              ? "text-[#1836B2] border-b-2 border-[#1836B2]"
-              : "text-black"
-            }`}
-        >
-          Completed
-        </h1>
-      </div> */}
-      <hr className="text-[#D0D5DD] mt-4" />
-      <div className="text-xl pt-4 flex justify-center">
-        {examinations.length === 0 ? (
-          <div className="flex flex-col items-center gap-4">
-            <img className="w-32 h-32" src={illustration2} alt="Illustration" />
-            <h1 className="text-[32px] max-md:text-2xl font-medium">
-              Nothing to see here… yet!
-            </h1>
-            <p className="text-[#667085] text-lg">
-              Join a student group and start taking examinations.
-            </p>
-          </div>
-        ) : // Conditional rendering based on selected tab.
-        selectedTab === "upcoming" ? (
-          <ExaminationTable examinations={availableExams} />
-        ) : (
-          <CompletedExams examinations={examinations} />
-        )}
-      </div>
-      <hr className="text-[#D0D5DD] mt-4" />
     </>
   );
 };

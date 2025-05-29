@@ -209,8 +209,8 @@ export const CreateNewExam = () => {
     course: courseId,
     examType: "",
     description: "",
-    scheduleTime: "",
-    dueTime: "",
+    scheduleTime: new Date(),
+    dueTime: new Date(new Date().setHours(23, 59, 0, 0)),
     addQuestion: [],
     questionMethod: selectedQuestionMethod,
     questions: [],
@@ -459,9 +459,9 @@ export const CreateNewExam = () => {
                       : "text-gray-200"
                   }`}
                 >
-                  Create
+                  Add
                   <br />
-                  Examination
+                  Questions
                 </div>
                 <div
                   className={`text-xs w-[80px] ${
@@ -542,13 +542,30 @@ export const CreateNewExam = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="examType">Examination Type</Label>
-                        <Input
+                        {/* <Input
                           id="examType"
                           name="examType"
                           placeholder="E.g Assignment, Mid-Semester, Quiz"
                           value={examData.examType}
                           onChange={handleInputChange}
-                        />
+                        /> */}
+                        <Select
+                          value={examData.examType}
+                          onValueChange={(value) =>
+                            handleSelectChange("examType", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select the Exam Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Quiz">Quiz</SelectItem>
+                            <SelectItem value="Mid Semester">
+                              Mid Semester
+                            </SelectItem>
+                            <SelectItem value="Exam">Exam</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="description">Description</Label>
@@ -863,11 +880,11 @@ export const CreateNewExam = () => {
                   )}
 
                   {(currentStep === 2 && selectedQuestionMethod) == "" && (
-                    <div className="flex justify-end gap-6 mt-8">
+                    <div className="flex w-full justify-end gap-6 mt-8">
                       {currentStep === 1 ? (
                         <CustomButton
                           variant="clear"
-                          className="w-1/5"
+                          className="w-1/5 mr-auto"
                           onClick={() =>
                             dispatch(setShowCreateNewExamination(false))
                           }
@@ -877,10 +894,10 @@ export const CreateNewExam = () => {
                       ) : (
                         <CustomButton
                           variant="clear"
-                          className="w-1/5"
+                          className="w-1/5 mr-auto"
                           onClick={handleBack}
                         >
-                          Cancel
+                          Previous
                         </CustomButton>
                       )}
 
@@ -894,7 +911,7 @@ export const CreateNewExam = () => {
                             Draft
                           </CustomButton> */}
                           <CustomButton
-                            variant="ghost"
+                            // variant="ghost"
                             className="w-1/2"
                             onClick={() => setExamPreview(true)}
                           >
@@ -902,7 +919,7 @@ export const CreateNewExam = () => {
                           </CustomButton>
                           <CustomButton
                             loading={submitting}
-                            variant="ghost"
+                            // variant="ghost"
                             className="w-1/2"
                             onClick={() => handlePublish()}
                             // onClick={() => dispatch(setShowPostExamWarningDialog({willShow: true, exam: }))}
@@ -1213,6 +1230,13 @@ export function ExaminationCard({
           <p className="text-sm text-gray-500">Due Date & Time - {dueTime}</p>
         </div>
       </div>
+      <CustomButton
+        as="link"
+        to={`${id}/detail`}
+        className="mt-4 ml-auto w-[150px]"
+      >
+        View Results
+      </CustomButton>
 
       {idToShow != 0 && <DeleteExamDialog title={title} id={idToShow} />}
     </div>
@@ -1418,7 +1442,7 @@ export const JoinStudentGroupDialog = () => {
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               maxLength="1"
-              className="w-14 h-12 max-md:w-10 max-md:h-10 max-[330px]:w-1/6 max-[330px]:h-auto text-xl text-center border-2 rounded-md focus:outline-none focus:border-none focus:ring-2 focus:ring-primary-main"
+              className="w-8 h-8 sm:w-14 sm:h-12 max-[330px]:w-1/6 max-[330px]:h-auto text-xl text-center border-2 rounded-md focus:outline-none focus:border-none focus:ring-2 focus:ring-primary-main"
             />
           ))}
         </div>
@@ -1600,13 +1624,13 @@ export const AddNewStudentToStudentGroupDialog = () => {
       onOpenChange={setShowAddStudentToStudentGroupDialog}
     >
       <DialogHeader>
-        <DialogTitle>Add Student to Student Group</DialogTitle>
+        <DialogTitle>Add Student</DialogTitle>
       </DialogHeader>
       <DropdownMenuSeparator />
       <DialogContent className="p-4">
         <div className="w-full flex flex-col items-start justify-start">
           <h2 className="font-inter font-medium text-xl mb-4">
-            Search for a student email and send the code
+            Search for a student by their email
           </h2>
           {/* <div className="w-full px-4"> */}
           <div className="flex w-full gap-2">
@@ -1618,7 +1642,7 @@ export const AddNewStudentToStudentGroupDialog = () => {
               }}
               required
               placeholder="Enter email here"
-              className="mb-4"
+              className="mb-2"
               id="examRoomName"
             />
             <CustomButton
@@ -1629,6 +1653,9 @@ export const AddNewStudentToStudentGroupDialog = () => {
               <FiSearch size={20} />
             </CustomButton>
           </div>
+          <p className="text-sm mb-4 opacity-60">
+            Only students with an Acad AI account can be added.
+          </p>
           <p className="font-bold">Student Groups</p>
           <div className="max-h-[50dvh] overflow-y-auto w-full">
             {willShow ? (

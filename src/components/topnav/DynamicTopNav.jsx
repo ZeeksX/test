@@ -36,7 +36,7 @@ const DynamicTopNav = () => {
           <img className="w-36 max-[350px]:w-28 lg:w-48" src={bannerTransparent} alt="Acad AI logo" />
         </div>
         <div className="flex items-center justify-start gap-6">
-          <FiBell size={20} className="cursor-pointer max-md:hidden" />
+          {/* <FiBell size={20} className="cursor-pointer max-md:hidden" /> */}
           <FiSettings size={20} className="cursor-pointer max-md:hidden" onClick={() => { handleSettingsClick() }} />
           <div>
             <div className="hidden md:flex flex-col items-right justify-right">

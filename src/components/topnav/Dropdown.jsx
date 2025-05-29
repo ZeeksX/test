@@ -25,7 +25,6 @@ const Dropdown = ({ showDropDown, setShowDropDown }) => {
         showLoader(true);
 
         setTimeout(() => {
-            navigate("/login");
             logout();
         }, 2000);
     };

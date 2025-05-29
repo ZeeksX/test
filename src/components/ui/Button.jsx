@@ -75,7 +75,7 @@ export const variantStyles = {
   clear:
     "bg-transparent text-text-main border border-neutral-border hover:border-primary-main hover:text-primary-main",
   accent: "bg-primary-purple text-white",
-  link: "text-primary-main underline-offset-4 hover:underline",
+  link: "text-primary-main underline-offset-4 hover:underline !p-0 !justify-start",
   danger: "bg-[#EA4335] text-white",
   icon: "rounded-full border border-primary-main hover:bg-primary-main",
 };

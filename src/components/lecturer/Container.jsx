@@ -10,9 +10,12 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { fetchStudentGroups } from "../../features/reducers/examRoomSlice";
 import { Loader } from "../ui/Loader";
+import { Link, useNavigate } from "react-router";
+import CustomButton from "../ui/Button";
 
 const Container = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { teacherStudentGroups, loading, error } = useSelector(
     (state) => state.examRooms
   );
@@ -20,6 +23,12 @@ const Container = () => {
   useEffect(() => {
     dispatch(fetchStudentGroups());
   }, [dispatch]);
+
+  const handleStudentGroupClick = (group) => {
+    navigate(`/student-groups/${group.id}`, {
+      state: { group },
+    });
+  };
 
   if (loading) {
     return <Loader />;
@@ -59,7 +68,9 @@ const Container = () => {
         <Card>
           <CardContent>
             <div className="flex w-full items-center justify-between mb-5">
-              <h3 className="font-normal text-lg opacity-[80%]">Total examinations created</h3>
+              <h3 className="font-normal text-lg opacity-[80%]">
+                Total examinations created
+              </h3>
               <span className="rounded-[6px] p-1 bg-[#EE1D1D33]">
                 <TbUserQuestion size={24} color="#EE1D1D" />
               </span>
@@ -69,7 +80,7 @@ const Container = () => {
         </Card>
       </div>
       <div className="text-xl">
-        <h2 className="mb-5">Recent Exam Rooms</h2>
+        <h2 className="mb-5">Recent Student Groups</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[...teacherStudentGroups]
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Sort by latest
@@ -78,8 +89,14 @@ const Container = () => {
               <Card key={group.id}>
                 <CardImage src={Rectangle4225} alt="Intro Tech" />
                 <CardContent>
-                  <h3 className="text-2xl text-black mb-4">{group.name}</h3>
-                  <p className="opacity-[50%] text-base">
+                  <CustomButton
+                    variant="link"
+                    onClick={() => handleStudentGroupClick(group)}
+                    className="!text-2xl !text-black "
+                  >
+                    {group.name}
+                  </CustomButton>
+                  <p className="opacity-[50%] text-base mt-4">
                     Enrolled students: {group.students.length}
                   </p>
                 </CardContent>

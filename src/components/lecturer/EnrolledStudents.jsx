@@ -150,7 +150,7 @@ const EnrolledStudents = () => {
           </p>
         </div>
         <div className="flex flex-row gap-4 max-md:mr-2">
-          <CustomButton
+          {/* <CustomButton
             variant="clear"
             onClick={() =>
               dispatch(
@@ -165,7 +165,7 @@ const EnrolledStudents = () => {
           >
             Share
             <FiUpload />
-          </CustomButton>
+          </CustomButton> */}
           <button
             onClick={() =>
               dispatch(

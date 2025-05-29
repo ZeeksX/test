@@ -130,6 +130,8 @@ const Login = ({ isMobile }) => {
             console.error("Error storing tokens:", error);
           }
 
+          
+
           // Login with complete user data
           login({
             email: formState.email,
@@ -377,9 +379,8 @@ const Header = ({ navigateToSignUp, brandLogo, logoMobile }) => (
           className="hidden md:flex mb-3"
           src={brandLogo}
           alt="Acad AI logo"
+          style={{ width: "inherit", height: "inherit", objectFit: "contain" }}
           loading="eager"
-          width="150"
-          height="45"
         />
       )}
       {logoMobile && (

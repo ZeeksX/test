@@ -415,7 +415,7 @@ const SignUp = () => {
                     error={errors.confirmPassword}
                   />
                 </div>
-                {/* <div className="flex flex-col justify-between w-full items-center mt-6 md:mt-4 gap-2">
+                <div className="flex flex-col justify-between w-full items-center mt-6 md:mt-4 gap-2">
                   <CustomButton
                     size="lg"
                     loading={loader}
@@ -424,10 +424,10 @@ const SignUp = () => {
                   >
                     Create an account
                   </CustomButton>
-                  <h3 className="flex w-full mt-1 mb-2 justify-center text-[#666666] hover:text-gray-600 text-center cursor-pointer">
+                  {/* <h3 className="flex w-full mt-1 mb-2 justify-center text-[#666666] hover:text-gray-600 text-center cursor-pointer">
                     Or, continue with <u className="ml-2">Google</u>
-                  </h3>
-                </div> */}
+                  </h3> */}
+                </div>
               </form>
               <ForgotPassword
                 open={forgotPasswordOpen}

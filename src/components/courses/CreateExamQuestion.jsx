@@ -165,6 +165,18 @@ import Toast from "../modals/Toast";
 //     setQuestions(newQuestions);
 //   };
 
+//   const deleteOption = (questionIndex, optionIndex) => {
+//     const newQuestions = [...questions];
+    
+//     // Don't allow deleting if there are only 2 options left
+//     if (newQuestions[questionIndex].options.length <= 2) {
+//       return;
+//     }
+    
+//     newQuestions[questionIndex].options.splice(optionIndex, 1);
+//     setQuestions(newQuestions);
+//   };
+
 //   const updateOptionText = (text, questionIndex, optionIndex) => {
 //     const newQuestions = [...questions];
 //     newQuestions[questionIndex].options[optionIndex].text = text;
@@ -298,6 +310,15 @@ import Toast from "../modals/Toast";
 //                     }
 //                   />
 //                 </div>
+//                 {questions[activeQuestion].options.length > 2 && (
+//                   <button
+//                     onClick={() => deleteOption(activeQuestion, optionIndex)}
+//                     className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+//                     title="Delete option"
+//                   >
+//                     <FiTrash className="h-4 w-4" />
+//                   </button>
+//                 )}
 //               </div>
 //             ))}
 
@@ -402,13 +423,10 @@ export const ManualCreateExamQuestion = ({
   const [questions, setQuestions] = useState([
     {
       id: "q1",
-      type: "multiple-choice",
+      type: "theory",
       text: "",
       score: 2,
-      options: [
-        { id: "opt1", text: "", isCorrect: true },
-        { id: "opt2", text: "", isCorrect: false },
-      ],
+      modelAnswer: "",
     },
   ]);
 
@@ -419,13 +437,10 @@ export const ManualCreateExamQuestion = ({
       setQuestions([
         {
           id: "q1",
-          type: "multiple-choice",
+          type: "theory",
           text: "",
           score: 2,
-          options: [
-            { id: "opt1", text: "", isCorrect: true },
-            { id: "opt2", text: "", isCorrect: false },
-          ],
+          modelAnswer: "",
         },
       ]);
     }
@@ -436,13 +451,10 @@ export const ManualCreateExamQuestion = ({
   const addQuestion = () => {
     const newQuestion = {
       id: `q${questions.length + 1}`,
-      type: "multiple-choice",
+      type: "theory",
       score: 2,
       text: "",
-      options: [
-        { id: `q${questions.length + 1}_opt1`, text: "", isCorrect: true },
-        { id: `q${questions.length + 1}_opt2`, text: "", isCorrect: false },
-      ],
+      modelAnswer: "",
     };
     setQuestions([...questions, newQuestion]);
     setActiveQuestion(questions.length);
@@ -455,11 +467,13 @@ export const ManualCreateExamQuestion = ({
       id: `q${questions.length + 1}`,
     };
 
-    // Update option IDs in the duplicated question
-    duplicatedQuestion.options = duplicatedQuestion.options.map((opt, i) => ({
-      ...opt,
-      id: `q${questions.length + 1}_opt${i + 1}`,
-    }));
+    // Update option IDs in the duplicated question if it has options
+    if (duplicatedQuestion.options) {
+      duplicatedQuestion.options = duplicatedQuestion.options.map((opt, i) => ({
+        ...opt,
+        id: `q${questions.length + 1}_opt${i + 1}`,
+      }));
+    }
 
     const newQuestions = [...questions];
     newQuestions.splice(index + 1, 0, duplicatedQuestion);
@@ -473,13 +487,10 @@ export const ManualCreateExamQuestion = ({
       setQuestions([
         {
           id: "q1",
-          type: "multiple-choice",
+          type: "theory",
           text: "",
           score: 2,
-          options: [
-            { id: "opt1", text: "", isCorrect: true },
-            { id: "opt2", text: "", isCorrect: false },
-          ],
+          modelAnswer: "",
         },
       ]);
       setActiveQuestion(0);
@@ -499,12 +510,18 @@ export const ManualCreateExamQuestion = ({
     // Reset options if changing to cloze or theory
     if (type === "cloze" || type === "theory") {
       newQuestions[index].options = [];
-    } else if (newQuestions[index].options.length === 0) {
+      // Initialize modelAnswer for theory and cloze if it doesn't exist
+      if (!newQuestions[index].modelAnswer) {
+        newQuestions[index].modelAnswer = "";
+      }
+    } else if (type === "multiple-choice") {
       // Add default options if changing to multiple-choice
       newQuestions[index].options = [
         { id: `q${index + 1}_opt1`, text: "", isCorrect: true },
         { id: `q${index + 1}_opt2`, text: "", isCorrect: false },
       ];
+      // Remove modelAnswer for multiple-choice
+      delete newQuestions[index].modelAnswer;
     }
 
     setQuestions(newQuestions);
@@ -600,7 +617,7 @@ export const ManualCreateExamQuestion = ({
         </div>
         <div className="flex justify-end mb-4 space-x-2">
           <CustomButton variant="clear" onClick={setPreviousStep}>
-            Cancel
+            Previous
           </CustomButton>
           <CustomButton
             variant={questions.length > 1 ? "primary" : "ghost"}
@@ -625,9 +642,9 @@ export const ManualCreateExamQuestion = ({
               <SelectValue placeholder="Select question type" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="theory">Theory</SelectItem>
               <SelectItem value="multiple-choice">Multiple-choice</SelectItem>
               <SelectItem value="cloze">Cloze</SelectItem>
-              <SelectItem value="theory">Theory</SelectItem>
             </SelectContent>
           </Select>
         </div>

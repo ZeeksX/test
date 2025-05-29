@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { AvatarFallback, AvatarImage } from "./ui/Avatar";
-import Avatar from '@mui/material/Avatar';
+import Avatar from "@mui/material/Avatar";
 import { useAuth } from "./Auth.jsx";
 import StudentContainer from "./students/Container.jsx";
 import LecturerContainer from "./lecturer/Container.jsx";
@@ -34,7 +34,7 @@ const Container = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ course_title, course_code }),
           });
@@ -50,7 +50,8 @@ const Container = () => {
 
           // Remove userData and user after successful post
           localStorage.removeItem("userData");
-
+        } else {
+          localStorage.removeItem("userData");
         }
       } catch (error) {
         console.error("Error posting course data:", error);
@@ -58,7 +59,7 @@ const Container = () => {
     };
 
     postCourseDetails();
-  },);
+  });
 
   return (
     <div className="w-full h-full p-5 overflow-auto bg-[#F9F9F9]">

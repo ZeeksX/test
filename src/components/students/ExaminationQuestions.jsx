@@ -178,9 +178,9 @@ const ExaminationQuestions = () => {
     try {
       setSubmissionStatus("Submitting your answers...");
 
-      const userData = JSON.parse(localStorage.getItem("userData"));
+      // const userData = JSON.parse(localStorage.getItem("userData"));
       const user = JSON.parse(localStorage.getItem("user"));
-      const studentNumber = userData.studentNumber;
+      // const studentNumber = userData.studentNumber;
       const studentId = user.studentId;
 
       // const gradingResults = await submitExamForGrading(

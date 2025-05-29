@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-} from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 
 const AuthContext = createContext();
 
@@ -17,7 +11,7 @@ export const AuthProvider = ({ children }) => {
       return {
         token: token || null,
         user: userStr ? JSON.parse(userStr) : null,
-        isAuthenticated: Boolean(token && userStr),
+        isAuthenticated: Boolean(token && userStr)
       };
     } catch (e) {
       console.error("Error loading initial auth state", e);
@@ -27,9 +21,7 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize states with values from localStorage to prevent flashing of unauthenticated state
   const initialState = getInitialAuthState();
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    initialState.isAuthenticated
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(initialState.isAuthenticated);
   const [user, setUser] = useState(initialState.user);
   const [isLoading, setIsLoading] = useState(true);
   const hasRedirected = useRef(false);
@@ -39,7 +31,7 @@ export const AuthProvider = ({ children }) => {
   const decodeToken = (token) => {
     if (!token) return null;
     try {
-      const payload = token.split(".")[1];
+      const payload = token.split('.')[1];
       return JSON.parse(atob(payload));
     } catch (error) {
       console.error("Error decoding token", error);
@@ -75,12 +67,6 @@ export const AuthProvider = ({ children }) => {
 
       if (!res.ok) {
         console.error("Token refresh failed with status:", res.status);
-
-        // If refresh token is also expired, logout user
-        if (res.status === 401) {
-          logout(true);
-          return false;
-        }
         return false;
       }
 
@@ -119,16 +105,16 @@ export const AuthProvider = ({ children }) => {
       const now = Date.now();
 
       // Refresh 5 minutes before expiry or immediately if less than 5 minutes left
-      const timeUntilRefresh = Math.max(0, expiresAt - now - 5 * 60 * 1000);
+      const timeUntilRefresh = Math.max(0, expiresAt - now - (5 * 60 * 1000));
 
-      refreshTimerRef.current = setTimeout(async () => {
-        const success = await refreshToken();
-        if (success) {
-          console.log("Scheduled token refresh succeeded");
-        } else {
-          console.error("Scheduled token refresh failed - logging out user");
-          logout(true);
-        }
+      refreshTimerRef.current = setTimeout(() => {
+        refreshToken().then(success => {
+          if (success) {
+            console.log("Scheduled token refresh succeeded");
+          } else {
+            console.error("Scheduled token refresh failed");
+          }
+        });
       }, timeUntilRefresh);
     } catch (e) {
       console.error("Error scheduling token refresh:", e);
@@ -150,12 +136,11 @@ export const AuthProvider = ({ children }) => {
           userObj = userStr ? JSON.parse(userStr) : null;
         } catch (e) {
           console.error("Error parsing user data:", e);
-          // Clear corrupted user data
-          localStorage.removeItem("user");
         }
 
         // Check if we have both token and user data
         if (accessToken && userObj) {
+
           // Check if token is expired
           if (!isTokenExpired(accessToken)) {
             setIsAuthenticated(true);
@@ -168,18 +153,11 @@ export const AuthProvider = ({ children }) => {
               setUser(userObj);
             } else {
               setIsAuthenticated(false);
-              setUser(null);
-              // Clear tokens if refresh failed
-              localStorage.removeItem("access_token");
-              localStorage.removeItem("refresh_token");
-              localStorage.removeItem("user");
+              // Don't clear localStorage here
             }
           } else {
             setIsAuthenticated(false);
-            setUser(null);
-            // Clear tokens if no refresh token
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("user");
+            // Don't clear localStorage here
           }
         } else if (refreshTokenValue && userObj) {
           const refreshed = await refreshToken();
@@ -188,28 +166,16 @@ export const AuthProvider = ({ children }) => {
             setUser(userObj);
           } else {
             setIsAuthenticated(false);
-            setUser(null);
-            // Clear all auth data
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            localStorage.removeItem("user");
+            // Don't clear localStorage here
           }
         } else {
           setIsAuthenticated(false);
-          setUser(null);
-          // Clear any remaining auth data
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          localStorage.removeItem("user");
+          // Don't clear localStorage here
         }
       } catch (error) {
         console.error("Error during auth initialization:", error);
         setIsAuthenticated(false);
-        setUser(null);
-        // Clear auth data on error
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("user");
+        // Don't clear localStorage on error
       } finally {
         setIsLoading(false);
       }
@@ -218,7 +184,7 @@ export const AuthProvider = ({ children }) => {
     // Run auth initialization
     initAuth();
 
-    // Cleanup function when component unmounts
+    // This function happens when the component is unmounted
     return () => {
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current);
@@ -233,13 +199,6 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      // Ensure we have the required tokens
-      if (!userData.access || !userData.refresh) {
-        console.error("Missing required tokens in user data");
-        return;
-      }
-
-      // Store user data and tokens
       localStorage.setItem("user", JSON.stringify(userData));
       localStorage.setItem("access_token", userData.access);
       localStorage.setItem("refresh_token", userData.refresh);
@@ -248,8 +207,6 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       scheduleTokenRefresh(userData.access);
       hasRedirected.current = false;
-
-      console.log("User logged in successfully:", userData.email);
     } catch (error) {
       console.error("Error during login:", error);
     }
@@ -257,55 +214,26 @@ export const AuthProvider = ({ children }) => {
 
   const logout = (redirect = true) => {
     try {
-      // Clear all auth-related data from localStorage
       localStorage.removeItem("user");
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
 
-      // Clear any stored toast messages
-      localStorage.removeItem("toastMessage");
-
       setUser(null);
       setIsAuthenticated(false);
 
-      // Clear refresh timer
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current);
         refreshTimerRef.current = null;
       }
 
-      console.log("User logged out successfully");
-
-      // Redirect to login page if requested and not already redirected
       if (redirect && !hasRedirected.current) {
         hasRedirected.current = true;
-        window.location.href = "/login";
+        window.location.href = "/";
       }
     } catch (error) {
       console.error("Error during logout:", error);
     }
   };
-
-  // Function to update user data (useful for profile updates)
-  const updateUser = (updatedUserData) => {
-    try {
-      const newUserData = { ...user, ...updatedUserData };
-      localStorage.setItem("user", JSON.stringify(newUserData));
-      setUser(newUserData);
-      console.log("User data updated successfully");
-    } catch (error) {
-      console.error("Error updating user data:", error);
-    }
-  };
-
-  // Check if user has specific role
-  const hasRole = (role) => {
-    return user && user.role === role;
-  };
-
-  // Check if user is a specific type (student/teacher)
-  const isStudent = () => hasRole("student");
-  const isTeacher = () => hasRole("teacher");
 
   return (
     <AuthContext.Provider
@@ -315,11 +243,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         user,
-        refreshToken,
-        updateUser,
-        hasRole,
-        isStudent,
-        isTeacher,
+        refreshToken
       }}
     >
       {children}
@@ -328,9 +252,5 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  return useContext(AuthContext);
 };

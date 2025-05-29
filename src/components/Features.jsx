@@ -9,11 +9,11 @@ const Features = () => {
                 <div className='feature py-8 px-5 gap-2 flex flex-col items-center h-[274px] lg:w-[427px] w-[90vw] rounded-[44px] bg-white transition-shadow duration-300'>
                     <div className='text-center flex justify-center'>
                         <h1 className='metropolis lg:text-2xl xl:text-3xl text-3xl font-bold mb-4 w-4/5 max-sm:w-[90%]'>
-                            Exam Room Creation:
+                            Student Group Creation:
                         </h1>
                     </div>
                     <h3 className='metropolis-normal font-light text-xl text-center leading-6'>
-                        Teachers can create customizable exam rooms tied to course-specific information like title, code, and description.
+                        Teachers can create customizable Student Groups tied to course-specific information like title, code, and description.
                     </h3>
                 </div>
 

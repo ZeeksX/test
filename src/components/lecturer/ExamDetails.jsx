@@ -88,7 +88,7 @@ const ExamDetails = () => {
 
   const exportToCSV = () => {
     // Create CSV headers
-    const headers = ["Name", "Matric Number", "Score"];
+    const headers = ["Name", "Matric Number", `${exam.exam_type}_Score`];
 
     // Create CSV rows
     const csvData = examSubmissions.map((student) => [
@@ -109,7 +109,7 @@ const ExamDetails = () => {
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `student_results_${new Date().toISOString().split("T")[0]}.csv`
+      `${exam.title}_student_results_${new Date().toISOString().split("T")[0]}.csv`
     );
     link.style.visibility = "hidden";
     document.body.appendChild(link);
@@ -122,7 +122,7 @@ const ExamDetails = () => {
       <div className="flex flex-col md:flex-row justify-between p-4 items-start md:items-center mb-4 gap-4">
         <h2 className="text-xl font-semibold">{exam.title}</h2>
         <div className="flex items-center gap-2">
-          <CustomButton variant="ghost" className="gap-2" onClick={exportToCSV}>
+          <CustomButton className="gap-2" onClick={exportToCSV}>
             <FileExportIcon className="h-4 w-4" />
             Export Result
           </CustomButton>

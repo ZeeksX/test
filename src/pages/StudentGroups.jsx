@@ -36,7 +36,7 @@ const StudentGroups = () => {
               Student Groups
             </h1>
             <p className="text-[#667085] max-w-xl font-inter text-sm">
-              An examination room helps you organize different groups of
+              A Student Group helps you organize different groups of
               students taking the subject(s) you teach
             </p>
           </div>

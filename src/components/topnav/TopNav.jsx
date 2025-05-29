@@ -29,7 +29,7 @@ const TopNav = () => {
   }, [bannerTransparent, arrow]);
 
   const handleClick = () => {
-    navigate("/login");
+    navigate("/onboarding");
   };
 
   return (
