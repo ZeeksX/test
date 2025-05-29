@@ -57,6 +57,8 @@ const Examinations = () => {
     [exams]
   );
 
+  console.log({ completedExams });
+
   if (examsLoading) {
     return <Loader />;
   }
@@ -71,13 +73,12 @@ const Examinations = () => {
             join a student group to participate in examinations.
           </p>
         </div>
-        <div className="flex max-md:justify-end w-full ">
-          <CustomButton size="base" className="gap-3 h-max max-md:w-48 max-md:mt-2 ">
+        <div className="flex max-md:justify-end max-md:w-full">
+          <CustomButton size="base" className="gap-3 h-max !w-48 max-md:mt-2 ">
             Join Student Group
             <FaPlus />
           </CustomButton>
         </div>
-
       </div>
       <div className="text-xl gap-6 mt-8">
         {exams.length === 0 ? (
@@ -95,19 +96,21 @@ const Examinations = () => {
             <div className="flex flex-row gap-4">
               <h1
                 onClick={() => setSelectedTab("upcoming")}
-                className={`cursor-pointer text-lg ${selectedTab === "upcoming"
+                className={`cursor-pointer text-lg ${
+                  selectedTab === "upcoming"
                     ? "text-[#1836B2] border-b-2 border-[#1836B2]"
                     : "text-black"
-                  }`}
+                }`}
               >
                 Upcoming
               </h1>
               <h1
                 onClick={() => setSelectedTab("completed")}
-                className={`cursor-pointer text-lg ${selectedTab === "completed"
+                className={`cursor-pointer text-lg ${
+                  selectedTab === "completed"
                     ? "text-[#1836B2] border-b-2 border-[#1836B2]"
                     : "text-black"
-                  }`}
+                }`}
               >
                 Completed
               </h1>

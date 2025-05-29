@@ -5,7 +5,7 @@ import { NavLink } from "react-router";
 const CourseNavbar = () => {
   const courseLinks = [
     { name: "Published Examinations", href: "published" },
-    { name: "Saved Drafts", href: "saved" },
+    // { name: "Saved Drafts", href: "saved" },
   ];
 
   return (

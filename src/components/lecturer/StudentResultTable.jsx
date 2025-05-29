@@ -3,9 +3,11 @@ import { Card } from "../ui/Card";
 import CustomButton from "../ui/Button";
 import { PaginationItem } from "@mui/material";
 import Pagination from "../ui/Pagination";
+import { useNavigate } from "react-router";
 
 export default function StudentResultsTable({ studentResults }) {
-  console.log({studentResults})
+  console.log({ studentResults });
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 10;
 
@@ -23,6 +25,12 @@ export default function StudentResultsTable({ studentResults }) {
   //   const handlePageChange = (page) => {
   //     setCurrentPage(page);
   //   };
+
+  // const handleClick = (studentResults) => {
+  //   navigate(`/examinations/${exam.id}/review`, {
+  //     state: { exam, results, userAnswers },
+  //   });
+  // };
 
   return (
     <>
@@ -44,8 +52,12 @@ export default function StudentResultsTable({ studentResults }) {
               {currentStudents.map((student) => (
                 <tr key={student.id} className="border-b">
                   <td className="px-4 py-3 text-sm">{student.id}</td>
-                  <td className="px-4 py-3 text-sm">{student.student.last_name}, {student.student.other_names}</td>
-                  <td className="px-4 py-3 text-sm">{student.student.matric_number}</td>
+                  <td className="px-4 py-3 text-sm">
+                    {student.student.last_name}, {student.student.other_names}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {student.student.matric_number}
+                  </td>
                   <td className="px-4 py-3 text-sm">
                     <span
                       className={`px-2 py-1 rounded ${
@@ -61,10 +73,10 @@ export default function StudentResultsTable({ studentResults }) {
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <CustomButton
-                      // as="link"
-                      // to={`student/${student.id}`}
+                      as="link"
+                      to={`student/${student.student.student_id}`}
                       variant="link"
-                      className="text-blue-600 p-0 h-auto"
+                      className="text-blue-600 !p-0 h-auto !justify-start"
                     >
                       Review
                     </CustomButton>

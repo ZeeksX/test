@@ -65,7 +65,7 @@ const CourseExamPreview = ({ examData, setPreview, updateExamData }) => {
           </p>
         </div>
         <div className="flex space-x-3">
-          <CustomButton variant="clear">Save to Draft</CustomButton>
+          {/* <CustomButton variant="clear">Save to Draft</CustomButton> */}
           <CustomButton onClick={setPreview}>Done</CustomButton>
         </div>
       </div>

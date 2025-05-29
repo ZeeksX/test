@@ -1,5 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import apiCall from "../../utils/apiCall";
+import axios from "axios";
+import { PETTY_SERVER_URL, sampleStudentResult } from "../../utils/constants";
+
+// ... keep your existing async thunks (fetchExams, fetchExamDetails, etc.)
 
 export const fetchExams = createAsyncThunk(
   "exams/fetchExams",
@@ -81,6 +85,62 @@ export const fetchExamSubmissions = createAsyncThunk(
   }
 );
 
+export const newFetchExamSubmissions = createAsyncThunk(
+  "exams/newFetchExamSubmissions",
+  async ({ examid }, thunkApi) => {
+    try {
+      const response = await axios.get(
+        `${PETTY_SERVER_URL}/api/exams/${examid}/results/`
+      );
+      return response.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const newFetchStudentResult = createAsyncThunk(
+  "exams/newFetchStudentResult",
+  async ({ examId, studentId }, thunkApi) => {
+    try {
+      const response = await axios.get(
+        `${PETTY_SERVER_URL}/api/exams/${examId}/students/${studentId}/result`
+      );
+      return response.data.data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+// NEW: Add the updateStudentScores async thunk for API call
+export const updateStudentScores = createAsyncThunk(
+  "exams/updateStudentScores",
+  async ({ examId, studentId, questionScores, totalScore }, thunkApi) => {
+    try {
+      const body = {
+        examId,
+        studentId,
+        questionScores,
+        totalScore,
+      };
+
+      const response = await axios.put(
+        `${PETTY_SERVER_URL}/api/exams/update-scores`,
+        body
+      );
+
+      if (response.status === 200) {
+        return { questionScores, totalScore };
+      } else {
+        throw new Error("Failed to update scores");
+      }
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 export const deleteExam = createAsyncThunk(
   "exams/deleteExam",
   async ({ id }, thunkApi) => {
@@ -99,6 +159,9 @@ const examSlice = createSlice({
     allExams: [],
     teacherExams: [],
     studentExams: [],
+
+    studentResult: null,
+    hasUnsavedChanges: false, // Changed to false initially
 
     courseExams: [],
 
@@ -127,14 +190,12 @@ const examSlice = createSlice({
 
     deleteExamLoading: false,
     deleteExamError: null,
+
+    // Add loading state for score updates
+    updateScoreLoading: false,
+    updateScoreError: null,
   },
   reducers: {
-    // filterExamByCourse: (state, action) => {
-    //   const courseId = action.payload;
-    //   state.courseExams = state.allExams.filter(
-    //     (exam) => exam.course === Number(courseId)
-    //   );
-    // },
     removeExam: (state, action) => {
       const examId = action.payload;
       state.allExams = state.allExams.filter((exam) => exam.id !== examId);
@@ -144,6 +205,48 @@ const examSlice = createSlice({
       state.courseExams = state.courseExams.filter(
         (exam) => exam.id !== examId
       );
+    },
+
+    // FIXED: Better score update logic
+    updateQuestionScore: (state, action) => {
+      const { questionIndex, newScore } = action.payload;
+
+      if (
+        state.studentResult &&
+        state.studentResult.results.details[questionIndex]
+      ) {
+        const score = parseFloat(newScore) || 0;
+
+        // Update score in the correct location based on grading status
+        if (state.studentResult.submissionInfo.grading_status === "completed") {
+          // For completed grading, update the nested score
+          if (state.studentResult.results.details[questionIndex][1]) {
+            state.studentResult.results.details[questionIndex][1].score = score;
+          }
+        } else {
+          // For manual grading, update both locations
+          if (state.studentResult.results.details[questionIndex][1]) {
+            state.studentResult.results.details[questionIndex][1].score = score;
+          }
+          // Also update question_scores if it exists
+          if (state.studentResult.results.details.question_scores) {
+            state.studentResult.results.details.question_scores[questionIndex] =
+              score;
+          }
+        }
+
+        // Mark as having unsaved changes
+        state.hasUnsavedChanges = true;
+      }
+    },
+
+    clearUnsavedChanges: (state) => {
+      state.hasUnsavedChanges = false;
+    },
+
+    resetStudentResult: (state) => {
+      state.studentResult = null;
+      state.hasUnsavedChanges = false;
     },
   },
   extraReducers: (builder) => {
@@ -166,7 +269,6 @@ const examSlice = createSlice({
         state.error = action.payload;
       })
 
-      //
       .addCase(fetchExamDetails.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -180,7 +282,6 @@ const examSlice = createSlice({
         state.error = action.payload;
       })
 
-      //
       .addCase(fetchExamsforACourse.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -194,7 +295,6 @@ const examSlice = createSlice({
         state.error = action.payload;
       })
 
-      //
       .addCase(fetchStudentExams.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -208,7 +308,6 @@ const examSlice = createSlice({
         state.error = action.payload;
       })
 
-      //
       .addCase(fetchExamSubmissions.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -245,7 +344,6 @@ const examSlice = createSlice({
         state.error = action.payload;
       })
 
-      //
       .addCase(deleteExam.pending, (state) => {
         state.deleteExamLoading = true;
         state.deleteExamError = null;
@@ -265,9 +363,110 @@ const examSlice = createSlice({
       .addCase(deleteExam.rejected, (state, action) => {
         state.deleteExamLoading = false;
         state.deleteExamError = action.payload;
+      })
+
+      .addCase(newFetchExamSubmissions.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(newFetchExamSubmissions.fulfilled, (state, action) => {
+        state.loading = false;
+        state.exam = action.payload;
+      })
+      .addCase(newFetchExamSubmissions.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(newFetchStudentResult.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(newFetchStudentResult.fulfilled, (state, action) => {
+        state.loading = false;
+        state.studentResult = action.payload;
+        state.hasUnsavedChanges = false; // Reset unsaved changes when loading fresh data
+      })
+      .addCase(newFetchStudentResult.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // NEW: Handle the updateStudentScores async thunk
+      .addCase(updateStudentScores.pending, (state) => {
+        state.updateScoreLoading = true;
+        state.updateScoreError = null;
+      })
+
+      .addCase(updateStudentScores.fulfilled, (state, action) => {
+        state.updateScoreLoading = false;
+        const { questionScores, totalScore } = action.payload;
+
+        if (state.studentResult) {
+          // Update individual question scores - FIXED LOGIC
+          Object.entries(questionScores).forEach(([questionIndex, score]) => {
+            const index = parseInt(questionIndex);
+            if (state.studentResult.results.details[index]) {
+              const scoreValue = parseFloat(score) || 0;
+
+              // Check the structure and update accordingly
+              if (
+                state.studentResult.submissionInfo.grading_status ===
+                "completed"
+              ) {
+                // For completed grading, update the nested score object
+                if (
+                  state.studentResult.results.details[index][1] &&
+                  typeof state.studentResult.results.details[index][1] ===
+                    "object"
+                ) {
+                  state.studentResult.results.details[index][1].score =
+                    scoreValue;
+                }
+              } else {
+                // For manual grading, update both locations
+                if (
+                  state.studentResult.results.details[index][1] &&
+                  typeof state.studentResult.results.details[index][1] ===
+                    "object"
+                ) {
+                  state.studentResult.results.details[index][1].score =
+                    scoreValue;
+                }
+                // Also update question_scores if it exists
+                if (state.studentResult.results.details.question_scores) {
+                  state.studentResult.results.details.question_scores[index] =
+                    scoreValue;
+                }
+              }
+            }
+          });
+
+          // Update total score
+          state.studentResult.results.total_scores = {
+            ...state.studentResult.results.total_scores,
+            1: totalScore,
+          };
+
+          // Update submission info score
+          state.studentResult.submissionInfo.score = totalScore;
+
+          // Clear unsaved changes flag
+          state.hasUnsavedChanges = false;
+        }
+      })
+      .addCase(updateStudentScores.rejected, (state, action) => {
+        state.updateScoreLoading = false;
+        state.updateScoreError = action.payload;
       });
   },
 });
 
-export const { removeExam } = examSlice.actions;
+export const {
+  removeExam,
+  updateQuestionScore,
+  clearUnsavedChanges,
+  resetStudentResult,
+} = examSlice.actions;
+
 export default examSlice.reducer;

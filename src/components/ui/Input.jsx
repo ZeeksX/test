@@ -10,12 +10,13 @@ export const Input = ({
   type = "text",
   value,
   className = "",
+  topClassName = "",
   error = "",
   onChange,
   max,
   ...props
 }) => (
-  <div className="w-full">
+  <div className={`w-full ${topClassName}`}>
     <input
       id={id}
       type={type}
@@ -37,6 +38,7 @@ Input.propTypes = {
   type: PropTypes.string,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   className: PropTypes.string,
+  topClassName: PropTypes.string,
   error: PropTypes.string,
   onChange: PropTypes.func,
 };

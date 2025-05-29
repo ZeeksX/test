@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchExamDetails,
   fetchExamSubmissions,
+  newFetchExamSubmissions,
 } from "../../features/reducers/examSlice";
 import StudentResultsTable from "./StudentResultTable";
 import { fetchStudentGroups } from "../../features/reducers/examRoomSlice";
@@ -14,6 +15,8 @@ import { emptyFolderImg } from "../../utils/images";
 import Toast from "../modals/Toast";
 import { areAllSubmissionsScored } from "../../utils/minorUtilities";
 import apiCall from "../../utils/apiCall";
+import { PETTY_SERVER_URL } from "../../utils/constants";
+import axios from "axios";
 
 const ExamDetails = () => {
   const { examId } = useParams();
@@ -47,15 +50,18 @@ const ExamDetails = () => {
       setPublishing(true);
 
       try {
-        const response = await apiCall.post(
-          `/exams/results/approve/${examId}/`
+        const response = await axios.put(
+          `${PETTY_SERVER_URL}/api/exams/${examId}/approve-all`
         );
+        // const response = await apiCall.post(
+        //   `/exams/results/approve/${examId}/`
+        // );
 
         if (response.status === 201 || response.status === 200) {
           showToast("Exam approved successfully", "success");
         }
       } catch (error) {
-        showToast("Failed to create student group. Please try again.", "error");
+        showToast("Failed to publish exam. Please try again.", "error");
         console.error("Error creating student group:", error);
       } finally {
         setPublishing(false);
@@ -80,19 +86,50 @@ const ExamDetails = () => {
     setToast({ open: false, message: "", severity: "info" });
   };
 
+  const exportToCSV = () => {
+    // Create CSV headers
+    const headers = ["Name", "Matric Number", "Score"];
+
+    // Create CSV rows
+    const csvData = examSubmissions.map((student) => [
+      `${student.student.last_name}, ${student.student.other_names}`,
+      student.student.matric_number,
+      student.score === null ? "Not Graded" : student.score,
+    ]);
+
+    // Combine headers and data
+    const csvContent = [headers, ...csvData]
+      .map((row) => row.map((field) => `"${field}"`).join(","))
+      .join("\n");
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `student_results_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="bg-[#F9F9F9] h-full">
       <div className="flex flex-col md:flex-row justify-between p-4 items-start md:items-center mb-4 gap-4">
         <h2 className="text-xl font-semibold">{exam.title}</h2>
         <div className="flex items-center gap-2">
-          <CustomButton variant="ghost" className="gap-2">
+          <CustomButton variant="ghost" className="gap-2" onClick={exportToCSV}>
             <FileExportIcon className="h-4 w-4" />
             Export Result
           </CustomButton>
           <CustomButton
             onClick={() => handlePublish(examSubmissions)}
             loading={publishing}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="w-[100px] bg-blue-600 hover:bg-blue-700"
           >
             Publish
           </CustomButton>

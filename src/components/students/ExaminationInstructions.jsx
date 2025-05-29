@@ -3,6 +3,8 @@ import { useLocation } from "react-router";
 import { useNavigate } from "react-router";
 import apiCall from "../../utils/apiCall";
 import Toast from "../modals/Toast";
+import axios from "axios";
+import { PETTY_SERVER_URL } from "../../utils/constants";
 
 const ExaminationInstructions = () => {
   const { state } = useLocation();
@@ -33,12 +35,13 @@ const ExaminationInstructions = () => {
 
   const handleClick = async (exam) => {
     try {
-      const response = await apiCall.post(`/exams/start/${exam.id}/`);
-      if (response.status === 201) {
+      const test = await axios.get(`${PETTY_SERVER_URL}/health`);
+      // const response = await apiCall.post(`/exams/start/${exam.id}/`);
+      // if (response.status === 201) {
         navigate(`/examinations/${exam.id}/questions`, {
           state: { exam },
         });
-      }
+      // }
     } catch (error) {
       console.error("Error starting exam:", error);
       if (error.status == 400) {

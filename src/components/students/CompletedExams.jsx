@@ -104,8 +104,9 @@ const CompletedExams = ({ examinations }) => {
   }, [examinations, examRooms]);
 
   const handleClick = (exam) => {
-    const formattedCourseCode = exam.course.replace(/\s+/g, "-").toLowerCase() || "unknown-course";
-    navigate(`/examinations/${formattedCourseCode}/result`, {
+    // const formattedCourseCode =
+    //   exam.course.replace(/\s+/g, "-").toLowerCase() || "unknown-course";
+    navigate(`/examinations/${exam.id}/result`, {
       state: { exam },
     });
   };
@@ -113,7 +114,7 @@ const CompletedExams = ({ examinations }) => {
   const columns = [
     { id: "serial-number", label: "S/N", minWidth: 50 },
     { id: "exam-name", label: "Examination Name", minWidth: 200 },
-    { id: "lecturer", label: "Teacher", minWidth: 200 },
+    // { id: "lecturer", label: "Teacher", minWidth: 200 },
     { id: "course", label: "Course", minWidth: 200 },
     { id: "date", label: "Date and Time", minWidth: 200 },
     { id: "option", label: "Option", minWidth: 150 },
@@ -134,17 +135,17 @@ const CompletedExams = ({ examinations }) => {
     return {
       "serial-number": index + 1,
       "exam-name": exam.title,
-      lecturer: getLecturerName(exam.teacher),
+      // lecturer: getLecturerName(exam.teacher),
       course: courseMap[exam.course] || "Unknown Course", // Use the courseMap
       date: <span>{timeString}</span>,
       option: (
         <CustomButton
-        as="link"
-        to={`/examinations/${exam.id}/result/${studentId}`}
+          // as="link"
+          // to={`/examinations/${exam.id}/result/${studentId}`}
           //   style={{ opacity: 1, cursor: "pointer" }}
-          variant="primary"
+          variant="link"
           onClick={() => handleClick(exam)}
-        //   className="bg-[#1835B3] w-[120px] h-11 gap-2 text-white flex items-center justify-center font-inter font-semibold text-sm rounded-md px-4 hover:ring-2"
+          className="!p-0 !justify-start"
         >
           View Result
         </CustomButton>
@@ -153,7 +154,7 @@ const CompletedExams = ({ examinations }) => {
   });
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
@@ -173,7 +174,7 @@ const CompletedExams = ({ examinations }) => {
     </div>
   ) : (
     <Paper sx={{ width: "100%", overflow: "hidden", fontFamily: "Inter" }}>
-      <TableContainer sx={{ maxHeight: 440 }}>
+      <TableContainer>
         <Table stickyHeader aria-label="completed exams table">
           <TableHead>
             <TableRow>

@@ -1,30 +1,114 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ChevronLeft from "@mui/icons-material/ChevronLeft";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import { FaCheckCircle } from "react-icons/fa";
 import { MdCancel } from "react-icons/md";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { CardFormattedText } from "../ui/Card";
 import ReactMarkdown from "react-markdown";
+import { Loader } from "../ui/Loader";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  newFetchStudentResult,
+  resetStudentResult,
+} from "../../features/reducers/examSlice";
+import CustomButton from "../ui/Button";
+import { illustration2 } from "../../utils/images";
 
 const ExaminationReview = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const results = location.state?.results || {};
-  const exam = location.state?.exam || {};
-  const userAnswers = location.state?.userAnswers || {};
+  const dispatch = useDispatch();
+  const { examId } = useParams();
+  const { studentResult, loading, error } = useSelector((state) => state.exams);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const studentId = user?.studentId;
+
+  // Safe destructuring with default values
+  const {
+    exam = {},
+    results = {},
+    userAnswers = {},
+    submissionInfo = {},
+  } = studentResult || {};
+
+  useEffect(() => {
+    if (examId && studentId) {
+      dispatch(newFetchStudentResult({ examId, studentId }));
+    }
+    // Cleanup when component unmounts
+    return () => {
+      dispatch(resetStudentResult());
+    };
+  }, [dispatch, examId, studentId]);
+
+  // Remove the redirect logic that was causing issues
+  // useEffect(() => {
+  //   if (!studentResult || studentResult == null) {
+  //     navigate(`/examinations/${examId}/result`);
+  //   }
+  // }, [studentResult, navigate, examId]);
 
   // State to manage current question index
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const currentAnswerScore =
+    submissionInfo?.grading_status === "completed"
+      ? results?.details[currentQuestionIndex]?.[1]?.score || 0
+      : results?.details?.question_scores?.[currentQuestionIndex] || 0;
 
-  // Get questions array from exam data
-  const questions = exam.questions || [];
+  // Get questions array from exam data with safe fallback
+  const questions = exam?.questions || [];
   const totalQuestions = questions.length;
 
-  // Calculate total score
-  const totalScore = results.total_scores["1"] || 0;
+  // Show loading state while data is being fetched
+  if (loading || !studentResult) {
+    return <Loader />;
+  }
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-2">Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => navigate(`/examinations/${examId}/result`)}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no questions available
+  if (totalQuestions === 0) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-600 mb-2">
+            No Questions Found
+          </h2>
+          <p className="text-gray-500 mb-4">
+            This exam doesn't have any questions to review.
+          </p>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate total score with safe fallbacks
+  const totalScore = results?.total_scores?.["1"] || 0;
   const maxPossibleScore =
-    results.max_possible_score ||
+    results?.max_possible_score ||
     questions.reduce((sum, q) => sum + (q.score || 0), 0);
   const percentageScore =
     maxPossibleScore > 0
@@ -72,9 +156,9 @@ const ExaminationReview = () => {
   };
 
   const formatBoldText = (text) => {
-    if (!text || typeof text !== 'string') return text;
+    if (!text || typeof text !== "string") return text;
     // Replace *word* with markdown bold **word**
-    return text.replace(/\*([^*]+)\*/g, '**$1**');
+    return text.replace(/\*([^*]+)\*/g, "**$1**");
   };
 
   // Current question and its result
@@ -84,44 +168,52 @@ const ExaminationReview = () => {
 
   // Helper function to parse score breakdown from feedback string
   const parseScoreBreakdown = (feedbackStr) => {
-    if (!feedbackStr || typeof feedbackStr !== 'string') return null;
+    if (!feedbackStr || typeof feedbackStr !== "string") return null;
 
-    const scoreBreakdownMatch = feedbackStr.match(/Score Breakdown:([\s\S]*?)(?:$|(?=\n\n))/);
+    const scoreBreakdownMatch = feedbackStr.match(
+      /Score Breakdown:([\s\S]*?)(?:$|(?=\n\n))/
+    );
     if (!scoreBreakdownMatch) return null;
 
     const scoreBreakdownText = scoreBreakdownMatch[1].trim();
-    const criteriaLines = scoreBreakdownText.split('\n').filter(line => line.trim().startsWith('Criterion'));
+    const criteriaLines = scoreBreakdownText
+      .split("\n")
+      .filter((line) => line.trim().startsWith("Criterion"));
 
     if (criteriaLines.length === 0) return null;
 
-    return criteriaLines.map((line, index) => {
-      // Parse the criterion text and score
-      const criterionMatch = line.match(/Criterion (\d+) - (.*?) - (\d+\.\d+)\/(\d+\.\d+)/);
-      if (!criterionMatch) return null;
+    return criteriaLines
+      .map((line, index) => {
+        // Parse the criterion text and score
+        const criterionMatch = line.match(
+          /Criterion (\d+) - (.*?) - (\d+\.\d+)\/(\d+\.\d+)/
+        );
+        if (!criterionMatch) return null;
 
-      return {
-        criterionNumber: criterionMatch[1],
-        criterionText: criterionMatch[2],
-        scoreObtained: criterionMatch[3],
-        maxScore: criterionMatch[4]
-      };
-    }).filter(Boolean);
+        return {
+          criterionNumber: criterionMatch[1],
+          criterionText: criterionMatch[2],
+          scoreObtained: criterionMatch[3],
+          maxScore: criterionMatch[4],
+        };
+      })
+      .filter(Boolean);
   };
 
   // Extract general feedback (everything before Score Breakdown)
   const extractGeneralFeedback = (feedbackStr) => {
-    if (!feedbackStr || typeof feedbackStr !== 'string') return "";
+    if (!feedbackStr || typeof feedbackStr !== "string") return "";
 
     // Split the feedback into parts and remove model answer section
     const parts = feedbackStr.split(/Model Answer:[\s\S]*?(?=\n\n|$)/i);
-    return parts[0].replace(/Score Breakdown:[\s\S]*/, '').trim();
+    return parts[0].replace(/Score Breakdown:[\s\S]*/, "").trim();
   };
 
   // Helper function to render feedback
   const renderFeedback = (feedback) => {
     if (!feedback) return null;
 
-    if (typeof feedback === 'object' && feedback !== null) {
+    if (typeof feedback === "object" && feedback !== null) {
       return (
         <div className="mt-6">
           <h3 className="text-lg font-bold mb-2">Feedback</h3>
@@ -131,7 +223,9 @@ const ExaminationReview = () => {
                 {Object.entries(feedback).map(([key, value]) => (
                   <tr key={key} className="border-b last:border-b-0">
                     <td className="py-2 pr-4 font-medium">{key}:</td>
-                    <td className="py-2"><CardFormattedText text={value} /></td>
+                    <td className="py-2">
+                      <CardFormattedText text={value} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -159,19 +253,35 @@ const ExaminationReview = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-gray-100">
-                      <th className="p-2 text-left border border-gray-300">Criteria No</th>
-                      <th className="p-2 text-left border border-gray-300">Criteria</th>
-                      <th className="p-2 text-center border border-gray-300">Marks Obtained</th>
-                      <th className="p-2 text-center border border-gray-300">Max Marks</th>
+                      <th className="p-2 text-left border border-gray-300">
+                        Criteria No
+                      </th>
+                      <th className="p-2 text-left border border-gray-300">
+                        Criteria
+                      </th>
+                      <th className="p-2 text-center border border-gray-300">
+                        Marks Obtained
+                      </th>
+                      <th className="p-2 text-center border border-gray-300">
+                        Max Marks
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {scoreBreakdown.map((criterion, index) => (
                       <tr key={index} className="border-b border-gray-200">
-                        <td className="p-2 border border-gray-300">{criterion.criterionNumber}</td>
-                        <td className="p-2 border border-gray-300">{criterion.criterionText}</td>
-                        <td className="p-2 text-center border border-gray-300">{criterion.scoreObtained}</td>
-                        <td className="p-2 text-center border border-gray-300">{criterion.maxScore}</td>
+                        <td className="p-2 border border-gray-300">
+                          {criterion.criterionNumber}
+                        </td>
+                        <td className="p-2 border border-gray-300">
+                          {criterion.criterionText}
+                        </td>
+                        <td className="p-2 text-center border border-gray-300">
+                          {criterion.scoreObtained}
+                        </td>
+                        <td className="p-2 text-center border border-gray-300">
+                          {criterion.maxScore}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -186,26 +296,31 @@ const ExaminationReview = () => {
 
   // Helper function to render the student's answer and feedback
   const renderAnswerAndFeedback = (question, result, index) => {
-    if (!question || !result.details[index]) return null;
+    if (!question || !result?.details?.[index]) return null;
 
     const answerDetails = result.details[index][1];
     const userAnswer = userAnswers[question.id];
 
     switch (question.type) {
       case "multiple-choice": {
-        const selectedOption = question.options.find(opt => opt.id === userAnswer);
+        const selectedOption = question.options?.find(
+          (opt) => opt.id === userAnswer
+        );
 
         return (
           <div className="mb-8">
             <h3 className="text-lg font-bold mb-4">Your Answer</h3>
             <div className="space-y-4">
-              {question.options.map((option) => {
+              {(question.options || []).map((option) => {
                 const isCorrect = option.isCorrect;
                 const isUserSelected = option.id === userAnswer;
 
                 let bgColor = "bg-white";
                 if (isUserSelected) {
-                  bgColor = answerDetails.score === question.score ? "bg-green-100" : "bg-red-100";
+                  bgColor =
+                    answerDetails.score === question.score
+                      ? "bg-green-100"
+                      : "bg-red-100";
                 } else if (isCorrect) {
                   bgColor = "bg-green-50";
                 }
@@ -223,7 +338,11 @@ const ExaminationReview = () => {
                       <div className="w-5 h-5 mr-4" />
                     )}
 
-                    <span className={isUserSelected && !isCorrect ? "text-red-800" : ""}>
+                    <span
+                      className={
+                        isUserSelected && !isCorrect ? "text-red-800" : ""
+                      }
+                    >
                       {option.text}
                     </span>
 
@@ -247,12 +366,15 @@ const ExaminationReview = () => {
             <h3 className="text-lg font-bold mb-4">Your Answer</h3>
             <div className="mb-4">
               <div
-                className={`p-3 border rounded ${answerDetails.score === question.score
-                  ? "border-green-500 bg-green-50"
-                  : "border-red-500 bg-red-50"
-                  }`}
+                className={`p-3 border rounded ${
+                  answerDetails.score === question.score
+                    ? "border-green-500 bg-green-50"
+                    : "border-red-500 bg-red-50"
+                }`}
               >
-                <p className="font-medium">You entered: {userAnswer || "(No answer provided)"}</p>
+                <p className="font-medium">
+                  You entered: {userAnswer || "(No answer provided)"}
+                </p>
                 <p className="mt-2 text-gray-700">
                   {answerDetails.score === question.score
                     ? "Correct!"
@@ -279,12 +401,16 @@ const ExaminationReview = () => {
             <div className="mt-4">
               <h3 className="text-lg font-bold mb-2">Model Answer</h3>
               <div className="p-4 border border-gray-300 rounded bg-blue-50 min-h-32 mb-4">
-                <ReactMarkdown>{question.modelAnswer || "No model answer provided"}</ReactMarkdown>
+                <ReactMarkdown>
+                  {question.modelAnswer || "No model answer provided"}
+                </ReactMarkdown>
               </div>
             </div>
             {renderFeedback(answerDetails.feedback)}
             <div className="mt-4 p-2 bg-gray-100 rounded">
-              <p className="font-medium">Score: {answerDetails.score}/{question.score} points</p>
+              <p className="font-medium">
+                Score: {answerDetails.score}/{question.score} points
+              </p>
             </div>
           </div>
         );
@@ -300,61 +426,76 @@ const ExaminationReview = () => {
     navigate("/dashboard");
   };
 
+  if (submissionInfo?.is_approved == false) {
+    return (
+      <div className=" h-[calc(100dvh_-_64px)] flex flex-col justify-center items-center gap-4 col-span-full ">
+        <img className="w-32 h-32" src={illustration2} alt="Illustration" />
+        <h1 className="text-[32px] max-md:text-2xl font-medium leading-8">
+          Result not Published
+        </h1>
+        <p className="text-[#667085] text-lg">
+          You will be able to view your result once the lecturer has published
+          it.
+        </p>
+        <CustomButton as="link" to="/examinations">
+          Back to Examinations
+        </CustomButton>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-auto flex flex-col h-full">
-      <div className="px-6 py-8 flex-grow">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">
-            {exam.title} - Results
-          </h1>
+      <div className="px-6 py-4 flex-grow">
+        <div className="flex justify-between items-start mb-3">
+          <div className="">
+            <h1 className="text-2xl font-bold text-gray-800">
+              {exam?.title || "Exam"} - Results
+            </h1>
+            <p className="text-gray-500 mt-2">
+              Review your answers and feedback
+            </p>
+          </div>
           <div className="flex items-center">
-            <div className={`px-4 py-2 rounded-md flex items-center ${isPerfectScore ? "bg-green-100" : "bg-red-100"
-              }`}>
+            <div className={`px-4 py-0 rounded-md flex items-center`}>
               <span className="text-gray-600 mr-2">Score:</span>
-              <span
-                className={`text-2xl font-bold ${percentageScore >= 70
-                  ? "text-green-600"
-                  : percentageScore >= 50
-                    ? "text-yellow-600"
-                    : "text-red-600"
+              <p className={`text-lg font-bold `}>
+                <span
+                  className={`text-3xl ${
+                    percentageScore >= 70
+                      ? "text-green-600"
+                      : percentageScore >= 50
+                      ? "text-yellow-600"
+                      : "text-red-600"
                   }`}
-              >
-                {totalScore}/{maxPossibleScore} ({percentageScore}%)
-              </span>
+                >
+                  {totalScore}
+                </span>
+                /{maxPossibleScore}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <p className="text-gray-500">Review your answers and feedback</p>
-          <button
-            className="bg-[#1836B2] text-white px-6 py-2 rounded-md font-medium"
-            onClick={handleBackToDashboard}
-          >
-            Back to Dashboard
-          </button>
-        </div>
-
-        <div className="border-t pt-8">
+        <div className="border-t pt-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">
               Question {currentQuestionIndex + 1}
             </h2>
             <div className="flex items-center">
               <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${(questionResult.details?.[currentQuestionIndex]?.[1]?.score || 0) ===
-                  (currentQuestion.score || 0)
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-                  }`}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  (questionResult?.details?.[currentQuestionIndex]?.[1]
+                    ?.score || 0) === (currentQuestion.score || 0)
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
               >
-                {(questionResult.details?.[currentQuestionIndex]?.[1]?.score || 0) ===
-                  (currentQuestion.score || 0)
+                {(questionResult?.details?.[currentQuestionIndex]?.[1]?.score ||
+                  0) === (currentQuestion.score || 0)
                   ? "Correct"
                   : "Incorrect"}{" "}
-                - {questionResult.details?.[currentQuestionIndex]?.[1]?.score ||
-                  0}
-                /{currentQuestion.score || 0} points
+                - {currentAnswerScore}/{currentQuestion.score || 0} marks
               </span>
             </div>
           </div>
@@ -374,8 +515,9 @@ const ExaminationReview = () => {
       {/* Footer Navigation */}
       <div className="border-t p-4 flex justify-between items-center mt-auto">
         <button
-          className={`flex items-center font-medium ${currentQuestionIndex > 0 ? "text-[#1836B2]" : "text-gray-400"
-            }`}
+          className={`flex items-center font-medium ${
+            currentQuestionIndex > 0 ? "text-[#1836B2]" : "text-gray-400"
+          }`}
           onClick={goToPreviousQuestion}
           disabled={currentQuestionIndex === 0}
         >
@@ -387,10 +529,11 @@ const ExaminationReview = () => {
           {paginationPages.map((page) => (
             <button
               key={page}
-              className={`w-8 h-8 flex items-center justify-center rounded-md ${page === currentQuestionIndex
-                ? "bg-[#1836B2] text-white"
-                : "bg-gray-200 text-gray-700"
-                }`}
+              className={`w-8 h-8 flex items-center justify-center rounded-md ${
+                page === currentQuestionIndex
+                  ? "bg-[#1836B2] text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
               onClick={() => goToQuestion(page)}
             >
               {page + 1}
@@ -399,10 +542,11 @@ const ExaminationReview = () => {
         </div>
 
         <button
-          className={`flex items-center font-medium ${currentQuestionIndex < totalQuestions - 1
-            ? "text-[#1836B2]"
-            : "text-gray-400"
-            }`}
+          className={`flex items-center font-medium ${
+            currentQuestionIndex < totalQuestions - 1
+              ? "text-[#1836B2]"
+              : "text-gray-400"
+          }`}
           onClick={goToNextQuestion}
           disabled={currentQuestionIndex === totalQuestions - 1}
         >

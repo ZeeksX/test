@@ -24,6 +24,370 @@ import { iconDocx, iconPdf, iconPptx } from "../../utils/images";
 import apiCall from "../../utils/apiCall";
 import Toast from "../modals/Toast";
 
+// export const ManualCreateExamQuestion = ({
+//   examData,
+//   updateExamData,
+//   setSelectedQuestionMethod,
+//   currentStep,
+//   style = "manually",
+//   setCurrentStep,
+//   setPreviousStep,
+// }) => {
+//   // const oldQuestions = [...examData.questions];
+
+//   const [questions, setQuestions] = useState([
+//     {
+//       id: "q1",
+//       type: "multiple-choice",
+//       text: "",
+//       score: 2,
+//       options: [
+//         { id: "opt1", text: "", isCorrect: true },
+//         { id: "opt2", text: "", isCorrect: false },
+//       ],
+//     },
+//   ]);
+
+//   useEffect(() => {
+//     if (examData.questions && examData.questions.length > 0) {
+//       setQuestions([...examData.questions]);
+//     } else {
+//       setQuestions([
+//         {
+//           id: "q1",
+//           type: "multiple-choice",
+//           text: "",
+//           score: 2,
+//           options: [
+//             { id: "opt1", text: "", isCorrect: true },
+//             { id: "opt2", text: "", isCorrect: false },
+//           ],
+//         },
+//       ]);
+//     }
+//   }, [examData.questions]);
+
+//   const [activeQuestion, setActiveQuestion] = useState(0);
+
+//   const addQuestion = () => {
+//     const newQuestion = {
+//       id: `q${questions.length + 1}`,
+//       type: "multiple-choice",
+//       score: 2,
+//       text: "",
+//       options: [
+//         { id: `q${questions.length + 1}_opt1`, text: "", isCorrect: true },
+//         { id: `q${questions.length + 1}_opt2`, text: "", isCorrect: false },
+//       ],
+//     };
+//     setQuestions([...questions, newQuestion]);
+//     setActiveQuestion(questions.length);
+//   };
+
+//   const duplicateQuestion = (index) => {
+//     const questionToDuplicate = questions[index];
+//     const duplicatedQuestion = {
+//       ...JSON.parse(JSON.stringify(questionToDuplicate)),
+//       id: `q${questions.length + 1}`,
+//     };
+
+//     // Update option IDs in the duplicated question
+//     duplicatedQuestion.options = duplicatedQuestion.options.map((opt, i) => ({
+//       ...opt,
+//       id: `q${questions.length + 1}_opt${i + 1}`,
+//     }));
+
+//     const newQuestions = [...questions];
+//     newQuestions.splice(index + 1, 0, duplicatedQuestion);
+//     setQuestions(newQuestions);
+//     setActiveQuestion(index + 1);
+//   };
+
+//   const deleteQuestion = (index) => {
+//     if (questions.length === 1) {
+//       // Don't delete the last question, just reset it
+//       setQuestions([
+//         {
+//           id: "q1",
+//           type: "multiple-choice",
+//           text: "",
+//           score: 2,
+//           options: [
+//             { id: "opt1", text: "", isCorrect: true },
+//             { id: "opt2", text: "", isCorrect: false },
+//           ],
+//         },
+//       ]);
+//       setActiveQuestion(0);
+//       return;
+//     }
+
+//     const newQuestions = [...questions];
+//     newQuestions.splice(index, 1);
+//     setQuestions(newQuestions);
+//     setActiveQuestion(Math.min(index, newQuestions.length - 1));
+//   };
+
+//   const updateQuestionType = (type, index) => {
+//     const newQuestions = [...questions];
+//     newQuestions[index].type = type;
+
+//     // Reset options if changing to cloze or theory
+//     if (type === "cloze" || type === "theory") {
+//       newQuestions[index].options = [];
+//     } else if (newQuestions[index].options.length === 0) {
+//       // Add default options if changing to multiple-choice
+//       newQuestions[index].options = [
+//         { id: `q${index + 1}_opt1`, text: "", isCorrect: true },
+//         { id: `q${index + 1}_opt2`, text: "", isCorrect: false },
+//       ];
+//     }
+
+//     setQuestions(newQuestions);
+//   };
+
+//   const updateQuestionText = (text, index) => {
+//     const newQuestions = [...questions];
+//     newQuestions[index].text = text;
+//     setQuestions(newQuestions);
+//   };
+
+//   const addOption = (questionIndex) => {
+//     const newQuestions = [...questions];
+//     const newOptionId = `q${questionIndex + 1}_opt${
+//       newQuestions[questionIndex].options.length + 1
+//     }`;
+//     newQuestions[questionIndex].options.push({
+//       id: newOptionId,
+//       text: "",
+//       isCorrect: false,
+//     });
+//     setQuestions(newQuestions);
+//   };
+
+//   const updateOptionText = (text, questionIndex, optionIndex) => {
+//     const newQuestions = [...questions];
+//     newQuestions[questionIndex].options[optionIndex].text = text;
+//     setQuestions(newQuestions);
+//   };
+
+//   const toggleOptionCorrect = (questionIndex, optionIndex) => {
+//     const newQuestions = [...questions];
+//     newQuestions[questionIndex].options[optionIndex].isCorrect =
+//       !newQuestions[questionIndex].options[optionIndex].isCorrect;
+//     setQuestions(newQuestions);
+//   };
+
+//   const updateModelAnswer = (text, index) => {
+//     const newQuestions = [...questions];
+//     newQuestions[index].modelAnswer = text;
+//     setQuestions(newQuestions);
+//   };
+
+//   const handleFinishSetQuestion = () => {
+//     if (questions.length >= 1) {
+//       // updateExamData({
+//       // });
+
+//       const uniqueQuestionTypes = [...new Set(questions.map((q) => q.type))];
+//       const questionStyle = [style];
+
+//       updateExamData({
+//         questions: [...questions],
+//         questionTypes: [uniqueQuestionTypes],
+//         addQuestion: [...questionStyle],
+//       });
+
+//       setCurrentStep();
+//     }
+//     // setSelectedQuestionMethod();
+//   };
+
+//   return (
+//     <div className="">
+//       <div className="flex justify-between items-start">
+//         <div className="mb-4">
+//           <Input
+//             name="name"
+//             placeholder="Exam Name"
+//             value={examData.name}
+//             onChange={(e) => updateExamData({ name: e.target.value })}
+//             className="text-3xl placeholder:text-3xl font-bold border-none !p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+//           />
+//           <Input
+//             name="description"
+//             placeholder="Exam Description"
+//             value={examData.examType}
+//             onChange={(e) => updateExamData({ examType: e.target.value })}
+//             className="text-gray-500 border-none !p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+//           />
+//         </div>
+//         <div className="flex justify-end mb-4 space-x-2">
+//           <CustomButton variant="clear" onClick={setPreviousStep}>
+//             Cancel
+//           </CustomButton>
+//           <CustomButton
+//             variant={questions.length > 1 ? "primary" : "ghost"}
+//             disabled={questions.length < 2}
+//             onClick={() => handleFinishSetQuestion()}
+//           >
+//             Done
+//           </CustomButton>
+//         </div>
+//       </div>
+//       {/* <DropdownMenuSeparator /> */}
+//       <div className="bg-white border rounded-lg p-6 mb-6">
+//         <div className="mb-4">
+//           <label className="block text-sm font-medium mb-1">
+//             Question type
+//           </label>
+//           <Select
+//             value={questions[activeQuestion]?.type}
+//             onValueChange={(value) => updateQuestionType(value, activeQuestion)}
+//           >
+//             <SelectTrigger className="w-full">
+//               <SelectValue placeholder="Select question type" />
+//             </SelectTrigger>
+//             <SelectContent>
+//               <SelectItem value="multiple-choice">Multiple-choice</SelectItem>
+//               <SelectItem value="cloze">Cloze</SelectItem>
+//               <SelectItem value="theory">Theory</SelectItem>
+//             </SelectContent>
+//           </Select>
+//         </div>
+
+//         <div className="mb-6">
+//           <label className="block text-sm font-medium mb-1">Question</label>
+//           <Textarea
+//             placeholder="Write a question here"
+//             value={questions[activeQuestion].text}
+//             onChange={(e) => updateQuestionText(e.target.value, activeQuestion)}
+//             className="w-full p-2 border-b outline-none mt-2 resize-none border-black focus:outline-none focus:border-primary-main min-h-[70px]"
+//           />
+//         </div>
+
+//         {questions[activeQuestion].type === "multiple-choice" && (
+//           <>
+//             <p className="text-sm text-gray-500 mb-4">
+//               Select all correct options.
+//             </p>
+
+//             {questions[activeQuestion].options.map((option, optionIndex) => (
+//               <div key={option.id} className="flex items-center mb-4">
+//                 <Checkbox
+//                   id={option.id}
+//                   checked={option.isCorrect}
+//                   onCheckedChange={() =>
+//                     toggleOptionCorrect(activeQuestion, optionIndex)
+//                   }
+//                   className="mr-3"
+//                 />
+//                 <div className="flex-1">
+//                   <label className="block text-sm font-medium mb-1">
+//                     Option {optionIndex + 1}
+//                   </label>
+//                   <Input
+//                     placeholder="Enter option here"
+//                     value={option.text}
+//                     onChange={(e) =>
+//                       updateOptionText(
+//                         e.target.value,
+//                         activeQuestion,
+//                         optionIndex
+//                       )
+//                     }
+//                   />
+//                 </div>
+//               </div>
+//             ))}
+
+//             <CustomButton
+//               variant="clear"
+//               size="sm"
+//               className="mt-2 !text-sm !font-medium"
+//               onClick={() => addOption(activeQuestion)}
+//             >
+//               <FiPlus className="h-4 w-4 mr-2" />
+//               Add option
+//             </CustomButton>
+//           </>
+//         )}
+
+//         {questions[activeQuestion].type === "cloze" && (
+//           <div className="mb-6">
+//             <label className="block text-sm font-medium mb-1">
+//               Model answer
+//             </label>
+//             <Input
+//               placeholder="Short answer"
+//               value={questions[activeQuestion].modelAnswer || ""}
+//               onChange={(e) =>
+//                 updateModelAnswer(e.target.value, activeQuestion)
+//               }
+//             />
+//           </div>
+//         )}
+
+//         {questions[activeQuestion].type === "theory" && (
+//           <div className="mb-6">
+//             <label className="block text-sm font-medium mb-1">
+//               Model answer
+//             </label>
+//             <Textarea
+//               placeholder="Long answer"
+//               value={questions[activeQuestion].modelAnswer || ""}
+//               onChange={(e) =>
+//                 updateModelAnswer(e.target.value, activeQuestion)
+//               }
+//               className="w-full p-2 border-b outline-none mt-2 resize-none border-black focus:outline-none focus:border-primary-main min-h-[70px]"
+//             />
+//           </div>
+//         )}
+
+//         <div className="flex justify-end mt-6 space-x-4">
+//           <button
+//             size="sm"
+//             className="!text-sm flex p-2 text-primary-main !font-medium"
+//             onClick={() => duplicateQuestion(activeQuestion)}
+//           >
+//             <FiCopy className="h-4 w-4 mr-2" />
+//             Duplicate
+//           </button>
+//           <button
+//             size="sm"
+//             className="!text-sm flex p-2 text-primary-danger !font-medium"
+//             onClick={() => deleteQuestion(activeQuestion)}
+//           >
+//             <FiTrash className="h-4 w-4 mr-2" />
+//             Delete
+//           </button>
+//         </div>
+//       </div>
+
+//       <CustomButton variant="clear" className="w-full" onClick={addQuestion}>
+//         <FiPlus className="h-4 w-4 mr-2" />
+//         Add new question
+//       </CustomButton>
+
+//       {questions.length > 1 && (
+//         <div className="mt-6 flex flex-wrap gap-2">
+//           {questions.map((_, index) => (
+//             <CustomButton
+//               key={index}
+//               className="!text-sm !font-medium"
+//               variant={activeQuestion === index ? "default" : "clear"}
+//               size="sm"
+//               onClick={() => setActiveQuestion(index)}
+//             >
+//               Question {index + 1}
+//             </CustomButton>
+//           ))}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
 export const ManualCreateExamQuestion = ({
   examData,
   updateExamData,
@@ -165,6 +529,18 @@ export const ManualCreateExamQuestion = ({
     setQuestions(newQuestions);
   };
 
+  const deleteOption = (questionIndex, optionIndex) => {
+    const newQuestions = [...questions];
+    
+    // Don't allow deleting if there are only 2 options left
+    if (newQuestions[questionIndex].options.length <= 2) {
+      return;
+    }
+    
+    newQuestions[questionIndex].options.splice(optionIndex, 1);
+    setQuestions(newQuestions);
+  };
+
   const updateOptionText = (text, questionIndex, optionIndex) => {
     const newQuestions = [...questions];
     newQuestions[questionIndex].options[optionIndex].text = text;
@@ -298,6 +674,15 @@ export const ManualCreateExamQuestion = ({
                     }
                   />
                 </div>
+                {questions[activeQuestion].options.length > 2 && (
+                  <button
+                    onClick={() => deleteOption(activeQuestion, optionIndex)}
+                    className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+                    title="Delete option"
+                  >
+                    <FiTrash className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             ))}
 

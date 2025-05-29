@@ -123,10 +123,10 @@ const App = () => {
                 path=":courseId/questions"
                 element={<ExaminationQuestions />}
               />
-              <Route path=":courseId/result" element={<ExaminationResult />} />
-              <Route path=":courseId/review" element={<ExaminationReview />} />
-              <Route path=":courseId/result" element={<ExaminationResult />} />
-              <Route path=":courseId/review" element={<ExaminationReview />} />
+              {/* <Route path=":courseId/result" element={<ExaminationResult />} /> */}
+              <Route path=":examId/review" element={<ExaminationReview />} />
+              <Route path=":examId/result" element={<ExaminationResult />} />
+              {/* <Route path=":courseId/review" element={<ExaminationReview />} /> */}
             </Route>
             <Route path="settings" element={<Settings />} />
             <Route path="profile" element={<Profile />} />

@@ -8,6 +8,8 @@ import apiCall from "../../utils/apiCall";
 import { useDispatch } from "react-redux";
 import { setShowExamConcludedDialog } from "../../features/reducers/uiSlice";
 import { ExamConcludedDialog } from "../modals/AuthModals";
+import axios from "axios";
+import { PETTY_SERVER_URL } from "../../utils/constants";
 
 const ExaminationQuestions = () => {
   const location = useLocation();
@@ -112,20 +114,20 @@ const ExaminationQuestions = () => {
     };
   }, [exam.due_time]);
 
-  // useEffect(() => {
-  //     const handleVisibilityChange = () => {
-  //       if (document.visibilityState === "hidden") {
-  //         setTabLeaveCount((prev) => prev + 1);
-  //       } else if (tabLeaveCount > 0) {
-  //         alert("Please do not leave the tab during the exam!");
-  //         if (tabLeaveCount >= 3) {
-  //           handleSubmit();
-  //         }
-  //       }
-  //     };
-  //     document.addEventListener("visibilitychange", handleVisibilityChange);
-  //     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  //   }, [tabLeaveCount]);
+  useEffect(() => {
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "hidden") {
+          setTabLeaveCount((prev) => prev + 1);
+        } else if (tabLeaveCount > 0) {
+          alert("Please do not leave the tab during the exam!");
+          if (tabLeaveCount >= 3) {
+            handleSubmit();
+          }
+        }
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }, [tabLeaveCount]);
 
   useEffect(() => {
     const handleBeforeUnload = (event) => {
@@ -177,7 +179,9 @@ const ExaminationQuestions = () => {
       setSubmissionStatus("Submitting your answers...");
 
       const userData = JSON.parse(localStorage.getItem("userData"));
+      const user = JSON.parse(localStorage.getItem("user"));
       const studentNumber = userData.studentNumber;
+      const studentId = user.studentId;
 
       // const gradingResults = await submitExamForGrading(
       //   exam.id,
@@ -185,22 +189,43 @@ const ExaminationQuestions = () => {
       //   exam
       // );
 
+      // const body = {
+      //   student: {
+      //     matric_number: studentNumber,
+      //   },
+      //   exam: exam.id,
+      //   answers: userAnswers,
+      //   gradingStatus: "Not Graded",
+      //   is_approved: false,
+      // };
+
       const body = {
-        student: {
-          matric_number: studentNumber,
-        },
-        exam: exam.id,
-        answers: userAnswers,
-        gradingStatus: "Not Graded",
-        is_approved: false,
+        examId: exam.id,
+        studentId: studentId,
+        userAnswers,
+        token: localStorage.getItem("access_token"),
       };
 
-      const response = await apiCall.post(`/exams/student-exams/submit_exam/`, body);
-      if (response.status === 201) {
+      const response = await axios.post(
+        `${PETTY_SERVER_URL}/api/exams/submit`,
+        body
+      );
+
+      // const response = await apiCall.post(
+      //   `/exams/student-exams/submit_exam/`,
+      //   body
+      // );
+      if (response.status === 200) {
         setSubmissionStatus("Submitted successfully!");
       }
 
       dispatch(setShowExamConcludedDialog(true));
+      // console.log({
+      //   examId: exam.id,
+      //   gradingResults,
+      //   userAnswers,
+      //   token: localStorage.getItem("access_token"),
+      // });
 
       // setTimeout(() => {
       //   navigate(`/examinations/${exam.id}/result`, {
@@ -248,6 +273,7 @@ const ExaminationQuestions = () => {
           <div className="mb-8">
             <div className="mb-4">
               <input
+                onPaste={(e) => e.preventDefault()}
                 type="text"
                 className="w-full p-2 border border-gray-300 rounded"
                 placeholder="Enter your answer"
@@ -263,6 +289,7 @@ const ExaminationQuestions = () => {
         return (
           <div className="mb-8">
             <textarea
+              onPaste={(e) => e.preventDefault()}
               className="w-full p-2 border border-gray-300 rounded min-h-32"
               placeholder="Enter your answer"
               value={userAnswers[question.id] || ""}
@@ -366,7 +393,13 @@ const ExaminationQuestions = () => {
           </h2>
 
           <div className="mb-8">
-            <p className="mb-4">{currentQuestion.text}</p>
+            <p
+              className="mb-4 select-none"
+              style={{ userSelect: "none" }}
+              onCopy={(e) => e.preventDefault()}
+            >
+              {currentQuestion.text}
+            </p>
           </div>
 
           {renderQuestion(currentQuestion)}

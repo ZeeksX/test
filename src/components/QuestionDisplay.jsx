@@ -15,7 +15,7 @@ const QuestionDisplay = ({ question, number }) => {
         <h2 className="text-lg font-semibold">Question {number}</h2>
         <div className="flex items-center gap-2">
           <span>
-            {question.studentAnswers[0].score} / {question?.score}
+            {question.points} / {question?.score}
           </span>
         </div>
       </div>

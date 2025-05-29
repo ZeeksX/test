@@ -308,7 +308,7 @@ const Login = ({ isMobile }) => {
             </CustomButton>
 
             {/* Google Login Section */}
-            <div className="w-full flex flex-col gap-2 mt-2">
+            {/* <div className="w-full flex flex-col gap-2 mt-2">
               <div className="flex items-center gap-2 w-full">
                 <hr className="flex-1 border-gray-300" />
                 <span className="text-gray-500 text-sm">or</span>
@@ -319,9 +319,9 @@ const Login = ({ isMobile }) => {
                 <CustomButton
                   size="lg"
                   loading={isLogging}
-                  variant="ghost"
                   className="w-full flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50"
                   type="button"
+                  variant="clear"
                   onClick={handleGoogleLogin}
                   disabled={isLogging}
                 >
@@ -335,7 +335,7 @@ const Login = ({ isMobile }) => {
                   Continue with Google
                 </CustomButton>
               </div>
-            </div>
+            </div> */}
 
             <p className="flex md:hidden text-[#666666] justify-center w-full my-2 text-[0.75rem] font-normal gap-2 text-center">
               Don't have an account?

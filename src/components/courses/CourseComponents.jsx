@@ -886,16 +886,16 @@ export const CreateNewExam = () => {
 
                       {currentStep === 5 ? (
                         <div className="flex gap-3 ml-auto">
-                          <CustomButton
+                          {/* <CustomButton
                             variant="ghost"
                             className="w-1/3"
                             // onClick={() => handlePublish()}
                           >
                             Draft
-                          </CustomButton>
+                          </CustomButton> */}
                           <CustomButton
                             variant="ghost"
-                            className="w-1/3"
+                            className="w-1/2"
                             onClick={() => setExamPreview(true)}
                           >
                             Preview
@@ -903,7 +903,7 @@ export const CreateNewExam = () => {
                           <CustomButton
                             loading={submitting}
                             variant="ghost"
-                            className="w-1/3"
+                            className="w-1/2"
                             onClick={() => handlePublish()}
                             // onClick={() => dispatch(setShowPostExamWarningDialog({willShow: true, exam: }))}
                           >
@@ -990,7 +990,7 @@ export const CreateStudentGroup = () => {
     const body = {
       name: formData.name,
       description: formData.description,
-      course: 1,
+      course: 3,
       teacher: teacher,
     };
 
