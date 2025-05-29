@@ -250,7 +250,7 @@ const Login = ({ isMobile }) => {
   return (
     <div className="landing flex flex-col items-center justify-center w-full min-h-screen">
       {loader && <Loader />}
-      <div className="sign-in flex flex-row lg:w-3/5 lg:h-[90vh]">
+      <div className="sign-in flex flex-row max-md:w-[90%] lg:w-3/5 lg:h-[90vh] my-6">
         <div className="signin-image md:w-1/2 hidden md:flex"></div>
         <div className="login hide-scrollbar flex overflow-y-scroll flex-col w-[90%] mx-auto max-w-96 lg:max-w-screen-lg md:w-full md:rounded-r-2xl bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
           <Header
@@ -371,26 +371,28 @@ const Login = ({ isMobile }) => {
 
 const Header = ({ navigateToSignUp, brandLogo, logoMobile }) => (
   <div className="flex flex-col justify-center items-center">
-    {brandLogo && (
-      <img
-        className="hidden md:flex w-1/3 mb-3"
-        src={brandLogo}
-        alt="Acad AI logo"
-        loading="eager"
-        width="150"
-        height="45"
-      />
-    )}
-    {logoMobile && (
-      <img
-        className="flex md:hidden w-1/2 justify-center items-center"
-        src={logoMobile}
-        alt="Acad AI logo"
-        loading="eager"
-        width="100"
-        height="30"
-      />
-    )}
+    <div className="w-60 h-20 flex justify-center">
+      {brandLogo && (
+        <img
+          className="hidden md:flex mb-3"
+          src={brandLogo}
+          alt="Acad AI logo"
+          loading="eager"
+          width="150"
+          height="45"
+        />
+      )}
+      {logoMobile && (
+        <img
+          className="flex md:hidden justify-center items-center"
+          src={logoMobile}
+          alt="Acad AI logo"
+          style={{ width: "inherit", height: "inherit", objectFit: "contain" }}
+          loading="eager"
+        />
+      )}
+    </div>
+
     <h3 className="hidden md:flex text-black font-medium text-[1.75rem]">
       Welcome Back!
     </h3>

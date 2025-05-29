@@ -188,7 +188,7 @@ const SchoolSelection = ({ onSubmit, onReturn, schoolName, setSchoolName }) => {
   };
 
   return (
-    <div className="flex flex-col items-center space-y-5 p-6 overflow-scroll hide-scrollbar">
+    <div className="flex flex-col items-center space-y-5 p-6 overflow-y-scroll hide-scrollbar">
       <button className="absolute top-4 left-4" onClick={onReturn}>
         <MdOutlineArrowBack size={24} />
       </button>
