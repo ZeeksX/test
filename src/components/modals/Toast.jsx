@@ -13,7 +13,7 @@ const Toast = ({ open, message, onClose, severity = "info" }) => {
 
     if (!open) return null;
 
-    const baseStyles = `fixed top-6 right-6 px-6 py-4 rounded-xl z-50 transition-all duration-300 font-semibold text-sm`;
+    const baseStyles = `fixed top-3 right-3 px-6 py-4 rounded-xl z-50 transition-all duration-300 font-semibold text-sm`;
     const glassStyles = `backdrop-blur-md bg-opacity-70 shadow-lg`;
 
     const severityStyles = {

@@ -235,6 +235,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function to update user data (useful for profile updates)
+  const updateUser = (updatedUserData) => {
+    try {
+      const newUserData = { ...user, ...updatedUserData };
+      localStorage.setItem("user", JSON.stringify(newUserData));
+      setUser(newUserData);
+      console.log("User data updated successfully");
+    } catch (error) {
+      console.error("Error updating user data:", error);
+    }
+  };
+
+
   return (
     <AuthContext.Provider
       value={{
@@ -243,7 +256,8 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         user,
-        refreshToken
+        refreshToken,
+        updateUser
       }}
     >
       {children}

@@ -7,8 +7,8 @@ import { AddNewStudentToStudentGroupDialog, CreateExaminationRoom, CreateStudent
 
 const HomePage = ({ sidebarOpen, toggleSidebar }) => {
   const [scrolling, setScrolling] = useState(false);
-  const user = useAuth();
-  const role = user?.user.role || "guest"; // Default to 'guest' if user is not authenticated
+  const { user } = useAuth();
+  const role = user?.role || "guest"; // Default to 'guest' if user is not authenticated
 
   // const handleScroll = () => {
   //   setScrolling(window.scrollY > 0);
@@ -36,16 +36,19 @@ const HomePage = ({ sidebarOpen, toggleSidebar }) => {
             <SidebarWithRoleControl role={role} />
           </div>
 
-          {/* Main content container */}
-          {!sidebarOpen && (
-            <div
-              className={`flex-1 h-[calc(100dvh_-_64px)] overflow-auto w-full ${
-                scrolling ? "pt-14" : ""
-              }`}
-            >
-              <Outlet />
+          {/* Mobile sidebar overlay */}
+          {sidebarOpen && (
+            <div className="sm:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={toggleSidebar}>
+              <div className="w-[264px] h-full bg-white" onClick={(e) => e.stopPropagation()}>
+                <SidebarWithRoleControl role={role} />
+              </div>
             </div>
           )}
+
+          {/* Main content container - always visible */}
+          <div className={`flex-1 h-[calc(100dvh_-_64px)] overflow-auto w-full ${scrolling ? "pt-14" : ""}`}>
+            <Outlet />
+          </div>
         </div>
 
         <CreateExaminationRoom />

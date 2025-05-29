@@ -79,7 +79,9 @@ const Login = ({ isMobile }) => {
   const handleSuccessfulLogin = useCallback(
     (message = "Login successful!") => {
       // Show toast on the login page
+
       showToast(message, "success");
+
 
       // Store the toast message for the dashboard
       try {
@@ -120,17 +122,16 @@ const Login = ({ isMobile }) => {
         });
 
         const data = await res.json();
-
+        
         if (res.ok) {
           // Store tokens
           try {
             localStorage.setItem("access_token", data.access);
             localStorage.setItem("refresh_token", data.refresh);
+            localStorage.setItem("user", JSON.stringify(data));
           } catch (error) {
             console.error("Error storing tokens:", error);
           }
-
-          
 
           // Login with complete user data
           login({
@@ -261,7 +262,6 @@ const Login = ({ isMobile }) => {
             logoMobile={images.logoMobile}
           />
           <form
-            action="/dashboard"
             onSubmit={handleSubmit}
             className="flex flex-col gap-2 lg:gap-3 items-start w-[90%] md:w-4/5 mx-auto"
           >
