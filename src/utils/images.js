@@ -10,7 +10,7 @@ import instagramLogo from "../assets/instagram.webp";
 import githubLogo from "../assets/github.png";
 import twitterLogo from "../assets/twitter.webp";
 import figmaLogo from "../assets/figma.png";
-import logoMobile from "../assets/logo.png";
+import logoMobile from "../assets/logo.webp";
 import featuredIcon from "../assets/Featured icon.png";
 import dangerImg from "../assets/Danger.svg";
 import iconPdf from "../assets/File type icon-pdf.svg";
