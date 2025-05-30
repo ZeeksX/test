@@ -46,8 +46,6 @@ const Container = () => {
           }
 
           const data = await response.json();
-          console.log("Posted course data:", data);
-
           // Remove userData and user after successful post
           localStorage.removeItem("userData");
         } else {

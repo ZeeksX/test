@@ -25,7 +25,7 @@ const StudentMobileSidebar = ({ showSidebar, toggleSidebar }) => {
                                     : "hover:bg-secondary-bg"
                                     }`}
                             >
-                                <Link to="/dashboard" className="w-full p-3 flex gap-4">
+                                <Link to="/dashboard" className="w-full p-3 flex gap-4" onClick={() => toggleSidebar()}>
                                     <FiHome size={22} />
                                     Dashboard
                                 </Link>
@@ -42,7 +42,7 @@ const StudentMobileSidebar = ({ showSidebar, toggleSidebar }) => {
                                         : "hover:bg-secondary-bg"
                                         }`}
                                 >
-                                    <Link to={link.href} className="w-full p-3 flex gap-4">
+                                    <Link to={link.href} className="w-full p-3 flex gap-4" onClick={() => toggleSidebar()}>
                                         <link.icon size={22} />
                                         {link.title}
                                     </Link>

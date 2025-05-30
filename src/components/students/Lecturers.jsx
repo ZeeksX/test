@@ -20,6 +20,7 @@ const Lecturers = () => {
   useEffect(() => {
     dispatch(fetchAllTeachersWithTheirExamRooms());
   }, [dispatch]);
+  
   if (loading) {
     return <Loader />
   }

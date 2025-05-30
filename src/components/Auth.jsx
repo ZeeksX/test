@@ -228,7 +228,7 @@ export const AuthProvider = ({ children }) => {
 
       if (redirect && !hasRedirected.current) {
         hasRedirected.current = true;
-        window.location.href = "/";
+        window.location.href = "/login";
       }
     } catch (error) {
       console.error("Error during logout:", error);

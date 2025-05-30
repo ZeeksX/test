@@ -38,7 +38,7 @@ const Examinations = () => {
           studentId
         );
         setAvailableExams(filteredExams);
-        console.log({ availableExams });
+        
       } catch (error) {
         console.error("Error fetching exams:", error);
       }
@@ -57,15 +57,13 @@ const Examinations = () => {
     [exams]
   );
 
-  console.log({ completedExams });
-
   if (examsLoading) {
     return <Loader />;
   }
 
   return (
     <div className="p-4">
-      <div className="flex flex-row max-md:flex-col justify-between w-full ">
+      <div className="flex flex-row max-md:flex-col justify-between w-full items-center">
         <div className="flex flex-col gap-4">
           <h3 className="text-[32px] leading-8 font-medium">Examinations</h3>
           <p className="text-sm text-[#222222] font-normal">

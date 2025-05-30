@@ -3,54 +3,55 @@ import SidebarWithRoleControl from "../components/SidebarWithRoleControl";
 import { AuthProvider, useAuth } from "../components/Auth";
 import DynamicTopNav from "../components/topnav/DynamicTopNav";
 import { Outlet } from "react-router";
-import { AddNewStudentToStudentGroupDialog, CreateExaminationRoom, CreateStudentGroup, JoinStudentGroupDialog, LeaveStudentGroupDialog, ShareStudentGroupLinkDialog } from "../components/courses/CourseComponents";
+import {
+  AddNewStudentToStudentGroupDialog,
+  CreateExaminationRoom,
+  CreateStudentGroup,
+  JoinStudentGroupDialog,
+  LeaveStudentGroupDialog,
+  ShareStudentGroupLinkDialog,
+} from "../components/courses/CourseComponents";
 
-const HomePage = ({ sidebarOpen, toggleSidebar }) => {
-  const [scrolling, setScrolling] = useState(false);
+const HomePage = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
-  const role = user?.role || "guest"; // Default to 'guest' if user is not authenticated
+  const role = user?.role || "guest";
 
-  // const handleScroll = () => {
-  //   setScrolling(window.scrollY > 0);
-  // };
-
-  // useEffect(() => {
-  //   window.addEventListener("scroll", handleScroll);
-  //   return () => {
-  //     window.removeEventListener("scroll", handleScroll);
-  //   };
-  // }, []);
+  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   return (
     <div className="w-full h-full sm:overflow-hidden">
       <AuthProvider>
-        {/* Top navbar for small screens */}
-        <DynamicTopNav
-          sidebarOpen={sidebarOpen}
-          toggleSidebar={toggleSidebar}
-        />
+        <DynamicTopNav sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
 
         <div className="home-page mt-[64px] flex sm:flex-row flex-col w-full h-[calc(100%_-_64px)]">
-          {/* Sidebar for larger screens */}
-          <div className="hidden sm:flex w-[264px] border-r-[4px] border-r-border-main">
-            <SidebarWithRoleControl role={role} />
+          {/* Sidebar for larger screens - no logo */}
+          <div className="hidden md:flex w-[264px]">
+            <SidebarWithRoleControl role={role} showLogo={false} />
           </div>
 
-          {/* Mobile sidebar overlay */}
+          {/* Mobile sidebar overlay - with logo */}
           {sidebarOpen && (
-            <div className="sm:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={toggleSidebar}>
-              <div className="w-[264px] h-full bg-white" onClick={(e) => e.stopPropagation()}>
-                <SidebarWithRoleControl role={role} />
+            <div
+              className="sm:hidden fixed inset-0 z-50 bg-black bg-opacity-50"
+              onClick={toggleSidebar}
+            >
+              <div
+                className="w-[264px] h-full bg-white"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <SidebarWithRoleControl role={role} showLogo={true} toggleSidebar={toggleSidebar}/>
               </div>
             </div>
           )}
 
-          {/* Main content container - always visible */}
-          <div className={`flex-1 h-[calc(100dvh_-_64px)] overflow-auto w-full ${scrolling ? "pt-14" : ""}`}>
+          {/* Main content */}
+          <div className="flex-1 h-[calc(100dvh_-_64px)] overflow-auto w-full">
             <Outlet />
           </div>
         </div>
 
+        {/* Dialogs */}
         <CreateExaminationRoom />
         <CreateStudentGroup />
         <JoinStudentGroupDialog />
