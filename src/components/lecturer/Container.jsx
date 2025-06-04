@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardImage } from "../ui/Card";
 import { TbSchool, TbUserQuestion } from "react-icons/tb";
 import { GoChecklist } from "react-icons/go";
@@ -10,6 +10,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { fetchStudentGroups } from "../../features/reducers/examRoomSlice";
 import { Loader } from "../ui/Loader";
+import { SERVER_URL } from "../../utils/constants";
 import { Link, useNavigate } from "react-router";
 import CustomButton from "../ui/Button";
 
@@ -19,10 +20,33 @@ const Container = () => {
   const { teacherStudentGroups, loading, error } = useSelector(
     (state) => state.examRooms
   );
+  const [details, setDetails] = useState([]);
 
   useEffect(() => {
     dispatch(fetchStudentGroups());
   }, [dispatch]);
+
+  useEffect(() => {
+      const fetchUserDetails = async () => {
+        try {
+          const response = await fetch(`${SERVER_URL}/exams/dashboard/teacher`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+            }
+          })
+          if (response.ok) {
+            const data = await response.json();
+            setDetails(data);
+          }
+  
+        } catch (error) {
+          console.error("Error fetching exams: ", error)
+        }
+      }
+      fetchUserDetails();
+    }, [])
 
   const handleStudentGroupClick = (group) => {
     navigate(`/student-groups/${group.id}`, {
@@ -41,13 +65,13 @@ const Container = () => {
           <CardContent>
             <div className="flex w-full items-center justify-between mb-5">
               <h3 className="font-normal text-lg opacity-[80%]">
-                Total enrolled students
+                Total courses created
               </h3>
               <span className="rounded-[6px] p-1 bg-[#1836B233]">
                 <TbSchool size={24} color="#1836B2" />
               </span>
             </div>
-            <p className="opacity-[50%] text-xl">0</p>
+            <p className="opacity-[50%] text-xl">{details.total_courses || 0}</p>
           </CardContent>
         </Card>
         <Card>
@@ -61,7 +85,7 @@ const Container = () => {
               </span>
             </div>
             <p className="opacity-[50%] text-xl">
-              {teacherStudentGroups.length}
+              {details.total_groups || 0}
             </p>
           </CardContent>
         </Card>
@@ -75,7 +99,7 @@ const Container = () => {
                 <TbUserQuestion size={24} color="#EE1D1D" />
               </span>
             </div>
-            <p className="opacity-[50%] text-xl">0</p>
+            <p className="opacity-[50%] text-xl">{details.total_exams || 0}</p>
           </CardContent>
         </Card>
       </div>

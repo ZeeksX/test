@@ -17,41 +17,25 @@ import CustomButton from "../ui/Button";
 import { setShowJoinStudentGroupDialog } from "../../features/reducers/uiSlice";
 import { Loader } from "../ui/Loader";
 import { fetchExams } from "../../features/reducers/examSlice";
-import { filterExamsByStudentSubmissions } from "../modals/UIUtilities";
+import { SERVER_URL } from "../../utils/constants";
 
 const Container = () => {
   const dispatch = useDispatch();
-  const user = JSON.parse(localStorage.getItem("user"));
-  const studentId = user.studentId;
-
-  const calculateTeachersCountFunctional = (allTeachersAndExamRooms, studentId) => {
-    if (!allTeachersAndExamRooms || !studentId) return 0;
-
-    return allTeachersAndExamRooms.reduce((count, teacher) => {
-      const hasStudent = teacher.exam_rooms?.some(examRoomWrapper =>
-        examRoomWrapper.exam_room?.students?.some(student =>
-          student.student_id === studentId
-        )
-      );
-      return hasStudent ? count + 1 : count;
-    }, 0);
-  };
 
   const {
     allStudentGroups,
     studentStudentGroups,
-    allTeachersAndExamRooms,
     loading,
   } = useSelector((state) => state.examRooms);
 
   const {
     allExams: examinations,
-    examSubmissions,
     loading: examsLoading,
   } = useSelector((state) => state.exams);
 
   const [dataLoaded, setDataLoaded] = useState(false);
   const [availableExams, setAvailableExams] = useState([]);
+  const [totalExams, setTotalExams] = useState([]);
   const [selectedTab, setSelectedTab] = useState("upcoming");
 
   useEffect(() => {
@@ -68,38 +52,45 @@ const Container = () => {
   }, [dispatch, dataLoaded]);
 
   useEffect(() => {
-    const fetchAvailableExams = async () => {
+    const fetchUserDetails = async () => {
       try {
-        const filtered = await filterExamsByStudentSubmissions(
-          examinations,
-          studentId
-        );
-        setAvailableExams(filtered);
+        const response = await fetch(`${SERVER_URL}/exams/dashboard/student`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+          }
+        })
+        if (response.ok) {
+          const data = await response.json();
+          setTotalExams(data);
+        }
+
       } catch (error) {
-        console.error("Error fetching exams:", error);
+        console.error("Error fetching exams: ", error)
       }
-    };
-    fetchAvailableExams();
-  }, [examinations, studentId]);
+    }
+    fetchUserDetails();
+  }, [])
 
   const studentCards = [
     {
       title: "Total Lecturers",
       icon: <TbSchool size={24} color="#1836B2" />,
       bgColor: "#1836B233",
-      count: calculateTeachersCountFunctional(allTeachersAndExamRooms, studentId),
+      count: totalExams.total_teachers,
     },
     {
       title: "Student Groups Enrolled",
       icon: <GoChecklist size={24} color="#85C7ED" />,
       bgColor: "#86C6EE33",
-      count: studentStudentGroups ? studentStudentGroups.length : 0,
+      count: totalExams.total_groups || 0,
     },
     {
       title: "Total Examinations Submitted",
       icon: <TbUserQuestion size={24} color="#EE1D1D" />,
       bgColor: "#EE1D1D33",
-      count: availableExams.length,
+      count: totalExams.total_submissions || 0,
     },
   ];
 
