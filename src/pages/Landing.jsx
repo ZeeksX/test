@@ -141,12 +141,12 @@ const Landing = ({ sidebarOpen, toggleSidebar }) => {
             onClick={() => {
               setLoader(true);
               setTimeout(() => {
-                navigate("/login");
+                navigate("/onboarding");
               }, 2000)
             }}
             className="inter !font-normal flex flex-row w-max hover:border-white border-[3px] gap-3 leading-[24.2px] md:h-16 h-12 rounded-xl mt-8 md:!px-6 md:text-xl text-white justify-center items-center bg-[#1836B2] mb-10"
           >
-            Log in to your account
+            Get Started {" "}
             <img src={arrow} alt="arrow" />
           </CustomButton>
         </div>

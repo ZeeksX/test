@@ -23,14 +23,14 @@ const GroupCard = ({ group }) => {
     <div className="flex flex-col font-inter rounded-[20px] w-full max-w-[422px] bg-white shadow-lg p-1">
       <div className="h-[278px] w-full">
         <div className="mt-10 flex flex-col items-center justify-between gap-4">
-          {Students.map((student) => (
+          {Students.map((student, index) => (
             <div
               key={student.student_id}
               className="flex flex-row w-[90%] items-center justify-between gap-2"
             >
               <div className="flex flex-row flex-1 gap-3 items-center">
                 <h1 className="text-base font-normal text-black">
-                  {student.student_id}
+                  {index + 1}
                 </h1>
                 <h1 className="text-base font-normal text-black truncate">
                   {student.last_name}, {student.other_names}
@@ -54,7 +54,9 @@ const GroupCard = ({ group }) => {
             onClick={() => handleStudentGroupClick(group)}
             className="text-xl font-medium !text-black !p-0 !justify-start"
           >
-            {group.name}
+            <p className="!truncate !max-w-[250px]" title={group.name}>
+              {group.name}
+            </p>
           </CustomButton>
           <span className="text-[#98A2B3] text-[14px]">
             Last Edited {formatDate(new Date(group.updated_at))}

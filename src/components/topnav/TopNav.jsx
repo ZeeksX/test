@@ -29,7 +29,7 @@ const TopNav = () => {
   }, [bannerTransparent, arrow]);
 
   const handleClick = () => {
-    navigate("/onboarding");
+    navigate("/login");
   };
 
   return (
@@ -65,7 +65,7 @@ const TopNav = () => {
         onClick={handleClick}
         className="hidden md:flex flex-row gap-3 hover:ring-2 rounded-[10px] w-[143px] h-[50px] font-normal text-sm md:text-base leading-[19.43px] text-white justify-center items-center bg-[#1836B2]"
       >
-        Get Started {""}
+        Login {""}
         <img
           src={arrow}
           alt="arrow"

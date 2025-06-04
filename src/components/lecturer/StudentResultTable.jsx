@@ -49,9 +49,9 @@ export default function StudentResultsTable({ studentResults }) {
               </tr>
             </thead>
             <tbody>
-              {currentStudents.map((student) => (
+              {currentStudents.map((student, index) => (
                 <tr key={student.id} className="border-b">
-                  <td className="px-4 py-3 text-sm">{student.id}</td>
+                  <td className="px-4 py-3 text-sm">{index + 1}</td>
                   <td className="px-4 py-3 text-sm">
                     {student.student.last_name}, {student.student.other_names}
                   </td>
@@ -60,13 +60,7 @@ export default function StudentResultsTable({ studentResults }) {
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <span
-                      className={`px-2 py-1 rounded ${
-                        student.score < 50
-                          ? "bg-red-100 text-red-800"
-                          : student.score >= 90
-                          ? "bg-green-100 text-green-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
+                      className={`px-2 py-1 rounded`}
                     >
                       {student.score === null ? "Not Graded" : student.score}
                     </span>

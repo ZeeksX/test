@@ -94,7 +94,9 @@ const Container = () => {
                     onClick={() => handleStudentGroupClick(group)}
                     className="!text-2xl !text-black "
                   >
-                    {group.name}
+                    <p className="!truncate !max-w-[250px]" title={group.name}>
+                      {group.name}
+                    </p>
                   </CustomButton>
                   <p className="opacity-[50%] text-base mt-4">
                     Enrolled students: {group.students.length}

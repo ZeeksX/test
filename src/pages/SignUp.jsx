@@ -324,7 +324,7 @@ const SignUp = () => {
                   alt="Acad AI logo"
                   width="150"
                   height="60"
-                  fetchPriority="high"
+                  // fetchPriority="high"
                   onLoad={() => setImageLoaded(true)}
                 />
                 <h3 className="text-black mt-3 font-medium text-[1.75rem] max-sm:text-[1.65rem] max-sm:font-semibold leading-[1rem]">

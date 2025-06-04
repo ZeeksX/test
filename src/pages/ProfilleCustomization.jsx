@@ -140,8 +140,8 @@ const RoleSelection = ({ onSubmit, role, setRole }) => {
       <div className="flex gap-5">
         <button
           className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${role === "teacher"
-              ? "border-primary-main text-primary-main bg-secondary-bg"
-              : ""
+            ? "border-primary-main text-primary-main bg-secondary-bg"
+            : ""
             }`}
           onClick={() => {
             setRole("teacher");
@@ -152,8 +152,8 @@ const RoleSelection = ({ onSubmit, role, setRole }) => {
         </button>
         <button
           className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${role === "student"
-              ? "border-primary-main text-primary-main bg-secondary-bg"
-              : ""
+            ? "border-primary-main text-primary-main bg-secondary-bg"
+            : ""
             }`}
           onClick={() => {
             setRole("student");
@@ -246,6 +246,7 @@ const CourseCreation = ({ onReturn, form, setForm, onSubmit, loading }) => {
       <p className="text-gray-600 text-center text-sm !mt-1">
         Please complete the form with your title and subject
       </p>
+      <p className="text-gray-600 text-center text-sm !mt-1">Additional courses can be created upon successful registration and login</p>
       <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
         <div className="">
           <Label htmlFor="title" className="text-[#666666]">

@@ -57,7 +57,7 @@ const Container = () => {
     };
 
     postCourseDetails();
-  });
+  }, []); 
 
   return (
     <div className="w-full h-full p-5 overflow-auto bg-[#F9F9F9]">

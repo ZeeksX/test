@@ -61,7 +61,7 @@ const CourseExamPreview = ({ examData, setPreview, updateExamData }) => {
         <div>
           <h1 className="text-2xl font-bold mb-1">{examData.name}</h1>
           <p className="text-gray-500 line-clamp-2 max-w-[400px]">
-            {examData.description}
+            {examData.examType}
           </p>
         </div>
         <div className="flex space-x-3">
@@ -145,7 +145,7 @@ function QuestionCard({
   onOptionChange,
 }) {
   const currentQuestion = isEditing ? editingQuestion : question;
-  const marks = question.marks || 2; // Default to 2 if not specified
+  const marks = question.score || 2;
 
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -154,17 +154,36 @@ function QuestionCard({
           <Badge className="text-sm text-[#A29A9A] bg-[#EEEEEE] rounded-[2px] font-medium">
             {currentQuestion.type}
           </Badge>
-          <Badge className="text-sm text-[#A29A9A] bg-[#EEEEEE] rounded-[2px] font-medium">
-            {marks} marks
-          </Badge>
+          {isEditing ? (
+            <Input
+              value={currentQuestion.score}
+              onChange={(e) => onQuestionChange("score", e.target.value)}
+              // className="mb-4 w-full p-2 border rounded resize-none min-h-[60px]"
+              placeholder="0"
+            />
+          ) : (
+            <Badge className="text-sm text-[#A29A9A] bg-[#EEEEEE] rounded-[2px] font-medium">
+              {marks} marks
+            </Badge>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           {isEditing ? (
             <>
-              <CustomButton variant="ghost" size="icon" className="hover:!bg-green-600 hover:!text-white" onClick={onSave}>
+              <CustomButton
+                variant="ghost"
+                size="icon"
+                className="hover:!bg-green-600 hover:!text-white"
+                onClick={onSave}
+              >
                 <FiCheck className="h-4 w-4 " />
               </CustomButton>
-              <CustomButton variant="ghost" className="hover:!bg-red-600 hover:!text-white" size="icon" onClick={onCancel}>
+              <CustomButton
+                variant="ghost"
+                className="hover:!bg-red-600 hover:!text-white"
+                size="icon"
+                onClick={onCancel}
+              >
                 <FiX className="h-4 w-4" />
               </CustomButton>
             </>
@@ -223,17 +242,41 @@ function QuestionCard({
           </div>
         )}
 
-        {currentQuestion.type === "cloze" && (
-          <Input className="mt-4" placeholder="Short answer" disabled />
-        )}
+        {currentQuestion.type === "cloze" &&
+          (isEditing ? (
+            <Textarea
+              className="mb-4 w-full p-2 border rounded resize-none min-h-[60px]"
+              placeholder="Short answer"
+              onChange={(e) => onQuestionChange("modelAnswer", e.target.value)}
+              value={currentQuestion.modelAnswer}
+            />
+          ) : (
+            <Input
+              className="mt-4"
+              placeholder="Short answer"
+              disabled
+              value={currentQuestion.modelAnswer}
+            />
+          ))}
 
-        {currentQuestion.type === "theory" && (
-          <Textarea
-            className="w-full p-2 border-b outline-none mt-2 resize-none border-black focus:outline-none focus:border-primary-main min-h-[70px]"
-            placeholder="Long answer"
-            disabled
-          />
-        )}
+        {currentQuestion.type === "theory" &&
+          (isEditing ? (
+            <Textarea
+              className="w-full p-3 border-[1.5px] rounded-md outline-none placeholder:text-text-placeholder focus:outline-none focus:border-primary-main resize-none"
+              placeholder="Long answer"
+              rows={4}
+              onChange={(e) => onQuestionChange("modelAnswer", e.target.value)}
+              value={currentQuestion.modelAnswer}
+            />
+          ) : (
+            <Textarea
+              className="w-full p-3 border-[1.5px] rounded-md outline-none placeholder:text-text-placeholder focus:outline-none focus:border-primary-main resize-none"
+              rows={4}
+              placeholder="Long answer"
+              disabled
+              value={currentQuestion.modelAnswer}
+            />
+          ))}
       </div>
     </div>
   );

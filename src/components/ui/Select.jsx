@@ -1,4 +1,5 @@
 import { createContext, useState, useContext } from "react";
+import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 
 const SelectContext = createContext();
 
@@ -33,6 +34,7 @@ export function SelectTrigger({ children, id, name }) {
       className="flex items-center justify-between w-full px-4 py-2 border rounded bg-white"
     >
       {children}
+      {isOpen ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
     </button>
   );
 }

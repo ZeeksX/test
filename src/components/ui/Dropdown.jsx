@@ -12,7 +12,7 @@ import {
 import { fetchCourses } from "../../features/reducers/courseSlice";
 
 export const CourseDropdownMenu = () => {
-  const [isOpen, setIsOpen] = useState();
+  const [isOpen, setIsOpen] = useState(true);
   const { courses, loading, error } = useSelector((state) => state.courses);
   const { pathname } = useLocation();
   const dispatch = useDispatch();

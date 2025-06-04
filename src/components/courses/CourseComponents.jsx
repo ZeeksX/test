@@ -216,10 +216,39 @@ export const CreateNewExam = () => {
     questions: [],
     uploadedFiles: [],
     gradingStyle: "strict",
-    numberOfQuestions: 15,
+    numberOfQuestions: 45,
     questionTypes: [],
     studentGroups: [],
   });
+
+  const criteriaData = [
+    {
+      title: "Relevance to Question",
+      description: "Provides a relevant point to every aspect of the question",
+      lenientWeight: 0.4,
+      strictWeight: 0.1,
+      lenientDesc: "Focus on addressing all parts of the question",
+      strictDesc: "Basic requirement with lower emphasis",
+    },
+    {
+      title: "Structure & Correctness",
+      description: "Quality of explanation and accuracy",
+      lenientWeight: 0.3,
+      strictWeight: 0.5,
+      lenientDesc: "Well-structured, no incorrect/irrelevant points",
+      strictDesc:
+        "Well explained with correct terminology, no incorrect/vague/irrelevant points",
+    },
+    {
+      title: "Answer Quality",
+      description: "Depth and alignment with expected answers",
+      lenientWeight: 0.3,
+      strictWeight: 0.4,
+      lenientDesc: "At least one key point related to model answer/question",
+      strictDesc:
+        "Closely matches model answer or contains two strong relevant points",
+    },
+  ];
 
   const [toast, setToast] = useState({
     open: false,
@@ -237,12 +266,10 @@ export const CreateNewExam = () => {
     if (currentStep < totalSteps) {
       if (
         currentStep === 1 &&
-        (!examData.name.trim() ||
-          !examData.examType.trim() ||
-          !examData.description.trim())
+        (!examData.name.trim() || !examData.examType.trim())
       ) {
         showToast(
-          "Please fill in an Exam name, type and description to move to the next step",
+          "Please fill in an Exam name and type to move to the next step",
           "error"
         );
         return;
@@ -263,6 +290,19 @@ export const CreateNewExam = () => {
           "Please select a schedule date and due date to move to the next step",
           "error"
         );
+        return;
+      }
+      const currentTime = new Date();
+      const scheduleTime = new Date(examData.scheduleTime);
+      const dueTime = new Date(examData.dueTime);
+
+      if (currentStep === 4 && scheduleTime <= currentTime) {
+        showToast("Schedule time must be in the future", "error");
+        return;
+      }
+
+      if (currentStep === 4 && dueTime <= scheduleTime) {
+        showToast("Due time must be after the schedule time", "error");
         return;
       }
       setCurrentStep(currentStep + 1);
@@ -324,7 +364,7 @@ export const CreateNewExam = () => {
   const setSelectedExamQuestions = (exam) => {
     setExamData({
       ...examData,
-      questions: exam.questions,
+      questions: JSON.parse(JSON.stringify(exam.questions)), // Deep clone
     });
     setSelectedExam(exam);
   };
@@ -358,40 +398,6 @@ export const CreateNewExam = () => {
     };
 
     dispatch(setShowPostExamWarningDialog({ willShow: true, exam: body }));
-
-    // setSubmitting(true);
-
-    // try {
-    //   const response = await apiCall.post("/exams/exams/", body);
-
-    //   if (response.status === 201) {
-    //     showToast("Exam created", "success");
-    //     setExamData({
-    //       name: "",
-    //       course: courseId,
-    //       examType: "",
-    //       description: "",
-    //       scheduleTime: false,
-    //       dueTime: false,
-    //       addQuestion: [],
-    //       questionMethod: selectedQuestionMethod,
-    //       questions: [],
-    //       uploadedFiles: [],
-    //       gradingStyle: "strict",
-    //       numberOfQuestions: 50,
-    //       questionTypes: [],
-    //       studentGroups: [],
-    //       exam_rooms: [],
-    //     });
-
-    //     dispatch(setShowCreateNewExamination(false));
-    //   }
-    // } catch (error) {
-    //   showToast("Failed to create exam. Please try again.", "error");
-    //   console.error("Error creating exam:", error);
-    // } finally {
-    //   setSubmitting(false);
-    // }
   };
 
   const showToast = (message, severity = "info") => {
@@ -414,7 +420,7 @@ export const CreateNewExam = () => {
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         currentStep === step
-                          ? "bg-blue-600 text-white"
+                          ? "bg-primary-main text-white"
                           : step < currentStep
                           ? "bg-green-500 text-white"
                           : "bg-gray-200 text-gray-500"
@@ -440,7 +446,7 @@ export const CreateNewExam = () => {
                 <div
                   className={`text-xs w-[80px] ${
                     currentStep === 1
-                      ? "text-blue-600"
+                      ? "text-primary-main"
                       : 1 < currentStep
                       ? "text-green-500"
                       : "text-gray-200"
@@ -453,7 +459,7 @@ export const CreateNewExam = () => {
                 <div
                   className={`text-xs w-[80px]  ${
                     currentStep === 2
-                      ? "text-blue-600"
+                      ? "text-primary-main"
                       : 2 < currentStep
                       ? "text-green-500"
                       : "text-gray-200"
@@ -466,7 +472,7 @@ export const CreateNewExam = () => {
                 <div
                   className={`text-xs w-[80px] ${
                     currentStep === 3
-                      ? "text-blue-600"
+                      ? "text-primary-main"
                       : 3 < currentStep
                       ? "text-green-500"
                       : "text-gray-200"
@@ -479,7 +485,7 @@ export const CreateNewExam = () => {
                 <div
                   className={`text-xs w-[80px] ${
                     currentStep === 4
-                      ? "text-blue-600"
+                      ? "text-primary-main"
                       : 4 < currentStep
                       ? "text-green-500"
                       : "text-gray-200"
@@ -490,7 +496,7 @@ export const CreateNewExam = () => {
                 <div
                   className={`text-xs w-[80px] ${
                     currentStep === 5
-                      ? "text-blue-600"
+                      ? "text-primary-main"
                       : 5 < currentStep
                       ? "text-green-500"
                       : "text-gray-200"
@@ -542,13 +548,6 @@ export const CreateNewExam = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="examType">Examination Type</Label>
-                        {/* <Input
-                          id="examType"
-                          name="examType"
-                          placeholder="E.g Assignment, Mid-Semester, Quiz"
-                          value={examData.examType}
-                          onChange={handleInputChange}
-                        /> */}
                         <Select
                           value={examData.examType}
                           onValueChange={(value) =>
@@ -568,11 +567,13 @@ export const CreateNewExam = () => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description" className="flex gap-1">
+                          Description <p className="opacity-80">(Optional)</p>
+                        </Label>
                         <textarea
                           id="description"
                           name="description"
-                          placeholder="Enter Description"
+                          placeholder="Describe the exam to your students in your own way. (E.g: First Semester Examination)"
                           value={examData.description}
                           onChange={handleInputChange}
                           className="w-full p-3 border-[1.5px] rounded-md outline-none placeholder:text-text-placeholder focus:outline-none focus:border-primary-main resize-none min-h-[170px]"
@@ -636,7 +637,16 @@ export const CreateNewExam = () => {
                           </p>
 
                           <div className="space-y-4">
-                            {/* Create exam manuLLy */}
+                            {/* Create exam with material */}
+                            <MaterialCreateExamAddMaterial
+                              examData={examData}
+                              updateExamData={updateExamData}
+                              setSelectedQuestionMethod={() =>
+                                setSelectedQuestionMethod("upload")
+                              }
+                            />
+
+                            {/* Create exam manually */}
                             <div
                               className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
                               onClick={() =>
@@ -654,18 +664,9 @@ export const CreateNewExam = () => {
                                     answer, maximum score
                                   </p>
                                 </div>
-                                <FiChevronRight className="h-5 w-5 text-gray-400" />
+                                {/* <FiChevronRight className="h-5 w-5 text-gray-400" /> */}
                               </div>
                             </div>
-
-                            {/* Create exam with material */}
-                            <MaterialCreateExamAddMaterial
-                              examData={examData}
-                              updateExamData={updateExamData}
-                              setSelectedQuestionMethod={() =>
-                                setSelectedQuestionMethod("upload")
-                              }
-                            />
 
                             {/* Create Exam by copying another exam */}
                             <div
@@ -682,7 +683,7 @@ export const CreateNewExam = () => {
                                     copy and edit
                                   </p>
                                 </div>
-                                <FiChevronRight className="h-5 w-5 text-gray-400" />
+                                {/* <FiChevronRight className="h-5 w-5 text-gray-400" /> */}
                               </div>
 
                               <Select
@@ -760,68 +761,164 @@ export const CreateNewExam = () => {
                         </div>
                       </div>
 
-                      <div className="pt-4">
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                          Grading Criteria Comparison
+                        </h3>
+
+                        <div className="hidden lg:block">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-gray-200">
+                                  <th className="text-left py-3 px-3 font-medium text-gray-600 min-w-[200px]">
+                                    Criteria
+                                  </th>
+                                  <th className="text-center py-3 px-3 font-medium text-primary-main min-w-[120px]">
+                                    Not Strict
+                                  </th>
+                                  <th className="text-center py-3 px-3 font-medium text-red-600 min-w-[120px]">
+                                    Strict
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-200">
+                                {criteriaData.map((criteria, index) => (
+                                  <tr key={index}>
+                                    <td className="py-4 px-3 text-gray-700">
+                                      <div>
+                                        <div className="font-medium mb-1">
+                                          {criteria.title}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                          {criteria.description}
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="text-center py-4 px-3">
+                                      <div className="space-y-2">
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                          {(
+                                            criteria.lenientWeight * 100
+                                          ).toFixed(0)}
+                                          % weight
+                                        </span>
+                                        <div className="text-xs text-gray-600 max-w-[150px] mx-auto">
+                                          {criteria.lenientDesc}
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="text-center py-4 px-3">
+                                      <div className="space-y-2">
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                          {(
+                                            criteria.strictWeight * 100
+                                          ).toFixed(0)}
+                                          % weight
+                                        </span>
+                                        <div className="text-xs text-gray-600 max-w-[150px] mx-auto">
+                                          {criteria.strictDesc}
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <div className="lg:hidden space-y-4">
+                          {criteriaData.map((criteria, index) => (
+                            <div
+                              key={index}
+                              className="border border-gray-200 rounded-lg p-4 bg-white"
+                            >
+                              <div className="mb-3">
+                                <h4 className="font-medium text-gray-800 text-sm">
+                                  {criteria.title}
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {criteria.description}
+                                </p>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-primary-main">
+                                      Not Strict
+                                    </span>
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                      {(criteria.lenientWeight * 100).toFixed(
+                                        0
+                                      )}
+                                      %
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-gray-600">
+                                    {criteria.lenientDesc}
+                                  </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-red-600">
+                                      Strict
+                                    </span>
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                      {(criteria.strictWeight * 100).toFixed(0)}
+                                      %
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-gray-600">
+                                    {criteria.strictDesc}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-600">
+                            <div className="space-y-1">
+                              <p className="font-medium text-primary-main">
+                                Not Strict Approach:
+                              </p>
+                              <p>
+                                More forgiving, focuses on relevance and basic
+                                structure. Encourages participation and
+                                understanding.
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="font-medium text-red-600">
+                                Strict Approach:
+                              </p>
+                              <p>
+                                Emphasizes precision, terminology, and close
+                                alignment with expected answers. Rigorous
+                                assessment.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* <div className="pt-4">
                         <button
-                          className="text-blue-600 p-1 flex font font-medium gap-2 items-center justify-center hover:underline"
+                          className="text-primary-main p-1 flex font font-medium gap-2 items-center justify-center hover:underline"
                           onClick={handleSkip}
                         >
                           Skip <FiChevronRight className="h-4 w-4 ml-1" />
                         </button>
-                      </div>
+                      </div> */}
                     </div>
                   )}
 
                   {currentStep === 4 && (
                     <div className="space-y-6">
-                      {/* <div className="flex-1">
-                        <Label htmlFor="startTIme" className={`mb-2`}>
-                          Schedule Time
-                        </Label>
-                        <Input
-                          type="datetime-local"
-                          name="scheduleTime"
-                          id="scheduleTime"
-                          value={
-                            examData.scheduleTime
-                              ? toLocalISOString(
-                                  new Date(examData.scheduleTime)
-                                )
-                              : ""
-                          }
-                          onChange={(e) =>
-                            setExamData((prev) => ({
-                              ...prev,
-                              scheduleTime: new Date(e.target.value),
-                            }))
-                          }
-                          placeholder="Select Date"
-                          required
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <Label htmlFor="startTIme" className={`mb-2`}>
-                          Due Time
-                        </Label>
-                        <Input
-                          type="datetime-local"
-                          name="dueTime"
-                          id="dueTime"
-                          value={
-                            examData.dueTime
-                              ? toLocalISOString(new Date(examData.dueTime))
-                              : ""
-                          }
-                          onChange={(e) =>
-                            setExamData((prev) => ({
-                              ...prev,
-                              dueTime: new Date(e.target.value),
-                            }))
-                          }
-                          placeholder="Select Date"
-                          required
-                        />
-                      </div> */}
                       <DateTimeSelector
                         examData={examData}
                         updateExamData={updateExamData}
@@ -929,7 +1026,7 @@ export const CreateNewExam = () => {
                         </div>
                       ) : (
                         <CustomButton
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-primary-main hover:bg-blue-700"
                           onClick={handleNext}
                           variant="primary"
                         >
@@ -1224,7 +1321,7 @@ export function ExaminationCard({
       <div className="space-y-3">
         <p className="text-sm text-gray-500 line-clamp-2">{description}</p>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-blue-600">
+          <p className="text-sm font-medium text-primary-main">
             {studentGroups} Student Groups
           </p>
           <p className="text-sm text-gray-500">Due Date & Time - {dueTime}</p>
