@@ -2,15 +2,15 @@
  * Copies the given text to the clipboard.
  *
  * @param {string} text - The text to be copied to the clipboard.
- * @returns {Promise<void>} - A promise that resolves when the text is successfully copied.
- * @throws {Error} - If copying fails, an error is logged to the console.
+ * @returns {Promise<boolean>} - Resolves to true if copied successfully, false otherwise.
  */
 export const copyToClipboard = async (text) => {
   try {
     await navigator.clipboard.writeText(text);
-    alert("Copied to clipboard!");
+    return true;
   } catch (err) {
     console.error("Failed to copy: ", err);
+    return false;
   }
 };
 
@@ -19,10 +19,10 @@ export const areAllSubmissionsScored = (examSubmissions) => {
   if (!examSubmissions || examSubmissions.length === 0) {
     return false;
   }
-  
+
   // Check if every submission has a non-null score
-  return examSubmissions.every(submission => 
-    submission.score !== null && submission.score !== undefined
+  return examSubmissions.every(
+    (submission) => submission.score !== null && submission.score !== undefined
   );
 };
 

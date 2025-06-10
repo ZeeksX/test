@@ -69,14 +69,14 @@ CustomButton.propTypes = {
 };
 
 export const variantStyles = {
-  primary: "bg-primary-main text-white hover:bg-primary-main",
+  primary: "bg-primary-main text-white hover:bg-primary-main/80",
   ghost:
     "bg-neutral-ghost text-text-ghost hover:bg-primary-main hover:text-white",
   clear:
     "bg-transparent text-text-main border border-neutral-border hover:border-primary-main hover:text-primary-main",
   accent: "bg-primary-purple text-white",
   link: "text-primary-main underline-offset-4 hover:underline !p-0 !justify-start",
-  danger: "bg-[#EA4335] text-white",
+  danger: "bg-primary-danger text-white hover:bg-primary-danger/80",
   icon: "rounded-full border border-primary-main hover:bg-primary-main",
 };
 

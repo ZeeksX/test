@@ -93,7 +93,7 @@ const Container = () => {
           <CardContent>
             <div className="flex w-full items-center justify-between mb-5">
               <h3 className="font-normal text-lg opacity-[80%]">
-                Total examinations created
+                Total exams created
               </h3>
               <span className="rounded-[6px] p-1 bg-[#EE1D1D33]">
                 <TbUserQuestion size={24} color="#EE1D1D" />

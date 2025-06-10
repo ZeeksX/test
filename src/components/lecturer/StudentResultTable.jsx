@@ -59,10 +59,10 @@ export default function StudentResultsTable({ studentResults }) {
                     {student.student.matric_number}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <span
-                      className={`px-2 py-1 rounded`}
-                    >
-                      {student.score === null ? "Not Graded" : student.score}
+                    <span className={`px-2 py-1 rounded`}>
+                      {student.score === null
+                        ? "Not Graded"
+                        : parseFloat(student.score).toFixed(2)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">

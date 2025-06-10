@@ -59,12 +59,14 @@ const StudentResultPage = () => {
   }
 
   const results = studentResult.results;
+  console.log({ results });
   const exam = studentResult.exam;
   const userAnswers = studentResult.userAnswers;
   const submissionInfo = studentResult.submissionInfo;
 
   // Get questions array from exam data
   const questions = exam.questions || [];
+  console.log({ questions });
   const totalQuestions = questions.length;
 
   // Calculate total score dynamically from current question scores
@@ -83,9 +85,10 @@ const StudentResultPage = () => {
   };
 
   const totalScore = calculateTotalScore();
-  const maxPossibleScore =
-    results.max_possible_score ||
-    questions.reduce((sum, q) => sum + (q.score || 0), 0);
+  const maxPossibleScore = questions.reduce(
+    (sum, q) => sum + (parseInt(q.score) || 0),
+    0
+  );
   const percentageScore =
     maxPossibleScore > 0
       ? Math.round((totalScore / maxPossibleScore) * 100)
@@ -511,7 +514,7 @@ const StudentResultPage = () => {
                   hasUnsavedChanges ? "text-orange-600 font-semibold" : ""
                 }
               >
-                {totalScore}/{maxPossibleScore}
+                {parseFloat(totalScore).toFixed(2)}/{parseFloat(maxPossibleScore).toFixed(2)}
               </span>
               {hasUnsavedChanges && (
                 <span className="ml-2 text-xs text-orange-600">*</span>

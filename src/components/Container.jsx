@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { AvatarFallback, AvatarImage } from "./ui/Avatar";
 import Avatar from "@mui/material/Avatar";
 import { useAuth } from "./Auth.jsx";
@@ -8,25 +8,37 @@ import { FaPlus } from "react-icons/fa6";
 import { CustomButton } from "./ui/Button.jsx";
 import { useDispatch } from "react-redux";
 import { setShowJoinStudentGroupDialog } from "../features/reducers/uiSlice.jsx";
-import { SERVER_URL } from "../utils/constants.js";
+import { PETTY_SERVER_URL, SERVER_URL } from "../utils/constants.js";
 import { profileImageDefault } from "../utils/images.js";
+import axios from "axios";
 
 const Container = () => {
   const [src, setSrc] = useState("");
   const [studentGroup, setStudentGroup] = useState([]);
   const dispatch = useDispatch();
   const { user } = useAuth();
+  const hasPostedCourse = useRef(false);
 
   // Post course details on mount if userData exists in localStorage
   useEffect(() => {
     const postCourseDetails = async () => {
       try {
+        if (hasPostedCourse.current) return;
+
         const storedData = localStorage.getItem("userData");
         const token = localStorage.getItem("access_token");
-        if (!storedData) return;
+
+        if (!storedData || !token) {
+          return;
+        }
 
         const parsedData = JSON.parse(storedData);
+
+        // Only proceed if it's a teacher with form data
         if (parsedData.role === "teacher" && parsedData.form) {
+          // Mark as being processed to prevent duplicate requests
+          hasPostedCourse.current = true;
+
           // Ensure you correctly map the fields from parsedData.form
           const { course: course_title, code: course_code } = parsedData.form;
 
@@ -40,24 +52,40 @@ const Container = () => {
           });
 
           if (!response.ok) {
+            // Reset the flag if request failed so it can be retried
+            hasPostedCourse.current = false;
             // If response is not OK, try to get the text response for debugging
             const errorText = await response.text();
             throw new Error(`Server Error: ${errorText}`);
           }
 
           const data = await response.json();
-          // Remove userData and user after successful post
+          console.log("Course created successfully:", data);
           localStorage.removeItem("userData");
         } else {
           localStorage.removeItem("userData");
         }
       } catch (error) {
         console.error("Error posting course data:", error);
+        hasPostedCourse.current = false;
       }
     };
 
     postCourseDetails();
-  }, []); 
+  }, []);
+
+  useEffect(() => {
+    const welcome = async () => {
+      try {
+        const test = await axios.get(`${PETTY_SERVER_URL}/health`);
+        console.log(test.data.status);
+      } catch (error) {
+        console.log(error.response?.data);
+      }
+    };
+
+    welcome();
+  }, []);
 
   return (
     <div className="w-full h-full p-5 overflow-auto bg-[#F9F9F9]">

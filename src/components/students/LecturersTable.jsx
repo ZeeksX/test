@@ -11,21 +11,16 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router";
 import CustomButton from "../ui/Button";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useAuth } from "../Auth";
 import { illustration3 } from "../../utils/images";
+import { Loader } from "../ui/Loader";
 
-const LecturersTable = ({ lecturers }) => {
+const LecturersTable = ({ lecturers, studentEnrolledGroups, loading }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  // Get student's enrolled groups from Redux store
-  const { studentStudentGroups: studentEnrolledGroups } = useSelector(
-    (state) => state.examRooms
-  );
-
-  if (!lecturers) {
-    return <div>No lecturers data available</div>;
-  }
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const handleViewClick = (lecturer) => {
     navigate(`/lecturers/${lecturer.id}/groups`, {
@@ -39,6 +34,15 @@ const LecturersTable = ({ lecturers }) => {
     { id: "groups-joined", label: "Groups Joined", minWidth: 100 },
     { id: "option", label: "Option", minWidth: 150 },
   ];
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  if (!lecturers || !studentEnrolledGroups) {
+    return <div>No lecturers data available</div>;
+  }
+
   const filteredLecturers = lecturers.filter((lecturer) =>
     studentEnrolledGroups.some((group) => group.teacher.id === lecturer.id)
   );
@@ -84,9 +88,6 @@ const LecturersTable = ({ lecturers }) => {
     );
   }
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -95,6 +96,7 @@ const LecturersTable = ({ lecturers }) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
+
   return (
     <>
       <div className="w-full">

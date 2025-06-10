@@ -157,7 +157,7 @@ export const ManualCreateExamQuestion = ({
 
   const updateQuestionScore = (score, index) => {
     const newQuestions = [...questions];
-    newQuestions[index].score = score;
+    newQuestions[index].score = parseInt(score);
     setQuestions(newQuestions);
   };
 
@@ -313,7 +313,7 @@ export const ManualCreateExamQuestion = ({
           <CustomButton
             onClick={() => handleFinishSetQuestion()}
           >
-            Done
+            Save Questions
           </CustomButton>
         </div>
       </div>
@@ -343,25 +343,43 @@ export const ManualCreateExamQuestion = ({
               className="w-full p-3 border-[1.5px] rounded-md outline-none placeholder:text-text-placeholder focus:outline-none focus:border-primary-main resize-none"
             />
 
-            <div className="my-4">
-              <Label className="mb-1">Question Type</Label>
-              <Select
-                value={questions[questionIndex]?.type}
-                onValueChange={(value) =>
-                  updateQuestionType(value, questionIndex)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select question type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="theory">Theory</SelectItem>
-                  <SelectItem value="multiple-choice">
-                    Multiple-choice
-                  </SelectItem>
-                  <SelectItem value="cloze">Fill in the gaps</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="my-4 flex justify-between gap-4">
+              <div className="flex-1">
+                <Label className="mb-1">Question Type</Label>
+                <Select
+                  value={questions[questionIndex]?.type}
+                  onValueChange={(value) =>
+                    updateQuestionType(value, questionIndex)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select question type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="theory">Theory</SelectItem>
+                    <SelectItem value="multiple-choice">
+                      Multiple-choice
+                    </SelectItem>
+                    <SelectItem value="cloze">Fill in the gaps</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor={`marks-${questionIndex}`} className="mb-1">
+                  Maximum Score
+                </Label>
+                <Input
+                  id="questionScore"
+                  name="score"
+                  type="number"
+                  placeholder="0"
+                  topClassName="!w-[200px]"
+                  value={questions[questionIndex].score}
+                  onChange={(e) =>
+                    updateQuestionScore(e.target.value, questionIndex)
+                  }
+                />
+              </div>
             </div>
 
             {questions[questionIndex].type === "multiple-choice" && (
@@ -453,7 +471,7 @@ export const ManualCreateExamQuestion = ({
               </div>
             )}
 
-            <div className="w-full">
+            {/* <div className="w-full">
               <div className="mb-1">
                 <div className="w-full flex items-center justify-between">
                   Advanced Settings
@@ -504,7 +522,7 @@ export const ManualCreateExamQuestion = ({
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </div> */}
 
             <div className="flex justify-end mt-6 space-x-4">
               <button
@@ -535,7 +553,7 @@ export const ManualCreateExamQuestion = ({
           className="w-full"
           onClick={() => handleFinishSetQuestion()}
         >
-          Done
+          Save Questions
         </CustomButton>
       </div>
       <Toast

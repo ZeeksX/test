@@ -66,6 +66,7 @@ import apiCall from "../../utils/apiCall";
 import {
   fetchAllStudents,
   fetchStudentGroups,
+  leaveExamRoom,
   removeStudentFromExamRoom,
 } from "../../features/reducers/examRoomSlice";
 import { Spinner } from "../ui/Loader";
@@ -1191,6 +1192,12 @@ export const CreateStudentGroup = () => {
 };
 
 export const ShareStudentGroupLinkDialog = () => {
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
   const isOpen = useSelector(
     (state) => state.ui.showShareStudentGroupLinkDialog.willShow
   );
@@ -1198,13 +1205,35 @@ export const ShareStudentGroupLinkDialog = () => {
   const { link, code } = useSelector(
     (state) => state.ui.showShareStudentGroupLinkDialog
   );
+
   const dispatch = useDispatch();
+
+  const copyItem = async (text) => {
+    try {
+      const success = await copyToClipboard(text);
+      if (success) {
+        showToast("Copied to clipboard", "success");
+      } else {
+        showToast("Failed to copy to clipboard. Please try again.", "error");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
+  };
 
   return (
     <OutsideDismissDialog
       open={isOpen}
       onOpenChange={setShowShareStudentGroupLinkDialog}
-      maxWidth="400px"
+      maxWidth="450px"
     >
       <DialogHeader>
         <DialogTitle className="whitespace-pre-line text-center">
@@ -1215,7 +1244,7 @@ export const ShareStudentGroupLinkDialog = () => {
       <DialogContent className="p-4">
         <div className="px-4 py-2 flex items-center justify-start w-full bg-[#F2F4F7] rounded-md">
           <p className="flex-1 text-[#155EEF]">{link}</p>
-          <button onClick={() => copyToClipboard(link)}>
+          <button onClick={() => copyItem(link)}>
             <FiCopy color="#155EEF" />
           </button>
         </div>
@@ -1228,12 +1257,12 @@ export const ShareStudentGroupLinkDialog = () => {
       <DialogContent className="p-4">
         <div className="px-4 py-2 flex items-center justify-start w-full bg-[#F2F4F7] rounded-md">
           <p className="flex-1 text-[#155EEF]">{code}</p>
-          <button onClick={() => copyToClipboard(code)}>
+          <button onClick={() => copyItem(code)}>
             <FiCopy color="#155EEF" />
           </button>
         </div>
       </DialogContent>
-      <DialogContent className="p-6 pt-4 flex items-center justify-center gap-4">
+      {/* <DialogContent className="p-6 pt-4 flex items-center justify-center gap-4">
         <CustomButton
           className="!text-sm gap-3"
           onClick={() => copyToClipboard(link)}
@@ -1250,7 +1279,13 @@ export const ShareStudentGroupLinkDialog = () => {
         >
           Done
         </CustomButton>
-      </DialogContent>
+      </DialogContent> */}
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </OutsideDismissDialog>
   );
 };
@@ -1387,7 +1422,7 @@ export const JoinStudentGroupDialog = () => {
 
       if (response.status === 201 || response.status === 200) {
         showToast(`You have joined the student group`, "success");
-        await sleep(2000);
+        await sleep(1000);
         dispatch(setShowJoinStudentGroupDialog(false));
         navigate("/dashboard");
       }
@@ -1566,12 +1601,12 @@ export const LeaveStudentGroupDialog = () => {
   const {
     isOpen,
     groupName: title,
-    groupId,
+    groupId: room_id,
   } = useSelector((state) => state.ui.showLeaveStudentGroupDialog);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const user = JSON.parse(localStorage.getItem("user"));
-  const studentId = user.studentId;
+  // const user = JSON.parse(localStorage.getItem("user"));
+  // const studentId = user.studentId;
 
   const { removeStudentLoading: removing } = useSelector(
     (state) => state.examRooms
@@ -1584,18 +1619,20 @@ export const LeaveStudentGroupDialog = () => {
   });
 
   const handleLeave = async () => {
-    dispatch(removeStudentFromExamRoom({ groupId, studentId }))
+    dispatch(leaveExamRoom({ room_id }))
       .unwrap()
       .then(() => {
         showToast("You have left the student group!", "success");
         setTimeout(() => {
-          setShowLeaveStudentGroupDialog({
-            isOpen: false,
-            groupName: "",
-            groupId: "",
-          });
+          dispatch(
+            setShowLeaveStudentGroupDialog({
+              isOpen: false,
+              groupName: "",
+              groupId: "",
+            })
+          );
           navigate("/dashboard");
-        }, 2000);
+        }, 1000);
       })
       .catch((error) => {
         console.log(error);
@@ -1633,7 +1670,7 @@ export const LeaveStudentGroupDialog = () => {
             </CustomButton>
             <CustomButton
               variant="danger"
-              // onClick={handleLeave}
+              onClick={handleLeave}
               loading={removing}
               className="gap-2 mt-4 flex-1"
             >

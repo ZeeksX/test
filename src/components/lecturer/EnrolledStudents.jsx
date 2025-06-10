@@ -50,6 +50,8 @@ const EnrolledStudents = () => {
   const group = location.state?.group;
   const dispatch = useDispatch();
 
+  console.log(group)
+
   const { removeStudentLoading: removing } = useSelector(
     (state) => state.examRooms
   );
@@ -150,14 +152,14 @@ const EnrolledStudents = () => {
           </p>
         </div>
         <div className="flex flex-row gap-4 max-md:mr-2">
-          {/* <CustomButton
+          <CustomButton
             variant="clear"
             onClick={() =>
               dispatch(
                 setShowShareStudentGroupLinkDialog({
                   willShow: true,
-                  link: "newLink",
-                  code: "newCode",
+                  link: `${window.location.hostname}/exams/groups/join/${group.invite_code}`,
+                  code: group.invite_code,
                 })
               )
             }
@@ -165,7 +167,7 @@ const EnrolledStudents = () => {
           >
             Share
             <FiUpload />
-          </CustomButton> */}
+          </CustomButton>
           <button
             onClick={() =>
               dispatch(

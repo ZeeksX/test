@@ -87,7 +87,7 @@ const Container = () => {
       count: totalExams.total_groups || 0,
     },
     {
-      title: "Total Examinations Submitted",
+      title: "Total Exams Submitted",
       icon: <TbUserQuestion size={24} color="#EE1D1D" />,
       bgColor: "#EE1D1D33",
       count: totalExams.total_submissions || 0,

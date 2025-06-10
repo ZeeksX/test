@@ -26,13 +26,13 @@ const JoinStudentGroup = () => {
 
         if (response.status === 201 || response.status === 200) {
           showToast(`You have joined the student group`, "success");
-          await sleep(2000);
+          await sleep(1000);
           navigate("/dashboard");
         }
       } catch (error) {
         showToast("Failed to join group. Please try again.", "error");
         console.error("Error sending code:", error);
-        await sleep(2000);
+        await sleep(1000);
         navigate("/dashboard");
       } finally {
         setJoining(false);
