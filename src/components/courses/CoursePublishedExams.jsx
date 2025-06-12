@@ -31,6 +31,8 @@ const CoursePublishedExams = () => {
     return <Loader />;
   }
 
+  console.log(courseExams)
+
   if (courseExams.length == 0) {
     return (
       <div className="w-full h-full gap-1 flex flex-col items-center justify-center p-4">
@@ -64,7 +66,7 @@ const CoursePublishedExams = () => {
           <ExaminationCard
             key={exam.id}
             title={exam.title}
-            description={exam.description}
+            description={exam.exam_type}
             id={exam.id}
             studentGroups={exam.exam_rooms.length}
             dueTime={formatScheduleTime(exam.due_time)}

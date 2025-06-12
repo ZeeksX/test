@@ -139,10 +139,11 @@ const RoleSelection = ({ onSubmit, role, setRole }) => {
       </p>
       <div className="flex gap-5">
         <button
-          className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${role === "teacher"
-            ? "border-primary-main text-primary-main bg-secondary-bg"
-            : ""
-            }`}
+          className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${
+            role === "teacher"
+              ? "border-primary-main text-primary-main bg-secondary-bg"
+              : ""
+          }`}
           onClick={() => {
             setRole("teacher");
             setErrorMessage("");
@@ -151,10 +152,11 @@ const RoleSelection = ({ onSubmit, role, setRole }) => {
           Teacher
         </button>
         <button
-          className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${role === "student"
-            ? "border-primary-main text-primary-main bg-secondary-bg"
-            : ""
-            }`}
+          className={`px-6 py-2.5 border rounded-md hover:border-primary-main hover:bg-secondary-bg hover:text-primary-main ${
+            role === "student"
+              ? "border-primary-main text-primary-main bg-secondary-bg"
+              : ""
+          }`}
           onClick={() => {
             setRole("student");
             setErrorMessage("");
@@ -237,7 +239,7 @@ const CourseCreation = ({ onReturn, form, setForm, onSubmit, loading }) => {
   };
 
   return (
-    <div className="course flex flex-col items-center space-y-5 p-6 overflow-y-scroll">
+    <div className="course flex flex-col items-center space-y-5 p-6 overflow-y-scroll hide-scrollbar">
       <button className="absolute top-4 left-4" onClick={onReturn}>
         <MdOutlineArrowBack size={24} />
       </button>
@@ -246,7 +248,6 @@ const CourseCreation = ({ onReturn, form, setForm, onSubmit, loading }) => {
       <p className="text-gray-600 text-center text-sm !mt-1">
         Please complete the form with your title and subject
       </p>
-      <p className="text-gray-600 text-center text-sm !mt-1">Additional courses can be created upon successful registration and login</p>
       <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
         <div className="">
           <Label htmlFor="title" className="text-[#666666]">
@@ -257,9 +258,7 @@ const CourseCreation = ({ onReturn, form, setForm, onSubmit, loading }) => {
             id="title"
             value={form.title}
             placeholder="E.g Dr, Mr, Prof"
-            onChange={(e) =>
-              setForm({ ...form, title: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
             required
           />
         </div>
@@ -272,11 +271,12 @@ const CourseCreation = ({ onReturn, form, setForm, onSubmit, loading }) => {
             id="course"
             value={form.course}
             placeholder="English Language"
-            onChange={(e) =>
-              setForm({ ...form, course: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, course: e.target.value })}
             required
           />
+          <p className="text-gray-600 text-sm !mt-1">
+            Additional courses can added later
+          </p>
         </div>
         <div className="">
           <Label htmlFor="course_code" className="text-[#666666]">
@@ -287,9 +287,7 @@ const CourseCreation = ({ onReturn, form, setForm, onSubmit, loading }) => {
             id="course_code"
             value={form.code}
             placeholder="ENG101"
-            onChange={(e) =>
-              setForm({ ...form, code: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, code: e.target.value })}
             required
           />
         </div>

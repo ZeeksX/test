@@ -70,7 +70,7 @@ const DynamicTopNav = () => {
               alt="Acad AI logo"
             />
           </div>
-          <div className="flex ml-6">
+          {/* <div className="flex ml-6">
             <CustomButton
               // disabled={!canGoBack}
               onClick={handleBack}
@@ -85,7 +85,7 @@ const DynamicTopNav = () => {
             >
               <IoChevronForwardOutline />
             </CustomButton>
-          </div>
+          </div> */}
         </div>
         <div className="flex items-center justify-start gap-6">
           {/* <FiBell size={20} className="cursor-pointer max-md:hidden" /> */}

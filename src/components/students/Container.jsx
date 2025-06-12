@@ -4,7 +4,7 @@ import { TbSchool, TbUserQuestion } from "react-icons/tb";
 import { GoChecklist, GoDotFill } from "react-icons/go";
 import { illustration1, illustration2 } from "../../utils/images";
 import { FaPlus } from "react-icons/fa6";
-import { BsThreeDotsVertical } from "react-icons/bs";
+// import { BsThreeDotsVertical } from "react-icons/bs";
 import ExaminationTable from "./ExaminationTable";
 import CompletedExams from "./CompletedExams";
 import { useDispatch, useSelector } from "react-redux";
@@ -142,16 +142,16 @@ const Container = () => {
             </CustomButton>
           </div>
         ) : (
-          studentStudentGroups.map((group) => {
+          studentStudentGroups.slice(0, 3).map((group) => {
             const detail = allStudentGroups.find((g) => g.id === group.id);
             if (!detail) return null;
 
             return (
               <div
                 key={detail.id}
-                className="flex flex-row py-4 pl-1 pr-6 w-full max-w-[309px] h-max bg-white border rounded-xl border-[#D0D5DD] items-start gap-2"
+                className="flex flex-row p-4 w-full max-w-[309px] h-max bg-white border rounded-xl border-[#D0D5DD] items-start gap-2"
               >
-                <div><BsThreeDotsVertical /></div>
+                {/* <div><BsThreeDotsVertical /></div> */}
                 <div className="flex-1 flex flex-col gap-2">
                   <h1 className="max-w-[250px] text-xl leading-5 text-[#222222] font-medium truncate" title={detail.name}>
                     {detail.name}

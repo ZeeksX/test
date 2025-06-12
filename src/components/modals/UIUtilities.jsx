@@ -91,7 +91,10 @@ function getDaySuffix(day) {
   }
 }
 
-export function formatScheduleTime(scheduleTime) {
+export function formatScheduleTime(
+  scheduleTime,
+  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+) {
   const date = new Date(scheduleTime);
 
   if (isNaN(date.getTime())) {
@@ -104,16 +107,23 @@ export function formatScheduleTime(scheduleTime) {
     hour: "numeric",
     minute: "numeric",
     hour12: true,
-    timeZone: "UTC",
+    timeZone, // Dynamic time zone
   };
 
   let formattedDate = date.toLocaleString("en-US", options);
 
-  const day = date.getUTCDate();
+  // Get correct day from the same time zone
+  const dayFormatter = new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    timeZone,
+  });
+  const day = parseInt(dayFormatter.format(date), 10);
+
   const suffix = ["th", "st", "nd", "rd"][
     day % 10 > 3 || Math.floor((day % 100) / 10) === 1 ? 0 : day % 10
   ];
-  formattedDate = formattedDate.replace(/\d+/, `${day}${suffix}`);
+
+  formattedDate = formattedDate.replace(/\b\d+\b/, `${day}${suffix}`);
 
   return formattedDate;
 }
@@ -135,9 +145,7 @@ export function setTimeToDate(date, scheduleTime) {
   return updatedDate;
 }
 
-export async function filterExamsByStudentSubmissions(
-  examinations,
-  studentId) {
+export async function filterExamsByStudentSubmissions(examinations, studentId) {
   try {
     const availableExams = [];
 

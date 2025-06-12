@@ -310,9 +310,7 @@ export const ManualCreateExamQuestion = ({
           <CustomButton variant="clear" onClick={setPreviousStep}>
             Previous
           </CustomButton>
-          <CustomButton
-            onClick={() => handleFinishSetQuestion()}
-          >
+          <CustomButton onClick={() => handleFinishSetQuestion()}>
             Save Questions
           </CustomButton>
         </div>
@@ -691,34 +689,21 @@ export const MaterialCreateExamUpdateMetaData = ({
   return (
     <div className="">
       <div className="flex justify-between items-start">
-        <div className="mb-4">
+        <div className="mb-4 w-full">
           <Input
             name="name"
             placeholder="Exam Name"
             value={examData.name}
             onChange={(e) => updateExamData({ name: e.target.value })}
-            className="text-3xl placeholder:text-3xl font-bold border-none !p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="text-3xl placeholder:text-3xl font-bold mb-1 border-none !p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <Input
             name="description"
-            placeholder="Exam Description"
+            disabled
             value={examData.examType}
             onChange={(e) => updateExamData({ examType: e.target.value })}
             className="text-gray-500 border-none !p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
           />
-        </div>
-        <div className="flex justify-end mb-4 space-x-2">
-          <CustomButton variant="clear" onClick={() => handleCancel()}>
-            Cancel
-          </CustomButton>
-          <CustomButton
-            disabled={isUploading}
-            loading={isUploading}
-            onClick={() => handleDone()}
-            className="w-[200px]"
-          >
-            Generate Questions
-          </CustomButton>
         </div>
       </div>
       <div className="bg-white border rounded-lg p-6 mb-6">
@@ -766,6 +751,19 @@ export const MaterialCreateExamUpdateMetaData = ({
               updateExamData({ numberOfQuestions: e.target.value })
             }
           />
+        </div>
+        <div className="flex mt-4 w-full justify-between">
+          <CustomButton variant="clear" onClick={() => handleCancel()}>
+            Cancel
+          </CustomButton>
+          <CustomButton
+            disabled={isUploading}
+            loading={isUploading}
+            onClick={() => handleDone()}
+            className="w-[200px]"
+          >
+            Generate Questions
+          </CustomButton>
         </div>
       </div>
 
@@ -879,7 +877,7 @@ export const MaterialCreateExamAddMaterial = ({
         <div>
           <h3 className="font-medium">Upload file</h3>
           <p className="text-sm text-gray-500">
-            Upload your material, specify the type and number of questions, edit
+            Upload your teaching notes, specify the type and number of questions, edit
             your questions
           </p>
         </div>
@@ -952,7 +950,7 @@ export const MaterialCreateExamAddMaterial = ({
       {uploadedFile && (
         <div className="w-full pt-4 flex items-center justify-end">
           <CustomButton onClick={setSelectedQuestionMethod}>
-            Customize Exam
+            Generate Questions
           </CustomButton>
         </div>
       )}

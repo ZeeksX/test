@@ -27,11 +27,13 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "../ui/Dropdown";
+import { AnimatePresence, motion } from "framer-motion";
 import { Label } from "../ui/Label";
 import { Input } from "../ui/Input";
 import { CustomButton } from "../ui/Button";
 import { dangerImg } from "../../utils/images";
 import {
+  FiChevronDown,
   FiChevronRight,
   FiCopy,
   FiMoreVertical,
@@ -204,6 +206,7 @@ export const CreateNewExam = () => {
   const [selectedQuestionMethod, setSelectedQuestionMethod] = useState("");
   const [examPreview, setExamPreview] = useState(false);
 
+  const [isOpen, setIsOpen] = useState();
   const [currentStep, setCurrentStep] = useState(1);
   const [examData, setExamData] = useState({
     name: "",
@@ -212,6 +215,7 @@ export const CreateNewExam = () => {
     description: "",
     scheduleTime: new Date(),
     dueTime: new Date(new Date().setHours(23, 59, 0, 0)),
+    duration: 60,
     addQuestion: [],
     questionMethod: selectedQuestionMethod,
     questions: [],
@@ -306,6 +310,7 @@ export const CreateNewExam = () => {
         showToast("Due time must be after the schedule time", "error");
         return;
       }
+
       setCurrentStep(currentStep + 1);
     } else {
       setExamCreated(true);
@@ -388,9 +393,10 @@ export const CreateNewExam = () => {
       title: examData.name,
       exam_type: examData.examType,
       description: examData.description,
-      schedule_time: new Date(examData.scheduleTime).toISOString(),
+      schedule_time: new Date(examData.scheduleTime).toISOString().substring(11, 16),
       status: "Scheduled",
       due_time: new Date(examData.dueTime).toISOString(),
+      duration: examData.duration,
       questions: examData.questions,
       source_file: "",
       strict: examData.gradingStyle === "strict",
@@ -762,149 +768,187 @@ export const CreateNewExam = () => {
                         </div>
                       </div>
 
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-4">
-                          Grading Criteria Comparison
-                        </h3>
-
-                        <div className="hidden lg:block">
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b border-gray-200">
-                                  <th className="text-left py-3 px-3 font-medium text-gray-600 min-w-[200px]">
-                                    Criteria
-                                  </th>
-                                  <th className="text-center py-3 px-3 font-medium text-primary-main min-w-[120px]">
-                                    Not Strict
-                                  </th>
-                                  <th className="text-center py-3 px-3 font-medium text-red-600 min-w-[120px]">
-                                    Strict
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-200">
-                                {criteriaData.map((criteria, index) => (
-                                  <tr key={index}>
-                                    <td className="py-4 px-3 text-gray-700">
-                                      <div>
-                                        <div className="font-medium mb-1">
-                                          {criteria.title}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                          {criteria.description}
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td className="text-center py-4 px-3">
-                                      <div className="space-y-2">
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                          {(
-                                            criteria.lenientWeight * 100
-                                          ).toFixed(0)}
-                                          % weight
-                                        </span>
-                                        <div className="text-xs text-gray-600 max-w-[150px] mx-auto">
-                                          {criteria.lenientDesc}
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td className="text-center py-4 px-3">
-                                      <div className="space-y-2">
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                          {(
-                                            criteria.strictWeight * 100
-                                          ).toFixed(0)}
-                                          % weight
-                                        </span>
-                                        <div className="text-xs text-gray-600 max-w-[150px] mx-auto">
-                                          {criteria.strictDesc}
-                                        </div>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        <div className="lg:hidden space-y-4">
-                          {criteriaData.map((criteria, index) => (
-                            <div
-                              key={index}
-                              className="border border-gray-200 rounded-lg p-4 bg-white"
+                      <div className="w-full">
+                        <div className="mb-1">
+                          <div className="w-full flex items-center justify-between">
+                            More Details
+                            <button
+                              onClick={() => setIsOpen(!isOpen)}
+                              className="p-2 rounded-full bg-neutral-ghost hover:bg-text-placeholder"
                             >
-                              <div className="mb-3">
-                                <h4 className="font-medium text-gray-800 text-sm">
-                                  {criteria.title}
-                                </h4>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {criteria.description}
-                                </p>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs font-medium text-primary-main">
-                                      Not Strict
-                                    </span>
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                      {(criteria.lenientWeight * 100).toFixed(
-                                        0
-                                      )}
-                                      %
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-gray-600">
-                                    {criteria.lenientDesc}
-                                  </p>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs font-medium text-red-600">
-                                      Strict
-                                    </span>
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                      {(criteria.strictWeight * 100).toFixed(0)}
-                                      %
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-gray-600">
-                                    {criteria.strictDesc}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-600">
-                            <div className="space-y-1">
-                              <p className="font-medium text-primary-main">
-                                Not Strict Approach:
-                              </p>
-                              <p>
-                                More forgiving, focuses on relevance and basic
-                                structure. Encourages participation and
-                                understanding.
-                              </p>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="font-medium text-red-600">
-                                Strict Approach:
-                              </p>
-                              <p>
-                                Emphasizes precision, terminology, and close
-                                alignment with expected answers. Rigorous
-                                assessment.
-                              </p>
-                            </div>
+                              <FiChevronDown
+                                className={`h-4 w-4 transition-transform duration-200 ${
+                                  isOpen ? "rotate-180 transform" : ""
+                                }`}
+                              />
+                            </button>
                           </div>
                         </div>
+                        <AnimatePresence initial={false}>
+                          {isOpen && (
+                            <motion.div
+                              key="content"
+                              initial="collapsed"
+                              animate="open"
+                              exit="collapsed"
+                              variants={{
+                                open: { opacity: 1, height: "auto" },
+                                collapsed: { opacity: 0, height: 0 },
+                              }}
+                              transition={{
+                                duration: 0.3,
+                                ease: [0.04, 0.62, 0.23, 0.98],
+                              }}
+                            >
+                              <div className="bg-gray-50 rounded-lg p-4">
+                                <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                                  Grading Criteria Comparison
+                                </h3>
+
+                                <div className="hidden lg:block">
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                      <thead>
+                                        <tr className="border-b border-gray-200">
+                                          <th className="text-left py-3 px-3 font-medium text-gray-600 min-w-[200px]">
+                                            Criteria
+                                          </th>
+                                          <th className="text-center py-3 px-3 font-medium text-primary-main min-w-[120px]">
+                                            Not Strict
+                                          </th>
+                                          <th className="text-center py-3 px-3 font-medium text-red-600 min-w-[120px]">
+                                            Strict
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-gray-200">
+                                        {criteriaData.map((criteria, index) => (
+                                          <tr key={index}>
+                                            <td className="py-4 px-3 text-gray-700">
+                                              <div>
+                                                <div className="font-medium mb-1">
+                                                  {criteria.title}
+                                                </div>
+                                                <div className="text-xs text-gray-500">
+                                                  {criteria.description}
+                                                </div>
+                                              </div>
+                                            </td>
+                                            <td className="text-center py-4 px-3">
+                                              <div className="space-y-2">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                  {(
+                                                    criteria.lenientWeight * 100
+                                                  ).toFixed(0)}
+                                                  % weight
+                                                </span>
+                                                <div className="text-xs text-gray-600 max-w-[150px] mx-auto">
+                                                  {criteria.lenientDesc}
+                                                </div>
+                                              </div>
+                                            </td>
+                                            <td className="text-center py-4 px-3">
+                                              <div className="space-y-2">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                  {(
+                                                    criteria.strictWeight * 100
+                                                  ).toFixed(0)}
+                                                  % weight
+                                                </span>
+                                                <div className="text-xs text-gray-600 max-w-[150px] mx-auto">
+                                                  {criteria.strictDesc}
+                                                </div>
+                                              </div>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+
+                                <div className="lg:hidden space-y-4">
+                                  {criteriaData.map((criteria, index) => (
+                                    <div
+                                      key={index}
+                                      className="border border-gray-200 rounded-lg p-4 bg-white"
+                                    >
+                                      <div className="mb-3">
+                                        <h4 className="font-medium text-gray-800 text-sm">
+                                          {criteria.title}
+                                        </h4>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          {criteria.description}
+                                        </p>
+                                      </div>
+
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs font-medium text-primary-main">
+                                              Not Strict
+                                            </span>
+                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                              {(
+                                                criteria.lenientWeight * 100
+                                              ).toFixed(0)}
+                                              %
+                                            </span>
+                                          </div>
+                                          <p className="text-xs text-gray-600">
+                                            {criteria.lenientDesc}
+                                          </p>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs font-medium text-red-600">
+                                              Strict
+                                            </span>
+                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                              {(
+                                                criteria.strictWeight * 100
+                                              ).toFixed(0)}
+                                              %
+                                            </span>
+                                          </div>
+                                          <p className="text-xs text-gray-600">
+                                            {criteria.strictDesc}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-gray-600">
+                                    <div className="space-y-1">
+                                      <p className="font-medium text-primary-main">
+                                        Not Strict Approach:
+                                      </p>
+                                      <p>
+                                        More forgiving, focuses on relevance and
+                                        basic structure. Encourages
+                                        participation and understanding.
+                                      </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="font-medium text-red-600">
+                                        Strict Approach:
+                                      </p>
+                                      <p>
+                                        Emphasizes precision, terminology, and
+                                        close alignment with expected answers.
+                                        Rigorous assessment.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {/* <div className="pt-4">
@@ -1304,7 +1348,7 @@ export function ExaminationCard({
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
   };
-
+  
   return (
     <div
       // to={`${id}/detail`}
@@ -1386,7 +1430,8 @@ export const JoinStudentGroupDialog = () => {
     severity: "info",
   });
 
-  const [otp, setOtp] = useState(["", "", "", "", "", "", "", ""]);
+  // const [otp, setOtp] = useState(["", "", "", "", "", "", "", ""]);
+  const [otp, setOtp] = useState("");
   const [loader, setLoader] = useState(false);
   const inputRefs = useRef([]);
 
@@ -1408,7 +1453,8 @@ export const JoinStudentGroupDialog = () => {
   };
 
   const handleSubmit = async (otpValue) => {
-    const invite_code = otpValue || otp.join("");
+    // const invite_code = otpValue || otp.join("");
+    const invite_code = otpValue || otp;
 
     if (invite_code.length !== 8) {
       showToast("Please fill all the fields with valid digits", "error");
@@ -1564,8 +1610,8 @@ export const JoinStudentGroupDialog = () => {
       </DialogHeader>
       <DropdownMenuSeparator />
       <DialogContent className="p-6">
-        <div className="flex space-x-2 mx-auto items-center justify-center">
-          {otp.map((digit, index) => (
+        <div className="space-y-3 mx-auto items-center justify-center">
+          {/* {otp.map((digit, index) => (
             <input
               key={index}
               ref={(el) => (inputRefs.current[index] = el)}
@@ -1576,7 +1622,9 @@ export const JoinStudentGroupDialog = () => {
               maxLength="1"
               className="w-8 h-8 sm:w-14 sm:h-12 max-[330px]:w-1/6 max-[330px]:h-auto text-xl text-center border-2 rounded-md focus:outline-none focus:border-none focus:ring-2 focus:ring-primary-main"
             />
-          ))}
+          ))} */}
+          <Label>Enter Code here: </Label>
+          <Input value={otp} onChange={(e) => setOtp(e.target.value)} />
         </div>
         <CustomButton
           type="button"

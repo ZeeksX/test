@@ -3,9 +3,9 @@ import { RiLink } from "react-icons/ri";
 import { TiDeleteOutline } from "react-icons/ti";
 import { formatDate } from "../modals/UIUtilities";
 import CustomButton from "../ui/Button";
-import { FiUserPlus } from "react-icons/fi";
+import { FiUpload, FiUserPlus } from "react-icons/fi";
 import { useNavigate } from "react-router";
-import { setShowAddStudentToStudentGroupDialog } from "../../features/reducers/uiSlice";
+import { setShowAddStudentToStudentGroupDialog, setShowShareStudentGroupLinkDialog } from "../../features/reducers/uiSlice";
 import { useDispatch } from "react-redux";
 
 const GroupCard = ({ group }) => {
@@ -63,7 +63,7 @@ const GroupCard = ({ group }) => {
           </span>
         </div>
         {/* <div className="flex"> */}
-        <CustomButton
+        {/* <CustomButton
           variant="link"
           onClick={() =>
             dispatch(
@@ -76,7 +76,24 @@ const GroupCard = ({ group }) => {
           className="flex flex-row gap-2 cursor-pointer items-center text-[#155EEF] relative z-10"
         >
           Add Student <FiUserPlus size={24} />
-        </CustomButton>
+        </CustomButton> */}
+
+        <CustomButton
+            variant="link"
+            onClick={() =>
+              dispatch(
+                setShowShareStudentGroupLinkDialog({
+                  willShow: true,
+                  link: `${window.location.hostname}/exams/groups/join/${group.invite_code}`,
+                  code: group.invite_code,
+                })
+              )
+            }
+            className="flex flex-row gap-2 cursor-pointer items-center text-[#155EEF] relative z-10"
+          >
+            Share
+            <FiUpload size={24} />
+          </CustomButton>
         {/* </div> */}
       </div>
     </div>

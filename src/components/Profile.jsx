@@ -23,6 +23,7 @@ const Profile = () => {
 
   // State management
   const [otherNames, setOtherNames] = useState("");
+  const [title, setTitle] = useState(user?.title || "");
   const [lastName, setLastName] = useState(user?.last_name || "");
   const [email, setEmail] = useState(user?.email || "");
   //   const [phone, setPhone] = useState(user?.phone || "");
@@ -59,6 +60,7 @@ const Profile = () => {
     setOtherNames(user?.other_names);
     setLastName(user?.last_name);
     setEmail(user?.email);
+    setTitle(user?.title)
   }, [user]);
 
   console.log(user);
@@ -94,6 +96,7 @@ const Profile = () => {
     const userData = {
       other_names: otherNames,
       last_name: lastName,
+      title: title,
     };
 
     dispatch(updateUserDetails(userData))
@@ -106,36 +109,6 @@ const Profile = () => {
         console.log(error);
         showToast("Failed to update profile. Please try again!", "error");
       });
-
-    // try {
-    //   const updatedData = {
-    //     OtherNames,
-    //     lastName,
-    //     email,
-    //     ...(user.role === "teacher" ? { phone } : { matricNumber }),
-    //     profileImage:
-    //       profileImage !== profileImageDefault ? profileImage : undefined,
-    //   };
-
-    // Simulated API call
-    //   const response = await fetch("/api/profile", {
-    //     method: "PUT",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       Authorization: `Bearer ${user.token}`,
-    //     },
-    //     body: JSON.stringify(updatedData),
-    //   });
-
-    //   if (!response.ok) throw new Error("Failed to save changes");
-
-    // Update auth context
-    //   updateUser({ ...user, ...updatedData });
-    //     } catch (err) {
-    //       setError(err.message);
-    //     } finally {
-    //       setIsSaving(false);
-    //     }
   };
 
   // Password change handler
@@ -199,7 +172,7 @@ const Profile = () => {
 
   return (
     <div className="inter flex flex-col items-center mb-8">
-      <div className="w-[756px] max-md:w-[90%]">
+      <div className="w-[956px] max-md:w-[90%]">
         {/* Error Message */}
         {error && <div className="text-red-500 mb-4">{error}</div>}
 
@@ -221,7 +194,7 @@ const Profile = () => {
           <div className="flex-1">
             <div className="flex flex-row gap-12 max-md:gap-6 p-5 h-[107px] max-md:h-auto rounded-[10px] bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.1)]">
               <div className="min-w-[100px] max-md:min-w-[50px]">
-                <h1 className="text-[#222222] text-base font-semibold">Name</h1>
+                <h1 className="text-[#222222] text-base font-semibold">User</h1>
               </div>
               <div className="flex flex-row-reverse gap-6 w-full max-md:flex-col">
                 <div className="flex flex-col gap-2 w-full">
@@ -243,6 +216,18 @@ const Profile = () => {
                     // value={user?.last_name}
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
+                    className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
+                  />
+                </div>
+                <div className="flex flex-col gap-2 w-full">
+                  <label className="inter font-medium text-sm">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    // value={user?.other_names}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                     className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
                   />
                 </div>

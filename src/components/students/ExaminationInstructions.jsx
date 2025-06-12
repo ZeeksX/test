@@ -51,7 +51,13 @@ const ExaminationInstructions = () => {
   };
 
   const instructions = [
-    "Please answer all questions within the specified time",
+    "This exam is timed. The timer starts and ends at the exact time set by your teacher. It will submit automatically when time runs out.",
+    "Do not switch tabs during the exam. If you leave this page or open a new tab, your exam will end automatically.",
+    "Ensure your device is charged and your internet connection is stable before beginning.",
+    "Take your time to read and understand each question before answering.",
+    "For theory questions, feel free to explain in your own words. Our system looks for understanding, not memorised lines.",
+    "If you’re stuck on a question, move on and return to it later. Your answers are autosaved.",
+    "This exam is designed to help you grow and show what you’ve learned. Take your time, stay focused, and do your best.",
   ];
 
   return (
@@ -59,24 +65,33 @@ const ExaminationInstructions = () => {
       className="flex-1 overflow-y-scroll bg-gray-100"
       style={{ height: "calc(100vh - 64px)" }}
     >
-      <div className="px-4 pt-6">
+      <div className="p-4">
         <h1 className="text-2xl font-bold text-gray-800">{exam.title}</h1>
         <p className="text-gray-500 mt-1 mb-7">{exam.description}</p>
 
         <div className="bg-white rounded-md w-[760px] border p-4">
           {/* Render Instructions */}
-          <div className="space-y-8">
+          <div className="space-y-4">
+            <p className="">
+              Hey scholar! Before you begin, here are a few things to know:
+            </p>
             {instructions.map((text, index) => (
               <div className="flex" key={index}>
-                {/* Blue divider container with fixed width */}
                 <div className="flex-shrink-0 w-1">
-                  <div className="w-full h-7 bg-[#1836B2]" />
+                  <div className="w-full h-7 bg-[#1836B2] mt-1" />
                 </div>
                 <div className="ml-4">
                   <p className="text-gray-700">{text}</p>
                 </div>
               </div>
             ))}
+            <p className="">
+              We believe in you. <strong>Good luck!</strong>
+            </p>
+            <p className="">
+              When you're ready, click the <strong>Start Examination</strong>{" "}
+              button below.
+            </p>
           </div>
         </div>
 

@@ -6,11 +6,13 @@ import StudentContainer from "./students/Container.jsx";
 import LecturerContainer from "./lecturer/Container.jsx";
 import { FaPlus } from "react-icons/fa6";
 import { CustomButton } from "./ui/Button.jsx";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setShowJoinStudentGroupDialog } from "../features/reducers/uiSlice.jsx";
 import { PETTY_SERVER_URL, SERVER_URL } from "../utils/constants.js";
 import { profileImageDefault } from "../utils/images.js";
 import axios from "axios";
+import { Loader } from "./ui/Loader.jsx";
+import { fetchUserDetails } from "../features/reducers/userSlice.jsx";
 
 const Container = () => {
   const [src, setSrc] = useState("");
@@ -18,6 +20,10 @@ const Container = () => {
   const dispatch = useDispatch();
   const { user } = useAuth();
   const hasPostedCourse = useRef(false);
+
+  const { userDetails: userDetails, getDetailsLoading } = useSelector(
+    (state) => state.users
+  );
 
   // Post course details on mount if userData exists in localStorage
   useEffect(() => {
@@ -85,7 +91,12 @@ const Container = () => {
     };
 
     welcome();
-  }, []);
+    dispatch(fetchUserDetails());
+  }, [dispatch]);
+
+  if (getDetailsLoading) {
+    return <Loader />;
+  }
 
   return (
     <div className="w-full h-full p-5 overflow-auto bg-[#F9F9F9]">
@@ -100,7 +111,9 @@ const Container = () => {
         </Avatar>
         <div className="flex flex-row justify-between h-[60px] w-full">
           <div className="flex flex-col justify-between">
-            <h3 className="text-2xl font-medium">Welcome {user?.last_name}</h3>
+            <h3 className="text-2xl font-medium">
+              Welcome, {userDetails?.title} {user?.last_name}
+            </h3>
             <p className="text-base text-[#858585] capitalize">{user?.role}</p>
           </div>
           <div
