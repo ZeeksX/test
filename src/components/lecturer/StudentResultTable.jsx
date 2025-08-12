@@ -28,12 +28,15 @@ export default function StudentResultsTable({ studentResults, exam }) {
       return 0;
     }
 
-    const totalScore = mapQuestions(examObject.questions).reduce((total, question) => {
-      // Ensure the question has a valid score property
-      const questionScore =
-        typeof question.score === "number" ? question.score : 0;
-      return total + questionScore;
-    }, 0);
+    const totalScore = mapQuestions(examObject.questions).reduce(
+      (total, question) => {
+        // Ensure the question has a valid score property
+        const questionScore =
+          typeof question.score === "number" ? question.score : 0;
+        return total + questionScore;
+      },
+      0
+    );
 
     return totalScore;
   };

@@ -12,53 +12,20 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   setShowAddStudentToStudentGroupDialog,
   setShowCreateExaminationRoom,
-  setShowCreateNewExamination,
   setShowCreateStudentGroup,
   setShowDeleteExamDialog,
   setShowJoinStudentGroupDialog,
   setShowLeaveStudentGroupDialog,
-  setShowPostExamWarningDialog,
   setShowShareStudentGroupLinkDialog,
   setShowStudentGroupWarnDialog,
 } from "../../features/reducers/uiSlice";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "../ui/Dropdown";
-import { AnimatePresence, motion } from "framer-motion";
+import { DropdownMenuSeparator } from "../ui/Dropdown";
 import { Label } from "../ui/Label";
 import { Input } from "../ui/Input";
-import { CustomButton } from "../ui/Button";
 import { dangerImg } from "../../utils/images";
-import {
-  FiChevronDown,
-  FiChevronRight,
-  FiCopy,
-  FiMoreVertical,
-  FiPlus,
-  FiSearch,
-  FiUpload,
-  FiX,
-} from "react-icons/fi";
+import { FiCopy, FiPlus, FiSearch } from "react-icons/fi";
 import { copyToClipboard, sleep } from "../../utils/minorUtilities";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/Select";
-import { Badge } from "../ui/Badge";
-import { toLocalISOString } from "../modals/UIUtilities";
-import {
-  ManualCreateExamQuestion,
-  MaterialCreateExamAddMaterial,
-  MaterialCreateExamUpdateMetaData,
-} from "./CreateExamQuestion";
-import { Link, useNavigate, useParams } from "react-router";
-import CourseExamPreview from "./CourseExamPreview";
+import { useNavigate } from "react-router";
 import {
   createCourse,
   createLocalCourse,
@@ -68,17 +35,12 @@ import apiCall from "../../utils/apiCall";
 import {
   createLocalStudentGroup,
   fetchAllStudents,
-  fetchStudentGroups,
   leaveExamRoom,
-  removeStudentFromExamRoom,
 } from "../../features/reducers/examRoomSlice";
 import { Spinner } from "../ui/Loader";
-import { deleteExam, fetchExams } from "../../features/reducers/examSlice";
-import { SERVER_URL } from "../../utils/constants";
-import DateTimeSelector from "../DateTimeSelector";
-import { PostExamWarningDialog } from "../modals/AuthModals";
-import ConfirmationModal from "../modals/ConfirmationModal";
+import { deleteExam } from "../../features/reducers/examSlice";
 import { CardDescription } from "../ui/Card";
+import CustomButton from "../ui/Button";
 
 export const CreateExaminationRoom = () => {
   const isOpen = useSelector((state) => state.ui.showCreateExaminationRoom);
@@ -410,24 +372,6 @@ export const ShareStudentGroupLinkDialog = () => {
           </button>
         </div>
       </DialogContent>
-      {/* <DialogContent className="p-6 pt-4 flex items-center justify-center gap-4">
-        <CustomButton
-          className="!text-sm gap-3"
-          onClick={() => copyToClipboard(link)}
-          variant="clear"
-        >
-          <FiUpload />
-          Share
-        </CustomButton>
-        <CustomButton
-          type="submit"
-          className="!text-sm"
-          variant="primary"
-          onClick={() => dispatch(setShowShareStudentGroupLinkDialog(false))}
-        >
-          Done
-        </CustomButton>
-      </DialogContent> */}
       <Toast
         open={toast.open}
         message={toast.message}
@@ -493,51 +437,6 @@ export const JoinStudentGroupDialog = () => {
     }
   };
 
-  // useEffect(() => {
-  //   dispatch(fetchStudentGroups());
-  // }, [dispatch]);
-
-  // const [search, setSearch] = useState("");
-  // const [isJoining, setIsJoining] = useState("");
-
-  // const filteredStudentGroups = allStudentGroups.filter((studentGroup) =>
-  //   studentGroup.name.toLowerCase().includes(search.toLowerCase())
-  // );
-
-  // const joinGroup = async (studentGroupId) => {
-  //   setIsJoining(studentGroupId);
-
-  //   try {
-  //     const response = await fetch(
-  //       `${SERVER_URL}/exams/exam-rooms/${studentGroupId}/join/`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-  //         },
-  //       }
-  //     );
-
-  //     if (response.ok) {
-  //       showToast("Student group joined successfully", "success");
-  //     } else {
-  //       const errorData = await response.json();
-  //       if (errorData.message) {
-  //         showToast(errorData.message, "error");
-  //       } else {
-  //         showToast("Failed to join student group. Please try again.", "error");
-  //         console.error("Error joining student group:", errorData);
-  //       }
-  //     }
-  //   } catch (error) {
-  //     showToast("Failed to join student group. Please try again.", "error");
-  //     console.error("Error joining student group:", error);
-  //   } finally {
-  //     setIsJoining("");
-  //   }
-  // };
-
   const showToast = (message, severity = "info") => {
     setToast({ open: true, message, severity });
   };
@@ -547,70 +446,6 @@ export const JoinStudentGroupDialog = () => {
   };
 
   return (
-    // <ButtonDismissDialog
-    //   open={isOpen}
-    //   onOpenChange={(open) => dispatch(setShowJoinStudentGroupDialog(open))}
-    // >
-    //   <DialogHeader>
-    //     <DialogTitle>Join a Student Group</DialogTitle>
-    //   </DialogHeader>
-    //   <DropdownMenuSeparator />
-    //   <DialogContent className="p-4">
-    //     <div className="w-full flex flex-col items-start justify-start">
-    //       <h2 className="font-inter font-medium text-xl mb-4">
-    //         Search for a student group to join
-    //       </h2>
-    //       <Input
-    //         value={search}
-    //         onChange={(e) => setSearch(e.target.value)}
-    //         required
-    //         placeholder="Enter query here"
-    //         className="mb-4"
-    //         id="examRoomName"
-    //       />
-    //       <p className="">Student Groups</p>
-    //       <div className="max-h-[50dvh] overflow-y-auto w-full">
-    //         {filteredStudentGroups.length === 0 ? (
-    //           <p className="text-center text-neutral-mediumGray py-4">
-    //             No Student Group found
-    //           </p>
-    //         ) : (
-    //           <div className="space-y-3">
-    //             {filteredStudentGroups.map((studentGroup) => (
-    //               <div
-    //                 className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary-bg"
-    //                 key={studentGroup.id}
-    //               >
-    //                 <div className="flex items-center gap-3">
-    //                   <div>
-    //                     <h4 className="font-medium">{studentGroup.name}</h4>
-    //                     <p className="text-xs text-neutral-mediumGray truncate">
-    //                       {studentGroup.description}
-    //                     </p>
-    //                   </div>
-    //                 </div>
-    //                 <CustomButton
-    //                   type="button"
-    //                   onClick={() => joinGroup(studentGroup.id)}
-    //                   disabled={isJoining !== ""}
-    //                   className="w-[78px]"
-    //                 >
-    //                   {isJoining === studentGroup.id ? <Spinner /> : "Join"}
-    //                 </CustomButton>
-    //               </div>
-    //             ))}
-    //           </div>
-    //         )}
-    //       </div>
-    //     </div>
-    //   </DialogContent>
-    //   <Toast
-    //     open={toast.open}
-    //     message={toast.message}
-    //     severity={toast.severity}
-    //     onClose={closeToast}
-    //   />
-    // </ButtonDismissDialog>
     <OutsideDismissDialog
       open={isOpen}
       onOpenChange={setShowJoinStudentGroupDialog}
@@ -624,18 +459,6 @@ export const JoinStudentGroupDialog = () => {
       <DropdownMenuSeparator />
       <DialogContent className="p-6">
         <div className="space-y-3 mx-auto items-center justify-center">
-          {/* {otp.map((digit, index) => (
-            <input
-              key={index}
-              ref={(el) => (inputRefs.current[index] = el)}
-              type="text"
-              value={digit}
-              onChange={(e) => handleChange(index, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(index, e)}
-              maxLength="1"
-              className="w-8 h-8 sm:w-14 sm:h-12 max-[330px]:w-1/6 max-[330px]:h-auto text-xl text-center border-2 rounded-md focus:outline-none focus:border-none focus:ring-2 focus:ring-primary-main"
-            />
-          ))} */}
           <Label>Enter Code here: </Label>
           <Input value={otp} onChange={(e) => setOtp(e.target.value)} />
         </div>

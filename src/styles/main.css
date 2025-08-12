@@ -87,6 +87,13 @@ body {
   object-fit: cover;
 }
 
+.acad-interface{
+  background: url("../assets/AcadAI-interface.png");
+  background-size: 100%;
+  background-repeat: no-repeat;
+  object-fit: cover;
+}
+
 @media screen and (max-width: 1024px) {
   .our-why {
     background-image: none;
@@ -111,6 +118,12 @@ body {
   .ready-to-grade {
     background-image: none;
     background-color: #1836b2;
+  }
+
+  .ready-background {
+    background-image: none;
+    background-color: #F9F9F9;
+    border-radius: 12px;
   }
 }
 

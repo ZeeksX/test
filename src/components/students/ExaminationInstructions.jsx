@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useLocation } from "react-router";
 import { useNavigate } from "react-router";
 import apiCall from "../../utils/apiCall";
@@ -29,7 +29,7 @@ const ExaminationInstructions = () => {
     setToast({ open: false, message: "", severity: "info" });
   };
 
-  console.log(exam);
+  // console.log(exam);
 
   if (!exam) {
     return (
@@ -86,7 +86,6 @@ const ExaminationInstructions = () => {
       <div className="p-4">
         <h1 className="text-2xl font-bold text-gray-800">{exam.title}</h1>
         <p className="text-gray-500 mt-1 mb-6">{exam.description}</p>
-
         <div className="space-y-6 bg-white rounded-md mb-6 border p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex items-center gap-3">
@@ -174,7 +173,6 @@ const ExaminationInstructions = () => {
             </div>
           </div>
         </div>
-
         <div className="bg-white rounded-md border p-4">
           {/* Render Instructions */}
           <div className="space-y-4">
@@ -184,10 +182,10 @@ const ExaminationInstructions = () => {
             {instructions.map((text, index) => (
               <div className="flex" key={index}>
                 <div className="flex-shrink-0 w-1">
-                  <div className="w-full h-7 bg-[#1836B2] mt-1" />
+                  <div className="w-full h-4 bg-[#1836B2] mt-1" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-gray-700">{text}</p>
+                  <p className="text-base text-gray-700">{text}</p>
                 </div>
               </div>
             ))}
@@ -201,7 +199,6 @@ const ExaminationInstructions = () => {
           </div>
         </div>
 
-        {/* Start Button */}
         <div className="mt-8">
           <CustomButton
             type="button"

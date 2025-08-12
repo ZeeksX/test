@@ -23,13 +23,13 @@ const NewLandingPage = () => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setIndex((prev) => (prev + 1) % words.length);
-  //   }, 5000); // change word every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % words.length);
+    }, 5000); // change word every 5 seconds
 
-  //   return () => clearInterval(interval);
-  // }, []);
+    return () => clearInterval(interval);
+  }, []);
 
   const wordVariants = {
     hidden: { opacity: 0, x: -20 },

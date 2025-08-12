@@ -53,6 +53,8 @@ import CTAImageTwo from "../assets/cta-image-two.webp";
 import star from "../assets/star.svg";
 import featuredIn1 from "../assets/featuredIn1.png";
 import EdugistLogo from "../assets/Edugist-logo.png"
+import AcadAIInterface from "../assets/AcadAI-interface.png";
+import AcadInterface from "../assets/acad-interface.png"
 
 export {
   emptyFolderImg,
@@ -109,5 +111,7 @@ export {
   CTAImageTwo, 
   star,
   featuredIn1,
-  EdugistLogo
+  EdugistLogo,
+  AcadAIInterface, 
+  AcadInterface
 };
