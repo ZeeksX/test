@@ -25,7 +25,7 @@ const SidebarWithRoleControl = ({ role, showLogo = false, toggleSidebar = () => 
     <div className="w-[264px] h-full flex flex-col items-start bg-white border-r-[4px] border-r-border-main">
       {showLogo && (
         <div className="p-4 w-full flex justify-center">
-          <img src={bannerTransparent} alt="Logo" className="w-32" />
+          <img src={bannerTransparent} alt="Logo" className="w-28" />
         </div>
       )}
       <div className="space-y-2 w-full">

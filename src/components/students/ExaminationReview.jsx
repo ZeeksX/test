@@ -3,7 +3,7 @@ import ChevronLeft from "@mui/icons-material/ChevronLeft";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import { FaCheckCircle } from "react-icons/fa";
 import { MdCancel } from "react-icons/md";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { CardFormattedText } from "../ui/Card";
 import ReactMarkdown from "react-markdown";
 import { Loader } from "../ui/Loader";
@@ -14,15 +14,28 @@ import {
 } from "../../features/reducers/examSlice";
 import CustomButton from "../ui/Button";
 import { illustration2 } from "../../utils/images";
+import { IoChevronBack } from "react-icons/io5";
+import { convertDetailStructure, mapQuestions } from "../modals/UIUtilities";
+import { RenderFeedback } from "../RenderComponents";
 
 const ExaminationReview = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { examId } = useParams();
+
   const { studentResult, loading, error } = useSelector((state) => state.exams);
   const user = JSON.parse(localStorage.getItem("user"));
   const studentId = user?.studentId;
+
+  useEffect(() => {
+    if (examId && studentId) {
+      dispatch(newFetchStudentResult({ examId, studentId }));
+    }
+
+    return () => {
+      dispatch(resetStudentResult());
+    };
+  }, [dispatch, examId, studentId]);
 
   // Safe destructuring with default values
   const {
@@ -32,32 +45,34 @@ const ExaminationReview = () => {
     submissionInfo = {},
   } = studentResult || {};
 
-  useEffect(() => {
-    if (examId && studentId) {
-      dispatch(newFetchStudentResult({ examId, studentId }));
-    }
-    // Cleanup when component unmounts
-    return () => {
-      dispatch(resetStudentResult());
-    };
-  }, [dispatch, examId, studentId]);
+  // const details = convertDetailStructure(results?.details);
+  const details = results?.details;
 
-  // Remove the redirect logic that was causing issues
-  // useEffect(() => {
-  //   if (!studentResult || studentResult == null) {
-  //     navigate(`/examinations/${examId}/result`);
-  //   }
-  // }, [studentResult, navigate, examId]);
+  // console.log({ exam, results, details, userAnswers });
 
-  // State to manage current question index
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const currentAnswerScore =
-    submissionInfo?.grading_status === "completed"
-      ? results?.details[currentQuestionIndex]?.[1]?.score || 0
-      : results?.details?.question_scores?.[currentQuestionIndex] || 0;
+  // const [currentQuestionId, setCurrentQuestionId] = useState(null);
+  // const currentAnswerScore =
+  //   submissionInfo?.grading_status === "completed"
+  //     ? details[currentQuestionIndex]?.[1]?.score || 0
+  //     : details?.question_scores?.[currentQuestionIndex] || 0;
 
-  // Get questions array from exam data with safe fallback
-  const questions = exam?.questions || [];
+  const currentAnswerScore = (questionId) => {
+    if (!questionId) {
+      return 0;
+    }
+
+    return details[questionId].score || 0;
+  };
+
+  const [questions, setQuestions] = useState([]);
+
+  useEffect(() => {
+    if (exam.questions) {
+      setQuestions(mapQuestions(exam?.questions));
+    }
+  }, [exam.questions]);
+  // const questions = mapQuestions(exam?.questions) || [];
   const totalQuestions = questions.length;
 
   // Show loading state while data is being fetched
@@ -65,7 +80,6 @@ const ExaminationReview = () => {
     return <Loader />;
   }
 
-  // Show error state if there's an error
   if (error) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -205,7 +219,7 @@ const ExaminationReview = () => {
     if (!feedbackStr || typeof feedbackStr !== "string") return "";
 
     // Split the feedback into parts and remove model answer section
-    const parts = feedbackStr.split(/Model Answer:[\s\S]*?(?=\n\n|$)/i);
+    const parts = feedbackStr.split(/Correct Answer:[\s\S]*?(?=\n\n|$)/i);
     return parts[0].replace(/Score Breakdown:[\s\S]*/, "").trim();
   };
 
@@ -296,9 +310,9 @@ const ExaminationReview = () => {
 
   // Helper function to render the student's answer and feedback
   const renderAnswerAndFeedback = (question, result, index) => {
-    if (!question || !result?.details?.[index]) return null;
+    if (!question || !details?.[index]) return null;
 
-    const answerDetails = result.details[index][1];
+    const answerDetails = details[index];
     const userAnswer = userAnswers[question.id];
 
     switch (question.type) {
@@ -355,7 +369,8 @@ const ExaminationReview = () => {
                 );
               })}
             </div>
-            {renderFeedback(answerDetails.feedback)}
+            {/* {renderFeedback(answerDetails.feedback)} */}
+            <RenderFeedback feedback={answerDetails.feedback} />
           </div>
         );
       }
@@ -381,7 +396,8 @@ const ExaminationReview = () => {
                     : `Incorrect. Correct answer: ${question.modelAnswer}`}
                 </p>
               </div>
-              {renderFeedback(answerDetails.feedback)}
+              {/* {renderFeedback(answerDetails.feedback)} */}
+              <RenderFeedback feedback={answerDetails.feedback} />
             </div>
           </div>
         );
@@ -399,14 +415,15 @@ const ExaminationReview = () => {
               )}
             </div>
             <div className="mt-4">
-              <h3 className="text-lg font-bold mb-2">Model Answer</h3>
+              <h3 className="text-lg font-bold mb-2">Correct Answer</h3>
               <div className="p-4 border border-gray-300 rounded bg-blue-50 min-h-32 mb-4">
                 <ReactMarkdown>
-                  {question.modelAnswer || "No model answer provided"}
+                  {question.modelAnswer || "No correct answer provided"}
                 </ReactMarkdown>
               </div>
             </div>
-            {renderFeedback(answerDetails.feedback)}
+            {/* {renderFeedback(answerDetails.feedback)} */}
+            <RenderFeedback feedback={answerDetails.feedback} />
             <div className="mt-4 p-2 bg-gray-100 rounded">
               <p className="font-medium">
                 Score: {answerDetails.score}/{question.score} points
@@ -447,11 +464,23 @@ const ExaminationReview = () => {
   return (
     <div className="flex-1 overflow-auto flex flex-col h-full">
       <div className="px-6 py-4 flex-grow">
+        {/* <CustomButton as="link" to="/examinations" className="mb-4 ml-auto w-[300px]">
+          Back to Examinations
+        </CustomButton> */}
+
         <div className="flex justify-between items-start mb-3">
           <div className="">
-            <h1 className="text-2xl font-bold text-gray-800">
-              {exam?.title || "Exam"} - Results
-            </h1>
+            <div className="flex gap-2">
+              <Link
+                to="/examinations"
+                className="rounded-full w-8 hover:bg-[#EAECF0] bg-transparent flex items-center justify-center hover:text-primary-main"
+              >
+                <IoChevronBack size={24} />
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-800">
+                {exam?.title || "Exam"} - Results
+              </h1>
+            </div>
             <p className="text-gray-500 mt-2">
               Review your answers and feedback
             </p>
@@ -469,7 +498,7 @@ const ExaminationReview = () => {
                       : "text-red-600"
                   }`}
                 >
-                  {totalScore}
+                  {totalScore.toFixed(2)}
                 </span>
                 /{maxPossibleScore}
               </p>
@@ -485,17 +514,18 @@ const ExaminationReview = () => {
             <div className="flex items-center">
               <span
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  (questionResult?.details?.[currentQuestionIndex]?.[1]
-                    ?.score || 0) === (currentQuestion.score || 0)
+                  currentAnswerScore(currentQuestion.id) ===
+                  (currentQuestion.score || 0)
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"
                 }`}
               >
-                {(questionResult?.details?.[currentQuestionIndex]?.[1]?.score ||
-                  0) === (currentQuestion.score || 0)
+                {currentAnswerScore(currentQuestion.id) ===
+                (currentQuestion.score || 0)
                   ? "Correct"
                   : "Incorrect"}{" "}
-                - {currentAnswerScore}/{currentQuestion.score || 0} marks
+                - {currentAnswerScore(currentQuestion.id)}/
+                {currentQuestion.score || 0} marks
               </span>
             </div>
           </div>
@@ -507,7 +537,7 @@ const ExaminationReview = () => {
           {renderAnswerAndFeedback(
             currentQuestion,
             questionResult,
-            currentQuestionIndex
+            currentQuestion.id
           )}
         </div>
       </div>

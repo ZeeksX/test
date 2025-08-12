@@ -333,7 +333,7 @@ const StudentNumberSelection = ({
       </p>
       <div className="w-full">
         <Label htmlFor="student_number" className="text-[#666666]">
-          Student Number*
+          Student ID*
         </Label>
         <Input
           name="student_number"

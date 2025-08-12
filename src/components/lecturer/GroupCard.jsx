@@ -21,7 +21,7 @@ const GroupCard = ({ group }) => {
 
   return (
     <div className="flex flex-col font-inter rounded-[20px] w-full max-w-[422px] bg-white shadow-lg p-1">
-      <div className="h-[278px] w-full">
+      <div className="h-[278px] overflow-hidden w-full">
         <div className="mt-10 flex flex-col items-center justify-between gap-4">
           {Students.map((student, index) => (
             <div
@@ -89,7 +89,7 @@ const GroupCard = ({ group }) => {
                 })
               )
             }
-            className="flex flex-row gap-2 cursor-pointer items-center text-[#155EEF] relative z-10"
+            className="flex flex-row gap-2 cursor-pointer items-center text-[#155EEF] relative"
           >
             Share
             <FiUpload size={24} />

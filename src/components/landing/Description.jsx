@@ -5,7 +5,7 @@ import {
   for_students_img,
   for_teachers_img,
   placeholder,
-} from "../utils/images";
+} from "../../utils/images";
 
 const Description = () => {
   const items = [

@@ -9,11 +9,22 @@ import {
 } from "../features/reducers/userSlice";
 import Toast from "./modals/Toast";
 import { Loader } from "./ui/Loader";
+import {
+  CheckEmailDialog,
+  ForgotPasswordDialog,
+  ResetPasswordDialog,
+  PasswordUpdatedDialog,
+} from "../components/modals/AuthModals.jsx";
+import { setShowForgotPasswordDialog } from "../features/reducers/uiSlice.jsx";
 
 const Profile = () => {
   const { updateUser } = useAuth();
   const fileInputRef = useRef(null);
   const dispatch = useDispatch();
+
+  const { role } = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user"))
+    : {};
 
   const {
     userDetails: user,
@@ -24,6 +35,7 @@ const Profile = () => {
   // State management
   const [otherNames, setOtherNames] = useState("");
   const [title, setTitle] = useState(user?.title || "");
+  const [matricNo, setMatricNo] = useState(user?.matric_number || "");
   const [lastName, setLastName] = useState(user?.last_name || "");
   const [email, setEmail] = useState(user?.email || "");
   //   const [phone, setPhone] = useState(user?.phone || "");
@@ -45,25 +57,17 @@ const Profile = () => {
 
   useEffect(() => {
     dispatch(fetchUserDetails());
-    //   .unwrap()
-    //   .then(() => {
-    //     setOtherNames(user?.other_names);
-    //     setLastName(user?.last_name);
-    //     setEmail(user?.email);
-    //   })
-    //   .catch((error) => {
-    //     console.log(error);
-    //   });
   }, [dispatch]);
 
   useEffect(() => {
     setOtherNames(user?.other_names);
     setLastName(user?.last_name);
     setEmail(user?.email);
-    setTitle(user?.title)
+    setTitle(user?.title);
+    setMatricNo(user?.matric_number);
   }, [user]);
 
-  console.log(user);
+  // console.log({ user });
 
   // Image upload handler
   const handleImageUpload = (e) => {
@@ -93,10 +97,16 @@ const Profile = () => {
     // setIsSaving(true);
     setError("");
 
+    // const userData = {
+    //   other_names: otherNames,
+    //   last_name: lastName,
+    //   title: title,
+    //   matric_number: matricNo,
+    // };
     const userData = {
       other_names: otherNames,
       last_name: lastName,
-      title: title,
+      ...(role === "teacher" ? { title } : { matric_number: matricNo }),
     };
 
     dispatch(updateUserDetails(userData))
@@ -111,47 +121,6 @@ const Profile = () => {
       });
   };
 
-  // Password change handler
-  //   const handlePasswordChange = async () => {
-  //     if (newPassword !== confirmPassword) {
-  //       setError("Passwords do not match");
-  //       return;
-  //     }
-
-  //     try {
-  //       const response = await fetch("/api/change-password", {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${user.access_token}`,
-  //         },
-  //         body: JSON.stringify({ currentPassword, newPassword }),
-  //       });
-
-  //       if (!response.ok) throw new Error("Password change failed");
-
-  //       setShowChangePassword(false);
-  //       setCurrentPassword("");
-  //       setNewPassword("");
-  //       setConfirmPassword("");
-  //     } catch (err) {
-  //       setError(err.message);
-  //     }
-  //   };
-
-  // Google disconnect handler
-  //   const handleGoogleDisconnect = async () => {
-  //     try {
-  //       await fetch("/api/disconnect-google", {
-  //         method: "POST",
-  //         headers: { Authorization: `Bearer ${user.token}` },
-  //       });
-  //       updateUser({ ...user, provider: "email" });
-  //     } catch (err) {
-  //       setError(err.message);
-  //     }
-  //   };
-
   const showToast = (message, severity = "info") => {
     setToast({ open: true, message, severity });
   };
@@ -159,12 +128,6 @@ const Profile = () => {
   const closeToast = () => {
     setToast({ open: false, message: "", severity: "info" });
   };
-
-  //   if (!user){
-  //     return (
-  //         <div className="">No user found</div>
-  //     )
-  //   }
 
   if (getDetailsLoading || !user) {
     return <Loader />;
@@ -197,6 +160,20 @@ const Profile = () => {
                 <h1 className="text-[#222222] text-base font-semibold">User</h1>
               </div>
               <div className="flex flex-row-reverse gap-6 w-full max-md:flex-col">
+                {role == "student" && (
+                  <div className="flex flex-col gap-2 w-full">
+                    <label className="inter font-medium text-sm">
+                      Matric Number
+                    </label>
+                    <input
+                      type="text"
+                      // value={user?.other_names}
+                      value={matricNo}
+                      onChange={(e) => setMatricNo(e.target.value)}
+                      className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
+                    />
+                  </div>
+                )}
                 <div className="flex flex-col gap-2 w-full">
                   <label className="inter font-medium text-sm">
                     Other Names
@@ -219,18 +196,18 @@ const Profile = () => {
                     className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
                   />
                 </div>
-                <div className="flex flex-col gap-2 w-full">
-                  <label className="inter font-medium text-sm">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    // value={user?.other_names}
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
-                  />
-                </div>
+                {role == "teacher" && (
+                  <div className="flex flex-col gap-2 w-full">
+                    <label className="inter font-medium text-sm">Title</label>
+                    <input
+                      type="text"
+                      // value={user?.other_names}
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -241,7 +218,7 @@ const Profile = () => {
                   Account
                 </h1>
               </div>
-              <div className="flex flex-row max-md:flex-col gap-6 w-full">
+              <div className="flex flex-row max-md:flex-col items-end gap-6 w-full">
                 <div className="flex flex-col gap-2 w-full">
                   <label className="inter font-medium text-sm">
                     Email Address
@@ -255,6 +232,14 @@ const Profile = () => {
                     className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
                   />
                 </div>
+
+                <button
+                  onClick={() => dispatch(setShowForgotPasswordDialog(true))}
+                  disabled={isSaving}
+                  className="cursor-pointer text-base font-semibold leading-6 w-[273px] h-[44px] rounded-md bg-[#1836B2] text-white flex justify-center items-center disabled:opacity-50"
+                >
+                  Change Password
+                </button>
                 {/* <div className="flex flex-col gap-2 w-full">
                             <label className="inter font-medium text-sm">
                                 {user?.role === "teacher" ? "Phone number" : "Matric Number"}
@@ -297,103 +282,6 @@ const Profile = () => {
             </div> */}
           </div>
         </div>
-
-        {/* Name Section */}
-        {/* <div className="flex flex-row gap-12 max-md:gap-6 p-5 h-[107px] max-md:h-auto rounded-[10px] bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.1)] mt-10">
-          <div className="min-w-[100px] max-md:min-w-[50px]">
-            <h1 className="text-[#222222] text-base font-semibold">Name</h1>
-          </div>
-          <div className="flex flex-row-reverse gap-6 w-full max-md:flex-col">
-            <div className="flex flex-col gap-2 w-full">
-              <label className="inter font-medium text-sm">Other Names</label>
-              <input
-                type="text"
-                // value={user?.other_names}
-                value={otherNames}
-                onChange={(e) => setOtherNames(e.target.value)}
-                className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
-              />
-            </div>
-            <div className="flex flex-col gap-2 w-full">
-              <label className="inter font-medium text-sm">Last Name</label>
-              <input
-                type="text"
-                // value={user?.last_name}
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
-              />
-            </div>
-          </div>
-        </div> */}
-
-        {/* Account Section */}
-        {/* <div className="flex flex-row gap-8 p-5 h-[107px] max-md:h-auto rounded-[10px] bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.1)] mt-5">
-          <div className="min-w-[100px] max-md:min-w-[50px]">
-            <h1 className="text-[#222222] text-base font-semibold">Account</h1>
-          </div>
-          <div className="flex flex-row max-md:flex-col gap-6 w-full"> */}
-            {/* <div className="flex flex-col gap-2 w-full">
-              <label className="inter font-medium text-sm">Email Address</label>
-              <input
-                type="email"
-                // value={user?.email}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled
-                className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
-              />
-            </div> */}
-            {/* <div className="flex flex-col gap-2 w-full">
-                            <label className="inter font-medium text-sm">
-                                {user?.role === "teacher" ? "Phone number" : "Matric Number"}
-                            </label>
-                            <input
-                                type="text"
-                                value={user?.role === "teacher" ? phone : matricNumber}
-                                onChange={(e) => user?.role === "teacher"
-                                    ? setPhone(e.target.value)
-                                    : setMatricNumber(e.target.value)
-                                }
-                                className="w-full h-[44px] text-base font-normal leading-6 border rounded-md py-[10px] px-[14px]"
-                            />
-                        </div> */}
-          {/* </div> */}
-        {/* </div> */}
-
-        {/* Security Section */}
-        {/* <div className='flex flex-row gap-8 p-5 rounded-[10px] bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.1)] mt-5'>
-                    <div className="min-w-[100px]">
-                        <h1 className="text-[#222222] text-base font-semibold">Security</h1>
-                    </div>
-                    <div className="flex flex-col gap-6 w-full">
-                        <button
-                            onClick={() => setShowChangePassword(true)}
-                            className="cursor-pointer text-base font-semibold leading-6 w-[173px] h-[44px] rounded-md bg-[#1836B2] text-white flex gap-2 flex-row justify-center items-center"
-                        >
-                            Change Password
-                        </button>
-                    </div>
-                </div> */}
-
-        {/* Connected Accounts
-                <div className='flex flex-row gap-3 p-5 h-[90px] max-md:h-auto rounded-[10px] bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.1)] mt-5'>
-                    <div className="min-w-[100px]">
-                        <h1 className="text-[#222222] text-base font-semibold">Connected Accounts</h1>
-                    </div>
-                    <div className="flex flex-row max-md:flex-col gap-8 items-center max-md:items-end w-full">
-                        <div className="flex flex-col gap-2">
-                            <p className="inter font-medium text-sm">Google Account</p>
-                            <p className="text-[#A1A1A1] text-sm font-normal">{user?.email}</p>
-                        </div>
-                        <button
-                            onClick={handleGoogleDisconnect}
-                            className="cursor-pointer text-base font-semibold leading-6 w-[124px] h-[44px] rounded-md bg-[#EA4335] text-white flex gap-2 flex-row justify-center items-center"
-                        >
-                            Disconnect
-                        </button>
-                    </div>
-                </div> */}
 
         {/* Save Button */}
         <div className="mt-8 flex justify-end">
@@ -464,6 +352,11 @@ const Profile = () => {
           </div>
         )}
       </div>
+
+      <ForgotPasswordDialog type="change" />
+      <CheckEmailDialog />
+      <ResetPasswordDialog />
+      <PasswordUpdatedDialog />
 
       <Toast
         open={toast.open}

@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
+import apiCall from "../utils/apiCall";
 
 const AuthContext = createContext();
 
@@ -11,7 +18,7 @@ export const AuthProvider = ({ children }) => {
       return {
         token: token || null,
         user: userStr ? JSON.parse(userStr) : null,
-        isAuthenticated: Boolean(token && userStr)
+        isAuthenticated: Boolean(token && userStr),
       };
     } catch (e) {
       console.error("Error loading initial auth state", e);
@@ -21,7 +28,9 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize states with values from localStorage to prevent flashing of unauthenticated state
   const initialState = getInitialAuthState();
-  const [isAuthenticated, setIsAuthenticated] = useState(initialState.isAuthenticated);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    initialState.isAuthenticated
+  );
   const [user, setUser] = useState(initialState.user);
   const [isLoading, setIsLoading] = useState(true);
   const hasRedirected = useRef(false);
@@ -31,7 +40,7 @@ export const AuthProvider = ({ children }) => {
   const decodeToken = (token) => {
     if (!token) return null;
     try {
-      const payload = token.split('.')[1];
+      const payload = token.split(".")[1];
       return JSON.parse(atob(payload));
     } catch (error) {
       console.error("Error decoding token", error);
@@ -105,10 +114,10 @@ export const AuthProvider = ({ children }) => {
       const now = Date.now();
 
       // Refresh 5 minutes before expiry or immediately if less than 5 minutes left
-      const timeUntilRefresh = Math.max(0, expiresAt - now - (5 * 60 * 1000));
+      const timeUntilRefresh = Math.max(0, expiresAt - now - 5 * 60 * 1000);
 
       refreshTimerRef.current = setTimeout(() => {
-        refreshToken().then(success => {
+        refreshToken().then((success) => {
           if (success) {
             console.log("Scheduled token refresh succeeded");
           } else {
@@ -140,7 +149,6 @@ export const AuthProvider = ({ children }) => {
 
         // Check if we have both token and user data
         if (accessToken && userObj) {
-
           // Check if token is expired
           if (!isTokenExpired(accessToken)) {
             setIsAuthenticated(true);
@@ -212,23 +220,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (redirect = true) => {
+  const logout = async (redirect = true) => {
+    const refresh_token = localStorage.getItem("refresh_token");
+    const body = {
+      refresh: refresh_token,
+    };
     try {
-      localStorage.removeItem("user");
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      const response = await apiCall.post(`/users/logout/`, body);
 
-      setUser(null);
-      setIsAuthenticated(false);
+      if (response.status == 200) {
+        localStorage.removeItem("user");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
 
-      if (refreshTimerRef.current) {
-        clearTimeout(refreshTimerRef.current);
-        refreshTimerRef.current = null;
-      }
+        setUser(null);
+        setIsAuthenticated(false);
 
-      if (redirect && !hasRedirected.current) {
-        hasRedirected.current = true;
-        window.location.href = "/login";
+        if (refreshTimerRef.current) {
+          clearTimeout(refreshTimerRef.current);
+          refreshTimerRef.current = null;
+        }
+
+        if (redirect && !hasRedirected.current) {
+          hasRedirected.current = true;
+          window.location.href = "/login";
+        }
       }
     } catch (error) {
       console.error("Error during logout:", error);
@@ -247,7 +263,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
   return (
     <AuthContext.Provider
       value={{
@@ -257,7 +272,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         user,
         refreshToken,
-        updateUser
+        updateUser,
       }}
     >
       {children}

@@ -1,31 +1,63 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import ChevronLeft from "@mui/icons-material/ChevronLeft";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import Visibility from "@mui/icons-material/Visibility";
 import { useLocation, useNavigate } from "react-router-dom";
-import { submitExamForGrading } from "./ExamComponents";
 import apiCall from "../../utils/apiCall";
-import { useDispatch } from "react-redux";
-import { setShowExamConcludedDialog } from "../../features/reducers/uiSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setShowExamConcludedDialog,
+  setShowSubmitExamWarningDialog,
+} from "../../features/reducers/uiSlice";
 import { ExamConcludedDialog } from "../modals/AuthModals";
-import axios from "axios";
-import { PETTY_SERVER_URL } from "../../utils/constants";
+import { mapQuestions } from "../modals/UIUtilities";
+import { DialogTitle, OutsideDismissDialog } from "../ui/Dialog";
+import { DropdownMenuSeparator } from "../ui/Dropdown";
+import CustomButton from "../ui/Button";
+import Toast from "../modals/Toast";
+import { Badge } from "../ui/Badge";
+import { FiCalendar, FiClock, FiFileText, FiTarget } from "react-icons/fi";
+import { formatScheduleTime } from "../modals/UIUtilities";
+import { LuTimer } from "react-icons/lu";
 
 const ExaminationQuestions = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const exam = location.state?.exam || {};
+
+  // Generate unique keys for localStorage based on exam ID
+  const localStorageKey = `exam_answers_${exam.id}`;
+  const tabLeaveCountKey = `tab_leave_count_${exam.id}`;
+
   // State to manage current question index
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  // State to hold all user answers
-  const [userAnswers, setUserAnswers] = useState({});
+  // State to hold all user answers - initialize from localStorage
+  const [userAnswers, setUserAnswers] = useState(() => {
+    try {
+      const savedAnswers = localStorage.getItem(localStorageKey);
+      return savedAnswers ? JSON.parse(savedAnswers) : {};
+    } catch (error) {
+      console.error("Error loading saved answers:", error);
+      return {};
+    }
+  });
 
   // Timer state
   const [timeRemaining, setTimeRemaining] = useState("00:00:00");
   const [isTimeUp, setIsTimeUp] = useState(false);
-  const [tabLeaveCount, setTabLeaveCount] = useState(0);
+
+  // Initialize tab leave count from localStorage
+  const [tabLeaveCount, setTabLeaveCount] = useState(() => {
+    try {
+      const savedCount = localStorage.getItem(tabLeaveCountKey);
+      return savedCount ? parseInt(savedCount, 10) : 0;
+    } catch (error) {
+      console.error("Error loading tab leave count:", error);
+      return 0;
+    }
+  });
 
   // Submission status state
   const [submissionStatus, setSubmissionStatus] = useState("");
@@ -33,14 +65,67 @@ const ExaminationQuestions = () => {
   const timerIntervalRef = useRef(null);
 
   // Get questions array from exam data
-  const questions = exam.questions || [];
+  const questions = mapQuestions(exam.questions) || [];
   const totalQuestions = questions.length;
 
-  // Function to handle answer selection
+  // console.log(exam.questions)
+  useEffect(() => {
+    dispatch(setShowSubmitExamWarningDialog({ willShow: false, result: null }));
+  }, [dispatch]);
+
+  // Save answers to localStorage whenever userAnswers changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(localStorageKey, JSON.stringify(userAnswers));
+    } catch (error) {
+      console.error("Error saving answers to localStorage:", error);
+    }
+  }, [userAnswers, localStorageKey]);
+
+  // Save tab leave count to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(tabLeaveCountKey, tabLeaveCount.toString());
+    } catch (error) {
+      console.error("Error saving tab leave count to localStorage:", error);
+    }
+  }, [tabLeaveCount, tabLeaveCountKey]);
+
+  // Clear localStorage when exam is successfully submitted
+  const clearSavedAnswers = () => {
+    try {
+      localStorage.removeItem(localStorageKey);
+      localStorage.removeItem(tabLeaveCountKey);
+    } catch (error) {
+      console.error("Error clearing saved data:", error);
+    }
+  };
+
+  // Function to handle answer selection for single-choice questions
   const handleAnswerSelection = (value) => {
     setUserAnswers({
       ...userAnswers,
       [questions[currentQuestionIndex].id]: value,
+    });
+  };
+
+  // Function to handle multiple answer selection for multi-choice questions
+  const handleMultipleAnswerSelection = (optionId) => {
+    const questionId = questions[currentQuestionIndex].id;
+    const currentAnswers = userAnswers[questionId] || [];
+
+    let newAnswers;
+    if (currentAnswers.includes(optionId)) {
+      // Remove option if already selected
+      newAnswers = currentAnswers.filter((id) => id !== optionId);
+    } else {
+      // Add option if not selected
+      newAnswers = [...currentAnswers, optionId];
+    }
+
+    setUserAnswers({
+      ...userAnswers,
+      [questionId]: newAnswers,
     });
   };
 
@@ -115,31 +200,44 @@ const ExaminationQuestions = () => {
   }, [exam.due_time]);
 
   useEffect(() => {
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === "hidden") {
-          setTabLeaveCount((prev) => prev + 1);
-        } else if (tabLeaveCount > 0) {
-          alert("Please do not leave the tab during the exam!");
-          if (tabLeaveCount >= 3) {
-            handleSubmit();
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "hidden") {
+        setTabLeaveCount((prev) => prev + 1);
+      } else if (tabLeaveCount > 0) {
+        const message = `Please do not leave the tab during the exam! Times left: ${tabLeaveCount}.`;
+        alert(message);
+        if (tabLeaveCount >= 2) {
+          setIsSubmitting(true);
+          try {
+            setSubmissionStatus("Submitting your answers...");
+            const body = {
+              answers: userAnswers,
+              tab_switch_count: tabLeaveCount,
+            };
+            console.log(body);
+            const response = await apiCall.post(
+              `/exams/exams/${exam.id}/submit/`,
+              body
+            );
+            if (response.status === 200) {
+              setSubmissionStatus("Your exam was submitted for you as you switched tabs more that the max times allowed.");
+              clearSavedAnswers();
+              dispatch(setShowExamConcludedDialog(true));
+            }
+          } catch (error) {
+            console.error("Error submitting exam:", error);
+            setSubmissionStatus("Failed to submit answers. Please try again.");
+          } finally {
+            setIsSubmitting(false);
           }
+          handleSubmit();
         }
-      };
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-      return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-    }, [tabLeaveCount]);
-
-  useEffect(() => {
-    const handleBeforeUnload = (event) => {
-      alert(
-        "All exam data will be lost if you refresh the page. Are you sure?"
-      );
-      event.preventDefault();
-      event.returnValue = "";
+      }
     };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [clearSavedAnswers, dispatch, exam.id, tabLeaveCount, userAnswers]);
 
   // Function to handle when time is up
   const handleTimeUp = async () => {
@@ -147,19 +245,26 @@ const ExaminationQuestions = () => {
 
     setIsSubmitting(true);
     try {
-      const gradingResults = await submitExamForGrading(
-        exam.id,
-        userAnswers,
-        exam
+      // handleSubmit();
+      setSubmissionStatus("Submitting your answers...");
+
+      const body = {
+        answers: userAnswers,
+        tab_switch_count: tabLeaveCount,
+      };
+
+      console.log(body);
+
+      const response = await apiCall.post(
+        `/exams/exams/${exam.id}/submit/`,
+        body
       );
 
-      setSubmissionStatus("Time's up! Your answers have been submitted.");
-
-      setTimeout(() => {
-        navigate(`/examinations/${exam.id}/result`, {
-          state: { results: gradingResults, exam, userAnswers },
-        });
-      }, 2000);
+      if (response.status === 200) {
+        setSubmissionStatus("Submitted successfully!");
+        clearSavedAnswers();
+        dispatch(setShowExamConcludedDialog(true));
+      }
     } catch (error) {
       console.error("Error submitting exam:", error);
       setSubmissionStatus("Failed to submit answers. Please try again.");
@@ -173,72 +278,21 @@ const ExaminationQuestions = () => {
   // Function to handle manual exam submission
   const handleSubmit = async () => {
     if (isTimeUp || isSubmitting) return;
-
-    setIsSubmitting(true);
-    try {
-      setSubmissionStatus("Submitting your answers...");
-
-      // const userData = JSON.parse(localStorage.getItem("userData"));
-      const user = JSON.parse(localStorage.getItem("user"));
-      // const studentNumber = userData.studentNumber;
-      const studentId = user.studentId;
-
-      // const gradingResults = await submitExamForGrading(
-      //   exam.id,
-      //   userAnswers,
-      //   exam
-      // );
-
-      // const body = {
-      //   student: {
-      //     matric_number: studentNumber,
-      //   },
-      //   exam: exam.id,
-      //   answers: userAnswers,
-      //   gradingStatus: "Not Graded",
-      //   is_approved: false,
-      // };
-
-      const body = {
-        examId: exam.id,
-        studentId: studentId,
-        userAnswers,
-        token: localStorage.getItem("access_token"),
-      };
-
-      const response = await axios.post(
-        `${PETTY_SERVER_URL}/api/exams/submit`,
-        body
-      );
-
-      // const response = await apiCall.post(
-      //   `/exams/student-exams/submit_exam/`,
-      //   body
-      // );
-      if (response.status === 200) {
-        setSubmissionStatus("Submitted successfully!");
-      }
-
-      dispatch(setShowExamConcludedDialog(true));
-      // console.log({
-      //   examId: exam.id,
-      //   gradingResults,
-      //   userAnswers,
-      //   token: localStorage.getItem("access_token"),
-      // });
-
-      // setTimeout(() => {
-      //   navigate(`/examinations/${exam.id}/result`, {
-      //     state: { results: gradingResults, exam, userAnswers },
-      //   });
-      // }, 2000);
-    } catch (error) {
-      console.error("Error submitting exam:", error);
-      setSubmissionStatus("Failed to submit answers. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    dispatch(
+      setShowSubmitExamWarningDialog({
+        willShow: true,
+        result: [userAnswers, tabLeaveCount],
+      })
+    );
   };
+
+  const totalScore = questions.reduce(
+    (sum, question) => sum + question.score,
+    0
+  );
+
+  const startDateTime = formatScheduleTime(exam.schedule_time);
+  const endDateTime = formatScheduleTime(exam.due_time);
 
   // Helper function to render question based on type
   const renderQuestion = (question) => {
@@ -246,22 +300,35 @@ const ExaminationQuestions = () => {
 
     switch (question.type) {
       case "multiple-choice":
+        // const currentAnswers = userAnswers[question.id] || [];
+
         return (
           <div className="mb-8">
             <h3 className="text-lg font-bold mb-4">Options</h3>
             <div className="space-y-4">
               {question.options.map((option) => (
-                <label key={option.id} className="flex items-center">
+                <label
+                  key={option.id}
+                  className="flex items-center cursor-pointer"
+                >
                   <input
                     type="radio"
                     name={`answer-${question.id}`}
-                    value={option.id}
-                    className="w-5 h-5 mr-4"
-                    checked={userAnswers[question.id] === option.id}
-                    onChange={() => handleAnswerSelection(option.id)}
+                    value={option.text}
+                    className="w-5 h-5 mr-4 accent-[#1836B2]"
+                    checked={userAnswers[question.id] === option.text}
+                    onChange={() => handleAnswerSelection(option.text)}
                     disabled={isTimeUp || isSubmitting}
                   />
-                  <span>{option.text}</span>
+                  <span
+                    className={`${
+                      isTimeUp || isSubmitting
+                        ? "text-gray-400"
+                        : "text-gray-800"
+                    }`}
+                  >
+                    {option.text}
+                  </span>
                 </label>
               ))}
             </div>
@@ -366,11 +433,24 @@ const ExaminationQuestions = () => {
             {`Please answer all ${totalQuestions} questions - ` +
               exam.description}
           </p>
-          <p className="text-gray-500 text-sm">
-            Score: {currentQuestion.score || 0} point
-            {(currentQuestion.score || 0) !== 1 ? "s" : ""}
-          </p>
         </div>
+
+        {/* Auto-save indicator */}
+        <div className="mb-4 text-sm text-green-600 flex items-center">
+          <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+          Your answers are automatically saved
+        </div>
+
+        {/* Tab leave count warning */}
+        {tabLeaveCount > 0 && (
+          <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+            <strong>Warning:</strong> You have switched tabs {tabLeaveCount}{" "}
+            time
+            {tabLeaveCount !== 1 ? "s" : ""}. The exam will be auto-submitted if
+            you switch tabs {2 - tabLeaveCount} more time
+            {2 - tabLeaveCount !== 1 ? "s" : ""}.
+          </div>
+        )}
 
         {submissionStatus && (
           <div
@@ -388,9 +468,16 @@ const ExaminationQuestions = () => {
         )}
 
         <div className="border-t pt-8">
-          <h2 className="text-xl font-bold mb-6">
-            Question {currentQuestionIndex + 1}
-          </h2>
+          <div className="w-full flex items-center justify-between">
+            <h2 className="text-xl font-bold mb-4">
+              Question {currentQuestionIndex + 1}
+            </h2>
+
+            <p className="text-gray-500 text-sm">
+              Score: {currentQuestion.score || 0} point
+              {(currentQuestion.score || 0) !== 1 ? "s" : ""}
+            </p>
+          </div>
 
           <div className="mb-8">
             <p
@@ -457,9 +544,130 @@ const ExaminationQuestions = () => {
         </button>
       </div>
 
+      <SubmitExamWarningDialog
+        isTimeUp={isTimeUp}
+        setSubmissionStatus={setSubmissionStatus}
+        examId={exam.id}
+        onSubmitSuccess={clearSavedAnswers}
+      />
       <ExamConcludedDialog />
     </div>
   );
 };
 
 export default ExaminationQuestions;
+
+const SubmitExamWarningDialog = ({
+  isTimeUp,
+  setSubmissionStatus,
+  examId,
+  onSubmitSuccess,
+}) => {
+  const isOpen = useSelector(
+    (state) => state.ui.showSubmitExamWarningDialog.willShow
+  );
+  const result = useSelector(
+    (state) => state.ui.showSubmitExamWarningDialog.result
+  );
+  const dispatch = useDispatch();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  const handleSubmit = async () => {
+    if (isTimeUp || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      setSubmissionStatus("Submitting your answers...");
+
+      const body = {
+        answers: result[0],
+        tab_switch_count: result[1],
+      };
+
+      console.log(body);
+
+      const response = await apiCall.post(
+        `/exams/exams/${examId}/submit/`,
+        body
+      );
+
+      if (response.status === 200) {
+        setSubmissionStatus("Submitted successfully!");
+        // Clear saved answers from localStorage after successful submission
+        if (onSubmitSuccess) {
+          onSubmitSuccess();
+        }
+      }
+
+      dispatch(
+        setShowSubmitExamWarningDialog({ willShow: false, result: null })
+      );
+      dispatch(setShowExamConcludedDialog(true));
+    } catch (error) {
+      console.error("Error submitting exam:", error);
+      setSubmissionStatus("Failed to submit answers. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
+  };
+
+  return (
+    <OutsideDismissDialog open={isOpen}>
+      <div className="px-6 pt-6 w-full flex justify-between items-start">
+        <DialogTitle>Submit Exam</DialogTitle>
+      </div>
+      <DropdownMenuSeparator />
+      <div className="p-6 pt-0">
+        <p className="my-3 text-sm text-gray-600 mb-5">
+          Are you sure you want to submit this exam. Note that once you click
+          submit, the exam will be registered for grading and you will be
+          carried to the dashboard.
+        </p>
+        <div className="w-full flex gap-4">
+          <CustomButton
+            className="flex-1 min-w-0 h-10"
+            variant="clear"
+            onClick={() =>
+              dispatch(
+                setShowSubmitExamWarningDialog({
+                  willShow: false,
+                  result: null,
+                })
+              )
+            }
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            className="flex-1 min-w-0 h-10"
+            onClick={() => handleSubmit()}
+            loading={isSubmitting}
+          >
+            Submit Exam
+          </CustomButton>
+        </div>
+      </div>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
+    </OutsideDismissDialog>
+  );
+};

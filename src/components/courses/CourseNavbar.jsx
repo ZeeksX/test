@@ -5,11 +5,11 @@ import { NavLink } from "react-router";
 const CourseNavbar = () => {
   const courseLinks = [
     { name: "Published Examinations", href: "published" },
-    // { name: "Saved Drafts", href: "saved" },
+    { name: "Saved Drafts", href: "saved" },
   ];
 
   return (
-    <Topbar className="!h-12 px-4 sticky top-0 left-0">
+    <div className="w-full flex items-center justify-between border-b border-neutral-lightGray z-[5] !h-12 px-4 sticky top-0 left-0">
       <TopbarContent className="h-full">
         {courseLinks.map((courseLink, index) => (
           <NavLink
@@ -27,7 +27,7 @@ const CourseNavbar = () => {
           </NavLink>
         ))}
       </TopbarContent>
-    </Topbar>
+    </div>
   );
 };
 

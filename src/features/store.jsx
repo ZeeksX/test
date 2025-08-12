@@ -5,6 +5,7 @@ import uiReducer from "./reducers/uiSlice";
 import examReducer from "./reducers/examSlice";
 import examinationReducer from "./reducers/examinationSlice";
 import userReducer from "./reducers/userSlice";
+import draftReducer from "./reducers/draftSlice";
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     ui: uiReducer,
     exams: examReducer,
     users: userReducer,
+    drafts: draftReducer,
   },
 });
 

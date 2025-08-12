@@ -45,6 +45,89 @@ body {
   position: relative;
 }
 
+.our-why {
+  background: url("/Our-Why.svg");
+  background-size: 100%;
+  background-repeat: no-repeat;
+  object-fit: cover;
+}
+
+.acad-ai-in-action {
+  background: url("../assets/acad-in-action.svg");
+  background-size: 100%;
+  background-repeat: no-repeat;
+  object-fit: cover;
+}
+
+.cta-section {
+  background: url("../assets/cta-section.svg");
+  background-size: 100%;
+  background-repeat: no-repeat;
+  object-fit: cover;
+}
+
+.testimonials{
+  background: url("../assets/Testimonial.svg");
+  background-size: 100%;
+  background-repeat: no-repeat;
+  object-fit: cover;
+}
+
+.ready-to-grade {
+  background: url("../assets/pricing.svg");
+  background-size: 100%;
+  background-repeat: no-repeat;
+  object-fit: cover;
+}
+
+.ready-background {
+  background: url("../assets/ready-background.webp");
+  background-size: 100%;
+  background-repeat: no-repeat;
+  object-fit: cover;
+}
+
+@media screen and (max-width: 1024px) {
+  .our-why {
+    background-image: none;
+    background-color: rgb(220 239 249);
+  }
+
+  .acad-ai-in-action {
+    background-image: none;
+    background-color: rgb(24 54 178);
+  }
+  
+  .cta-section{
+    background-image: none;
+    background-color: #f9f9f9;
+  }
+
+  .testimonials{
+    background-image: none;
+    background-color: #F9F9F9;
+  }
+
+  .ready-to-grade {
+    background-image: none;
+    background-color: #1836b2;
+  }
+}
+
+@media screen and (min-width: 1025px) {
+  .acad-ai-in-action {
+    background-size: auto;
+    background-color: rgb(24 54 178);
+  }
+  .testimonials{
+    background-color: #F9F9F9;
+  }
+  .ready-to-grade {
+    background-color: #1836b2;
+  }
+
+}
+
 /* Load appropriate sized images based on screen size */
 @media screen and (max-width: 768px) {
   .landing {
@@ -94,11 +177,13 @@ label {
 }
 
 @media only screen and (max-width: 767px) {
-  .login {
-    border-radius: 6px;
-  }
-
   .footer {
     background-color: #1836B2;
+  }
+}
+
+@media only screen and (max-width: 1024px) {
+  .login {
+    border-radius: 6px;
   }
 }

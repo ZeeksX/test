@@ -47,3 +47,6 @@ temp/
 # React Native
 .expo/
 .expo-shared/
+
+#lock files  
+yarn.lock

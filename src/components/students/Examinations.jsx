@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import { illustration2 } from "../../utils/images";
 import ExaminationTable from "./ExaminationTable";
@@ -7,55 +7,36 @@ import { Outlet } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import CustomButton from "../ui/Button";
 import { Loader } from "../ui/Loader";
-import { fetchExams } from "../../features/reducers/examSlice";
-import { filterExamsByStudentSubmissions } from "../modals/UIUtilities";
+import {
+  fetchCompletedExams,
+  fetchStudentExams,
+  fetchUpcomingExams,
+} from "../../features/reducers/examSlice";
+import { setShowJoinStudentGroupDialog } from "../../features/reducers/uiSlice";
 
 const Examinations = () => {
   const [selectedTab, setSelectedTab] = useState("upcoming");
-  const [availableExams, setAvailableExams] = useState([]);
   const user = JSON.parse(localStorage.getItem("user"));
-  const studentId = user.studentId;
+  const studentId = user.id;
   const dispatch = useDispatch();
   // const exams = useSelector((state) => state.examinations.examinations);
-  const { allExams: exams, loading: examsLoading } = useSelector(
-    (state) => state.exams
-  );
+  const {
+    studentExams: exams,
+    studentUpcomingExams: upcomingExams,
+    studentCompletedExams: completedExams,
+    loading: examsLoading,
+  } = useSelector((state) => state.exams);
 
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     if (!dataLoaded) {
-      dispatch(fetchExams());
+      dispatch(fetchStudentExams(studentId));
+      dispatch(fetchCompletedExams());
+      dispatch(fetchUpcomingExams());
       setDataLoaded(true);
     }
-  }, [dispatch, dataLoaded]);
-
-  useEffect(() => {
-    const fetchAvailableExams = async () => {
-      try {
-        const filteredExams = await filterExamsByStudentSubmissions(
-          exams,
-          studentId
-        );
-        setAvailableExams(filteredExams);
-        
-      } catch (error) {
-        console.error("Error fetching exams:", error);
-      }
-    };
-
-    fetchAvailableExams();
-  }, [exams, studentId]);
-
-  const upcomingExams = useMemo(
-    () => availableExams.filter((exam) => new Date(exam.due_time) > new Date()),
-    [availableExams]
-  );
-
-  const completedExams = useMemo(
-    () => exams.filter((exam) => new Date(exam.due_time) <= new Date()),
-    [exams]
-  );
+  }, [dispatch, dataLoaded, studentId]);
 
   if (examsLoading) {
     return <Loader />;
@@ -72,10 +53,28 @@ const Examinations = () => {
           </p>
         </div>
         <div className="flex max-md:justify-end max-md:w-full">
-          <CustomButton size="base" className="gap-3 h-max !w-48 max-md:mt-2 ">
+          {/* <CustomButton
+            onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
+            size="base"
+            className="gap-3 h-max !w-48 max-md:mt-2 "
+          >
             Join Student Group
             <FaPlus />
-          </CustomButton>
+          </CustomButton> */}
+          <button
+            onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
+            className="bg-[#1835B3] hover:ring-2 w-[212px] hidden md:flex gap-2 text-[white] h-[44px] items-center justify-center font-inter font-semibold text-base leading-6 rounded-lg px-4"
+          >
+            Join Student Group
+            <FaPlus />
+          </button>
+          <button
+            onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
+            className="bg-[#1835B3] mt-4 hover:ring-2 w-full md:hidden gap-2 text-[white] h-[44px] flex items-center justify-center font-inter font-semibold text-base leading-6 rounded-lg px-4"
+          >
+            Join Student Group
+            <FaPlus />
+          </button>
         </div>
       </div>
       <div className="text-xl gap-6 mt-8">

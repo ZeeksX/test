@@ -5,7 +5,10 @@ import LecturersTable from "./LecturersTable";
 import { Outlet } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { setShowJoinStudentGroupDialog } from "../../features/reducers/uiSlice";
-import { fetchAllTeachersWithTheirExamRooms, fetchStudentsStudentGroups } from "../../features/reducers/examRoomSlice";
+import {
+  fetchAllTeachersWithTheirExamRooms,
+  fetchStudentsStudentGroups,
+} from "../../features/reducers/examRoomSlice";
 import { Loader } from "../ui/Loader";
 
 const Lecturers = () => {
@@ -47,7 +50,14 @@ const Lecturers = () => {
           >
             <button
               onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
-              className="bg-[#1835B3] hover:ring-2 w-[212px] gap-2 text-[white] h-[44px] flex items-center justify-center font-inter font-semibold text-base leading-6 rounded-lg px-4"
+              className="bg-[#1835B3] hover:ring-2 w-[212px] hidden md:flex gap-2 text-[white] h-[44px] items-center justify-center font-inter font-semibold text-base leading-6 rounded-lg px-4"
+            >
+              Join Student Group
+              <FaPlus />
+            </button>
+            <button
+              onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
+              className="bg-[#1835B3] hover:ring-2 w-full md:hidden gap-2 text-[white] h-[44px] flex items-center justify-center font-inter font-semibold text-base leading-6 rounded-lg px-4"
             >
               Join Student Group
               <FaPlus />
@@ -55,7 +65,7 @@ const Lecturers = () => {
           </div>
         </div>
         <hr className="text-[#D0D5DD] mt-4" />
-        {/* <div className="text-xl px-11 max-md:px-4 gap-6 py-12">
+        <div className="text-xl px-11 max-md:px-4 gap-6 py-4">
           {lecturers.length === 0 ? (
             <div className="flex flex-col justify-center items-center gap-4 col-span-full">
               <img
@@ -63,24 +73,6 @@ const Lecturers = () => {
                 src={illustration3}
                 alt="Illustration"
               />
-              <h1 className="text-[32px] max-md:text-2xl font-medium leading-8">
-                Oops, this page looks a little lonely. Let’s fill it up
-              </h1>
-              <p className="text-[#667085] text-lg">
-                Join a student group and get necessary informations here
-              </p>
-            </div>
-          ) : (
-            <>
-              <LecturersTable lecturers={lecturers} />
-              <Outlet />
-            </>
-          )}
-        </div> */}
-        <div className="text-xl px-11 max-md:px-4 gap-6 py-12">
-          {lecturers.length === 0 ? (
-            <div className="flex flex-col justify-center items-center gap-4 col-span-full">
-              <img className="w-32 h-32" src={illustration3} alt="Illustration" />
               <h1 className="text-[32px] max-md:text-2xl font-medium leading-8">
                 Oops, this page looks a little lonely. Let's fill it up
               </h1>
@@ -90,8 +82,8 @@ const Lecturers = () => {
             </div>
           ) : (
             <>
-              <LecturersTable 
-                lecturers={lecturers} 
+              <LecturersTable
+                lecturers={lecturers}
                 studentEnrolledGroups={studentStudentGroups}
                 loading={loading}
               />

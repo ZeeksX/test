@@ -49,18 +49,46 @@ export const Textarea = ({
   onChange,
   placeholder,
   rows,
+  maxLength,
   ...props
 }) => {
+  const handleChange = (e) => {
+    let inputValue = e.target.value;
+    
+    if (maxLength && inputValue.length > maxLength) {
+      inputValue = inputValue.substring(0, maxLength);
+    }
+    
+    const modifiedEvent = {
+      ...e,
+      target: {
+        ...e.target,
+        value: inputValue
+      }
+    };
+    
+    onChange(modifiedEvent);
+  };
+
+  const remainingChars = maxLength ? maxLength - (value?.length || 0) : null;
+
   return (
-    <textarea
-      id={id}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      rows={rows}
-      className="w-full p-3 border-[1.5px] border-neutral-mediumGray rounded-md bg-neutral-softWhite outline-none placeholder:text-neutral-mediumGray focus:outline-none focus:border-primary-vividBlue resize-none"
-      {...props}
-    />
+    <div className="relative w-full">
+      <textarea
+        id={id}
+        value={value}
+        onChange={handleChange}
+        placeholder={placeholder}
+        rows={rows}
+        className="w-full p-3 border-[1.5px] border-neutral-light rounded-md bg-transparent outline-none placeholder:text-neutral-light focus:outline-none focus:border-primary-main resize-none"
+        {...props}
+      />
+      {maxLength && (
+        <p className="absolute bottom-2 right-3 text-xs text-gray-500 pointer-events-none">
+          {remainingChars >= 0 ? remainingChars : 0} characters left
+        </p>
+      )}
+    </div>
   );
 };
 
@@ -71,6 +99,7 @@ Textarea.propTypes = {
   placeholder: PropTypes.string,
   required: PropTypes.bool,
   rows: PropTypes.string,
+  maxLength: PropTypes.number,
 };
 
 export function Search({
@@ -82,7 +111,7 @@ export function Search({
   ...props
 }) {
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative w-full ${className}`}>
       <MdOutlineSearch
         className="absolute left-2.5 top-[50%] -translate-y-1/2"
         size={24}
@@ -92,7 +121,7 @@ export function Search({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full h-full pl-10 py-2 rounded-md bg-neugborder-neutral-ghost placeholder-text-platext-text-placeholder ${searchClassName}`}
+        className={`w-full  px-3 py-2 pl-10 bg-neutral-ghost rounded-md border outline-none placeholder:text-text-placeholder placeholder:text-[15px] focus:outline-none focus:border-primary-main ${searchClassName}`}
         {...props}
       />
     </div>

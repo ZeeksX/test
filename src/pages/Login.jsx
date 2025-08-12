@@ -10,7 +10,12 @@ import { Label } from "../components/ui/Label.jsx";
 import { FiHome } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import { setShowForgotPasswordDialog } from "../features/reducers/uiSlice.jsx";
-import { CheckEmailDialog, ForgotPasswordDialog, ResetPasswordDialog, PasswordUpdatedDialog } from "../components/modals/AuthModals.jsx";
+import {
+  CheckEmailDialog,
+  ForgotPasswordDialog,
+  ResetPasswordDialog,
+  PasswordUpdatedDialog,
+} from "../components/modals/AuthModals.jsx";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 
@@ -21,6 +26,10 @@ const preloadImage = (src) => {
   const img = new Image();
   img.src = src;
 };
+
+// Constants for login timeout
+const MAX_LOGIN_ATTEMPTS = 5;
+const TIMEOUT_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 const Login = ({ isMobile }) => {
   const dispatch = useDispatch();
@@ -33,6 +42,12 @@ const Login = ({ isMobile }) => {
     message: "",
     severity: "info",
   });
+
+  // Login attempt tracking state
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutEndTime, setLockoutEndTime] = useState(null);
+  const [remainingTime, setRemainingTime] = useState(0);
 
   // Import images using dynamic import for code splitting
   const [images, setImages] = useState({
@@ -63,6 +78,57 @@ const Login = ({ isMobile }) => {
     loadImages();
   }, []);
 
+  // Check for existing lockout on component mount
+  useEffect(() => {
+    const checkExistingLockout = () => {
+      const lockoutData = localStorage.getItem("loginLockout");
+      if (lockoutData) {
+        const { endTime, attempts } = JSON.parse(lockoutData);
+        const now = Date.now();
+
+        if (now < endTime) {
+          // Still locked out
+          setIsLockedOut(true);
+          setLockoutEndTime(endTime);
+          setLoginAttempts(attempts);
+        } else {
+          // Lockout expired, clear it
+          localStorage.removeItem("loginLockout");
+          setLoginAttempts(0);
+        }
+      }
+    };
+
+    checkExistingLockout();
+  }, []);
+
+  // Countdown timer for lockout
+  useEffect(() => {
+    let interval;
+
+    if (isLockedOut && lockoutEndTime) {
+      interval = setInterval(() => {
+        const now = Date.now();
+        const timeLeft = lockoutEndTime - now;
+
+        if (timeLeft <= 0) {
+          // Lockout expired
+          setIsLockedOut(false);
+          setLockoutEndTime(null);
+          setLoginAttempts(0);
+          setRemainingTime(0);
+          localStorage.removeItem("loginLockout");
+        } else {
+          setRemainingTime(timeLeft);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isLockedOut, lockoutEndTime]);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -75,13 +141,62 @@ const Login = ({ isMobile }) => {
     setShowPassword((prev) => !prev);
   }, []);
 
+  // Helper function to format remaining time
+  const formatRemainingTime = (milliseconds) => {
+    const minutes = Math.floor(milliseconds / (1000 * 60));
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  // Helper function to handle failed login attempts
+  const handleFailedLogin = useCallback(
+    (errorMessage) => {
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+
+      if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+        // Lock out the user
+        const endTime = Date.now() + TIMEOUT_DURATION;
+        setIsLockedOut(true);
+        setLockoutEndTime(endTime);
+
+        // Store lockout data in localStorage
+        localStorage.setItem(
+          "loginLockout",
+          JSON.stringify({
+            endTime,
+            attempts: newAttempts,
+          })
+        );
+
+        showToast(
+          "Too many failed login attempts. Please try again in 15 minutes.",
+          "error"
+        );
+      } else {
+        const attemptsLeft = MAX_LOGIN_ATTEMPTS - newAttempts;
+        showToast(
+          `${errorMessage} ${attemptsLeft} attempt${
+            attemptsLeft !== 1 ? "s" : ""
+          } remaining.`,
+          "error"
+        );
+      }
+    },
+    [loginAttempts]
+  );
+
   // Helper function to show toast and handle navigation
   const handleSuccessfulLogin = useCallback(
     (message = "Login successful!") => {
+      // Clear any existing lockout data on successful login
+      localStorage.removeItem("loginLockout");
+      setLoginAttempts(0);
+      setIsLockedOut(false);
+      setLockoutEndTime(null);
+
       // Show toast on the login page
-
       showToast(message, "success");
-
 
       // Store the toast message for the dashboard
       try {
@@ -109,6 +224,18 @@ const Login = ({ isMobile }) => {
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
+
+      // Check if user is locked out
+      if (isLockedOut) {
+        showToast(
+          `Account temporarily locked. Try again in ${formatRemainingTime(
+            remainingTime
+          )}.`,
+          "error"
+        );
+        return;
+      }
+
       setIsLogging(true);
 
       try {
@@ -122,7 +249,7 @@ const Login = ({ isMobile }) => {
         });
 
         const data = await res.json();
-        
+
         if (res.ok) {
           // Store tokens
           try {
@@ -150,7 +277,18 @@ const Login = ({ isMobile }) => {
           handleSuccessfulLogin();
         } else {
           console.log("Login failed:", data);
-          showToast(data.detail || "Login failed. Please try again.", "error");
+
+          // Check if it's a password-related error
+          const errorMessage = data.detail || data.email[0] || "Login failed. Please try again.";
+          if (
+            errorMessage.toLowerCase().includes("password") ||
+            errorMessage.toLowerCase().includes("credentials") ||
+            errorMessage.toLowerCase().includes("invalid")
+          ) {
+            handleFailedLogin("Incorrect username or password.");
+          } else {
+            showToast(errorMessage, "error");
+          }
 
           // Handle email verification case
           if (
@@ -170,25 +308,33 @@ const Login = ({ isMobile }) => {
         setLoader(false);
       }
     },
-    [formState, navigate, login, handleSuccessfulLogin]
+    [
+      formState,
+      navigate,
+      login,
+      handleSuccessfulLogin,
+      handleFailedLogin,
+      isLockedOut,
+      remainingTime,
+    ]
   );
 
   // Google OAuth login handler
   const handleGoogleLogin = useGoogleLogin({
-    flow: 'auth-code',
+    flow: "auth-code",
     onSuccess: async (codeResponse) => {
       setIsLogging(true);
 
       try {
-        console.log('Google auth code received:', codeResponse.code);
-        console.log("code response", codeResponse);
+        // console.log("Google auth code received:", codeResponse.code);
+        // console.log("code response", codeResponse);
 
         const response = await axios.post(`${SERVER_URL}/users/auth/google/`, {
-          code: codeResponse.code
+          code: codeResponse.code,
         });
-        console.log("response", response)
+        // console.log("response", response);
         const data = response.data;
-        console.log('Google login success:', data);
+        // console.log("Google login success:", data);
 
         if (data.access && data.refresh) {
           // Store tokens
@@ -211,7 +357,7 @@ const Login = ({ isMobile }) => {
             refresh: data.refresh,
             other_names: data.other_names,
             first_name: data.first_name,
-            picture: data.picture
+            picture: data.picture,
           });
 
           handleSuccessfulLogin("Google login successful!");
@@ -221,7 +367,8 @@ const Login = ({ isMobile }) => {
         }
       } catch (error) {
         console.error("Error during Google login:", error);
-        const errorMessage = error.response?.data?.detail ||
+        const errorMessage =
+          error.response?.data?.detail ||
           error.response?.data?.error ||
           "Google login failed. Please try again.";
         showToast(errorMessage, "error");
@@ -235,7 +382,7 @@ const Login = ({ isMobile }) => {
       showToast("Google login failed. Please try again.", "error");
       setIsLogging(false);
       setLoader(false);
-    }
+    },
   });
 
   const navigateToSignUp = () => {
@@ -253,14 +400,42 @@ const Login = ({ isMobile }) => {
   return (
     <div className="landing flex flex-col items-center justify-center w-full min-h-screen">
       {loader && <Loader />}
-      <div className="sign-in flex flex-row max-md:w-[90%] lg:w-3/5 lg:h-[90vh] my-6">
-        <div className="signin-image md:w-1/2 hidden md:flex"></div>
-        <div className="login hide-scrollbar flex overflow-y-scroll flex-col w-[90%] mx-auto max-w-96 lg:max-w-screen-lg md:w-full md:rounded-r-2xl bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
+      <div className="sign-in flex flex-row max-lg:w-[90%] lg:w-3/5 lg:h-[90vh] my-6">
+        <div className="signin-image lg:w-1/2 hidden lg:flex"></div>
+        <div className="login hide-scrollbar flex overflow-y-scroll flex-col w-[90%] mx-auto max-w-96 lg:max-w-screen-lg lg:w-full lg:rounded-r-2xl bg-white text-black px-4 lg:px-3 border gap-4 2xl:gap-6 py-4">
           <Header
             navigateToSignUp={navigateToSignUp}
             brandLogo={images.brandLogo}
             logoMobile={images.logoMobile}
           />
+
+          {/* Lockout Warning */}
+          {isLockedOut && (
+            <div className="w-[90%] md:w-4/5 mx-auto bg-red-50 border border-red-200 rounded-md p-3 mb-2">
+              <div className="flex items-center">
+                <div className="text-red-800 text-sm">
+                  <strong>Account temporarily locked</strong>
+                  <br />
+                  Too many failed login attempts. Please try again in{" "}
+                  {formatRemainingTime(remainingTime)}.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Attempt Warning */}
+          {!isLockedOut &&
+            loginAttempts > 0 &&
+            loginAttempts < MAX_LOGIN_ATTEMPTS && (
+              <div className="w-[90%] md:w-4/5 mx-auto bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-2">
+                <div className="text-yellow-800 text-sm">
+                  <strong>Warning:</strong> {loginAttempts} failed attempt
+                  {loginAttempts !== 1 ? "s" : ""}. Account will be locked after{" "}
+                  {MAX_LOGIN_ATTEMPTS} failed attempts.
+                </div>
+              </div>
+            )}
+
           <form
             onSubmit={handleSubmit}
             className="flex flex-col gap-2 lg:gap-3 items-start w-[90%] md:w-4/5 mx-auto"
@@ -278,6 +453,7 @@ const Login = ({ isMobile }) => {
                 autoComplete="email"
                 onChange={handleInputChange}
                 required
+                disabled={isLockedOut}
               />
             </div>
             <div className="w-full mb-2">
@@ -291,11 +467,16 @@ const Login = ({ isMobile }) => {
                 value={formState.password}
                 onChange={handleInputChange}
                 required
+                disabled={isLockedOut}
               />
             </div>
             <h3
-              className="!p-0 ml-auto h-auto text-sm hover:text-blue-500 cursor-pointer"
-              onClick={() => dispatch(setShowForgotPasswordDialog(true))}
+              className={`!p-0 ml-auto h-auto text-sm hover:text-blue-500 cursor-pointer ${
+                isLockedOut ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              onClick={() =>
+                !isLockedOut && dispatch(setShowForgotPasswordDialog(true))
+              }
             >
               Forgot password?
             </h3>
@@ -304,9 +485,11 @@ const Login = ({ isMobile }) => {
               loading={isLogging}
               className="w-full"
               type="submit"
-              disabled={isLogging}
+              disabled={isLogging || isLockedOut}
             >
-              Login
+              {isLockedOut
+                ? `Locked (${formatRemainingTime(remainingTime)})`
+                : "Login"}
             </CustomButton>
 
             {/* Google Login Section */}
@@ -325,7 +508,7 @@ const Login = ({ isMobile }) => {
                   type="button"
                   variant="clear"
                   onClick={handleGoogleLogin}
-                  disabled={isLogging}
+                  disabled={isLogging || isLockedOut}
                 >
                   {images.googleLogo && (
                     <img
@@ -363,7 +546,7 @@ const Login = ({ isMobile }) => {
         )}
       </Suspense>
 
-      <ForgotPasswordDialog />
+      <ForgotPasswordDialog type="forgot" />
       <CheckEmailDialog />
       <ResetPasswordDialog />
       <PasswordUpdatedDialog />
@@ -376,31 +559,31 @@ const Header = ({ navigateToSignUp, brandLogo, logoMobile }) => (
     <div className="w-60 h-20 flex justify-center">
       {brandLogo && (
         <img
-          className="hidden md:flex mb-3"
+          className="w-48 hidden lg:flex mb-3"
           src={brandLogo}
           alt="Acad AI logo"
-          style={{ width: "inherit", height: "inherit", objectFit: "contain" }}
+          style={{ height: "inherit", objectFit: "contain" }}
           loading="eager"
         />
       )}
       {logoMobile && (
         <img
-          className="flex md:hidden justify-center items-center"
+          className="w-16 flex lg:hidden justify-center items-center"
           src={logoMobile}
           alt="Acad AI logo"
-          style={{ width: "inherit", height: "inherit", objectFit: "contain" }}
+          style={{ height: "inherit", objectFit: "contain" }}
           loading="eager"
         />
       )}
     </div>
 
-    <h3 className="hidden md:flex text-black font-medium text-[1.75rem]">
+    <h3 className="hidden lg:flex text-black font-medium text-[1.75rem]">
       Welcome Back!
     </h3>
-    <h3 className="md:hidden flex text-black font-medium text-[1.5rem]">
+    <h3 className="lg:hidden flex text-black font-medium text-[1.5rem]">
       Welcome to Acad AI
     </h3>
-    <p className="hidden md:flex text-black text-base font-normal text-center">
+    <p className="hidden lg:flex text-black text-base font-normal text-center">
       Don't have an account?
       <span
         className="underline cursor-pointer ml-2"
@@ -409,7 +592,7 @@ const Header = ({ navigateToSignUp, brandLogo, logoMobile }) => (
         Sign Up
       </span>
     </p>
-    <p className="md:hidden flex text-gray-500 text-sm italic font-light text-center">
+    <p className="lg:hidden flex text-gray-500 text-sm italic font-light text-center">
       Turn Grading Hours into Minutes
     </p>
   </div>

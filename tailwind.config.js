@@ -3,6 +3,10 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      screens: {
+        container: "820px",
+        land: "950px",
+      },
       colors: {
         primary: {
           main: "#1835B3",
@@ -19,6 +23,8 @@ export default {
         },
         neutral: {
           bg: "#DBDBDB",
+          new: "#454545",
+          light: "#AAAAAA",
           shadow: "#00000012",
           ghost: "#F2F4F7",
           border: "#D0D5DD",
@@ -35,7 +41,7 @@ export default {
       },
       boxShadow: {
         cardShadow: "0px 0px 47.58px 0px",
-        navShadow: "0px 0px 20px 4px #36404326"
+        navShadow: "0px 0px 20px 4px #36404326",
       },
     },
   },

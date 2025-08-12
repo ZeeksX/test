@@ -13,7 +13,7 @@ const Toast = ({ open, message, onClose, severity = "info" }) => {
 
   if (!open) return null;
 
-  const baseStyles = `fixed top-3 right-3 px-6 py-4 rounded-xl z-50 transition-all duration-300 font-semibold text-sm max-w-md`;
+  const baseStyles = `fixed top-3 right-3 px-6 py-4 rounded-xl z-[9999] transition-all duration-300 font-semibold text-sm max-w-md`;
   const glassStyles = `backdrop-blur-md bg-opacity-70 shadow-lg`;
 
   const severityStyles = {
@@ -26,7 +26,7 @@ const Toast = ({ open, message, onClose, severity = "info" }) => {
   const toastStyle = severityStyles[severity] || severityStyles.info;
 
   // Split message by \n and render each line
-  const messageLines = message.split("\n");
+  const messageLines = (typeof message === "string" ? message : String(message || "")).split("\n");
 
   return (
     <div className={`${baseStyles} ${glassStyles} ${toastStyle}`}>

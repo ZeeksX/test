@@ -1,5 +1,6 @@
+/* eslint-disable react/prop-types */
 // src/App.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -33,6 +34,10 @@ import ExaminationReview from "./components/students/ExaminationReview";
 import Settings from "./components/Settings";
 import Profile from "./components/Profile";
 import JoinStudentGroup from "./pages/JoinStudentGroup";
+import PublishDraftExams from "./components/drafts/PublishDraftExams";
+import PaymentCallback from "./pages/PayStackConfirmPage";
+import GroupResultPage from "./components/lecturer/GroupResultPage";
+import GroupStudentsTable from "./components/lecturer/GroupStudentsTable";
 
 // ProtectedRoute ensures that the children are rendered only if the user is authenticated.
 const ProtectedRoute = ({ children }) => {
@@ -134,6 +139,7 @@ const App = () => {
               <Route index element={<Lecturers />} />
               <Route path=":lecturerId/groups" element={<LecturerGroups />} />
             </Route>
+            <Route path="paystack/callback" element={<PaymentCallback />} />
 
             <Route path="student-groups" element={<StudentGroups />} />
             <Route
@@ -147,11 +153,18 @@ const App = () => {
             <Route
               path="student-groups/:groupId"
               element={<EnrolledStudents />}
-            />
+            >
+              <Route path="" element={<GroupStudentsTable />} />
+              <Route path="results" element={<GroupResultPage />} />
+            </Route>
             <Route path="course/:courseId" element={<CourseOverview />}>
               <Route path="published" element={<CoursePublishedExams />} />
               <Route path="saved" element={<CourseSavedExams />} />
             </Route>
+            <Route
+              path="course/:courseId/saved/:draftId/edit"
+              element={<PublishDraftExams />}
+            />
             <Route path="rooms" element={<ExamRooms />} />
           </Route>
         </Routes>

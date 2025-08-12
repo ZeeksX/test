@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router";
 import { Spinner } from "./Loader";
+import { StyledWrapper } from "./Styles";
 
 export const CustomButton = ({
   as = "button",
@@ -78,6 +79,30 @@ export const variantStyles = {
   link: "text-primary-main underline-offset-4 hover:underline !p-0 !justify-start",
   danger: "bg-primary-danger text-white hover:bg-primary-danger/80",
   icon: "rounded-full border border-primary-main hover:bg-primary-main",
+};
+
+export const StyleButton = ({ onClick }) => {
+  return (
+    <StyledWrapper>
+      <button onClick={onClick} className="cssbuttons-io-button">
+        Get started
+        <div className="icon">
+          <svg
+            height={24}
+            width={24}
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              d="M16.172 11l-5.364-5.364 1.414-1.414L20 12l-7.778 7.778-1.414-1.414L16.172 13H4v-2z"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
+      </button>
+    </StyledWrapper>
+  );
 };
 
 export default CustomButton;

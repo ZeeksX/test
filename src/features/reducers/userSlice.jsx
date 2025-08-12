@@ -13,6 +13,18 @@ export const fetchUserDetails = createAsyncThunk(
   }
 );
 
+export const fetchUserCredits = createAsyncThunk(
+  "users/fetchUserCredits",
+  async (_, thunkApi) => {
+    try {
+      const response = await apiCall.get("/users/credits/balance/");
+      return response.data.credits;
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
 export const updateUserDetails = createAsyncThunk(
   "users/updateUserDetails",
   async (userData, thunkApi) => {
@@ -29,14 +41,22 @@ const userSlice = createSlice({
   name: "users",
   initialState: {
     userDetails: null,
+    userCredits: null,
 
     getDetailsLoading: false,
     getDetailsError: false,
 
+    getCreditsLoading: false,
+    getCreditsError: null,
+
     updateDetailsLoading: false,
     updateDetailsError: false,
   },
-  reducers: {},
+  reducers: {
+    updateCredits: (state, action) => {
+      state.userCredits = (state.userCredits || 0) + action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchUserDetails.pending, (state) => {
@@ -50,6 +70,19 @@ const userSlice = createSlice({
       .addCase(fetchUserDetails.rejected, (state, action) => {
         state.getDetailsLoading = false;
         state.getDetailsError = action.payload;
+      })
+
+      .addCase(fetchUserCredits.pending, (state) => {
+        state.getCreditsLoading = true;
+        state.getCreditsError = null;
+      })
+      .addCase(fetchUserCredits.fulfilled, (state, action) => {
+        state.getCreditsLoading = false;
+        state.userCredits = action.payload;
+      })
+      .addCase(fetchUserCredits.rejected, (state, action) => {
+        state.getCreditsLoading = false;
+        state.getCreditsError = action.payload;
       })
 
       .addCase(updateUserDetails.pending, (state) => {
@@ -69,5 +102,7 @@ const userSlice = createSlice({
       });
   },
 });
+
+export const { updateCredits } = userSlice.actions;
 
 export default userSlice.reducer;

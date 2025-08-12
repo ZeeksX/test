@@ -12,8 +12,8 @@ const GroupCard = ({ group }) => {
 
   return (
     <div className="flex flex-col font-inter rounded-[20px] w-full h-[378px] border shadow-white bg-white p-1">
-      <div className="h-[278px] w-full">
-        <div className="mt-10 flex flex-col items-center justify-between gap-4">
+      <div className="h-[278px] overflow-hidden  w-full">
+        <div className="mt-10 flex flex-col  items-center justify-between gap-4">
           {Students.map((student, index) => (
             <div
               key={student.student_id}

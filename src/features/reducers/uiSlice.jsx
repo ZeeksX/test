@@ -45,6 +45,24 @@ const uiSlice = createSlice({
 
     showDeleteCourseDialog: false,
     showEditCourseDialog: false,
+
+    showDeleteSavedExamDialog: false,
+    showSaveExamToDraftDialog: {
+      willShow: false,
+      exam: null,
+    },
+
+    showPurchaseCreditDialog: false,
+
+    showSubmitExamWarningDialog: {
+      willShow: false,
+      result: null,
+    },
+
+    showDemoDialog: {
+      willShow: false,
+      result: null,
+    },
   },
   reducers: {
     setShowCreateExaminationRoom: (state, action) => {
@@ -121,6 +139,30 @@ const uiSlice = createSlice({
     setShowEditCourseDialog: (state, action) => {
       state.showEditCourseDialog = action.payload;
     },
+
+    setShowDeleteSavedExamDialog: (state, action) => {
+      state.showDeleteSavedExamDialog = action.payload;
+    },
+    setShowSaveExamToDraftDialog: (state, action) => {
+      state.showSaveExamToDraftDialog.willShow =
+        action.payload.willShow || false;
+      state.showSaveExamToDraftDialog.exam = action.payload.exam;
+    },
+
+    setShowPurchaseCreditDialog: (state, action) => {
+      state.showPurchaseCreditDialog = action.payload;
+    },
+
+    setShowSubmitExamWarningDialog: (state, action) => {
+      state.showSubmitExamWarningDialog.willShow =
+        action.payload.willShow || false;
+      state.showSubmitExamWarningDialog.result = action.payload.result;
+    },
+
+    setShowDemoDialog: (state, action) => {
+      state.setShowDemoDialog.willShow = action.payload.willShow || false;
+      state.setShowDemoDialog.result = action.payload.result;
+    },
   },
 });
 
@@ -145,5 +187,10 @@ export const {
   setShowEditStudentGroupDialog,
   setShowDeleteCourseDialog,
   setShowEditCourseDialog,
+  setShowDeleteSavedExamDialog,
+  setShowSaveExamToDraftDialog,
+  setShowPurchaseCreditDialog,
+  setShowSubmitExamWarningDialog,
+  setShowDemoDialog,
 } = uiSlice.actions;
 export default uiSlice.reducer;

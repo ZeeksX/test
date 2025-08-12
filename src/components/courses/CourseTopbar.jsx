@@ -1,6 +1,6 @@
 import { CustomButton } from "../ui/Button";
 import { FiMoreVertical, FiPlus } from "react-icons/fi";
-import { LuFileDown } from "react-icons/lu";
+import { HiOutlinePencilSquare } from "react-icons/hi2";
 import {
   DialogContent,
   DialogHeader,
@@ -43,62 +43,80 @@ const CourseTopbar = () => {
   };
 
   return (
-    <div className="w-full px-5 py-2.5 flex max-md:flex-col items-center max-md:items-end justify-between border-b">
-      <h2 className="text-xl font-medium">
-        {course.course_title} ({course.course_code})
-      </h2>
-      <div className="flex items-center justify-center gap-4">
-        {/* <CustomButton variant={"ghost"} className="text-xs gap-2">
-          Export File <LuFileDown size={20} />
-        </CustomButton> */}
-        <DialogTrigger
-          onClick={
-            hasStudentGroups
-              ? setShowCreateNewExamination
-              : setShowStudentGroupWarnDialog
-          }
-        >
-          <CustomButton className="text-xs gap-2">
-            Create New Exam <FiPlus size={20} />
-          </CustomButton>
-        </DialogTrigger>
-        <DropdownMenu>
+    <div className="w-full px-5 py-2.5 border-b">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-medium">
+          {course.course_title} ({course.course_code}){" "}
           <button
-            onClick={toggleDropdown}
-            className="rounded-lg hover:bg-[#EAECF0] bg-transparent flex items-center justify-center !p-3"
+            className="ml-2 p-2 rounded-lg hover:bg-[#EAECF0] bg-transparent"
+            onClick={() => {
+              dispatch(setShowEditCourseDialog(true));
+            }}
           >
-            <FiMoreVertical className="text-[#667085]" />
+            <HiOutlinePencilSquare />
           </button>
-          <DropdownMenuContent
-            className="!w-[150px] !z-[1000]"
-            open={isOpen}
-            setOpen={setIsOpen}
-            align="start"
+        </h2>
+        <div className="flex items-center justify-center gap-4">
+          <DialogTrigger
+            onClick={
+              hasStudentGroups
+                ? setShowCreateNewExamination
+                : setShowStudentGroupWarnDialog
+            }
           >
-            <DropdownMenuItem>
-              <button
-                className="w-full h-full px-4 py-2 flex items-center justify-start"
-                onClick={() => {
-                  dispatch(setShowEditCourseDialog(true));
-                }}
-              >
-                Update Course
-              </button>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <button
-                className="w-full h-full px-4 py-2 flex items-center justify-start"
-                onClick={() => {
-                  dispatch(setShowDeleteCourseDialog(true));
-                }}
-              >
-                Delete Course
-              </button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <CustomButton className="text-xs gap-2 md:flex hidden">
+              Create New Exam <FiPlus size={20} />
+            </CustomButton>
+          </DialogTrigger>
+          <DropdownMenu>
+            <button
+              onClick={toggleDropdown}
+              className="rounded-lg hover:bg-[#EAECF0] bg-transparent flex items-center justify-center !p-3"
+            >
+              <FiMoreVertical className="text-[#667085]" />
+            </button>
+            <DropdownMenuContent
+              className="!w-[150px] !z-[1000]"
+              open={isOpen}
+              setOpen={setIsOpen}
+              align="start"
+            >
+              <DropdownMenuItem>
+                <button
+                  className="w-full h-full px-4 py-2 flex items-center justify-start"
+                  onClick={() => {
+                    dispatch(setShowEditCourseDialog(true));
+                  }}
+                >
+                  Update Course
+                </button>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <button
+                  className="w-full h-full px-4 py-2 flex items-center justify-start"
+                  onClick={() => {
+                    dispatch(setShowDeleteCourseDialog(true));
+                  }}
+                >
+                  Delete Course
+                </button>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
+      <DialogTrigger
+        onClick={
+          hasStudentGroups
+            ? setShowCreateNewExamination
+            : setShowStudentGroupWarnDialog
+        }
+      >
+        <CustomButton className="text-xs w-full block md:hidden mt-3 py-3 gap-2">
+          Create New Exam <FiPlus size={20} />
+        </CustomButton>
+      </DialogTrigger>
 
       <DeleteCourseDialog title={course.course_title} id={course.id} />
       <EditCourse course={course} />
@@ -127,7 +145,7 @@ const DeleteCourseDialog = ({ title = "Student Group 2", id = 0 }) => {
         setTimeout(() => {
           dispatch(setShowDeleteCourseDialog(false));
           navigate("/dashboard");
-        }, 2000);
+        }, 1000);
       })
       .catch((error) => {
         console.log(error);
@@ -228,7 +246,7 @@ const EditCourse = ({ course }) => {
         setTimeout(() => {
           dispatch(setShowEditCourseDialog(false));
           // navigate("/student-groups");
-        }, 2000);
+        }, 1000);
       })
       .catch((error) => {
         console.log(error);

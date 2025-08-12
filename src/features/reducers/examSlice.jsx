@@ -1,7 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import apiCall from "../../utils/apiCall";
 import axios from "axios";
-import { PETTY_SERVER_URL, sampleStudentResult } from "../../utils/constants";
+import { PETTY_SERVER_URL } from "../../utils/constants";
+import { convertDetailStructure } from "../../components/modals/UIUtilities";
 
 // ... keep your existing async thunks (fetchExams, fetchExamDetails, etc.)
 
@@ -20,10 +21,8 @@ export const fetchExams = createAsyncThunk(
 export const fetchExamDetails = createAsyncThunk(
   "exams/fetchExamDetails",
   async ({ id }, thunkApi) => {
-    console.log("response");
     try {
       const response = await apiCall.get(`/exams/exams/${id}/`);
-      console.log("dddresponse", response.data);
       return response.data;
     } catch (error) {
       return thunkApi.rejectWithValue(error.response.data);
@@ -36,7 +35,12 @@ export const fetchExamsforACourse = createAsyncThunk(
   async ({ courseId }, thunkApi) => {
     try {
       const response = await apiCall.get(`/exams/get-exam_course/${courseId}/`);
-      return response.data;
+      const exams = response.data;
+
+      const scheduledExams = exams.filter(
+        (exam) => exam.status === "Scheduled"
+      );
+      return scheduledExams;
     } catch (error) {
       return thunkApi.rejectWithValue(error.response.data);
     }
@@ -47,12 +51,13 @@ export const fetchStudentExams = createAsyncThunk(
   "exams/fetchStudentExams",
   async ({ id }, thunkApi) => {
     try {
-      const examRoomsResponse = await apiCall.get(`/exams/exam-rooms/`);
-      const examRooms = examRoomsResponse.data;
+      // const examRoomsResponse = await apiCall.get(`/exams/exam-rooms/`);
+      // const examRooms = examRoomsResponse.data;
 
       const examResponse = await apiCall.get("/exams/get-exams/");
       const exams = examResponse.data;
-      return getStudentExams(id, examRooms, exams);
+      // return getStudentExams(id, examRooms, exams);
+      return exams;
     } catch (error) {
       return thunkApi.rejectWithValue(error.response.data);
     }
@@ -63,6 +68,8 @@ const getStudentExams = (studentId, examRooms, exams) => {
   const studentExamRooms = examRooms.filter((room) =>
     room.students.some((student) => student.student_id === studentId)
   );
+
+  // console.log(studentExamRooms.length());
 
   const studentExamRoomIds = studentExamRooms.map((room) => room.id);
 
@@ -103,8 +110,8 @@ export const newFetchStudentResult = createAsyncThunk(
   "exams/newFetchStudentResult",
   async ({ examId, studentId }, thunkApi) => {
     try {
-      const response = await axios.get(
-        `${PETTY_SERVER_URL}/api/exams/${examId}/students/${studentId}/result`
+      const response = await apiCall.get(
+        `/exams/exams/${examId}/student/${studentId}/result/`
       );
       return response.data.data;
     } catch (error) {
@@ -112,6 +119,109 @@ export const newFetchStudentResult = createAsyncThunk(
     }
   }
 );
+
+export const fetchUpcomingExams = createAsyncThunk(
+  "exams/fetchUpcomingExams",
+  async (_, thunkApi) => {
+    try {
+      const upcomingResponse = await apiCall.get(
+        `/exams/student/exams/upcoming/`
+      );
+      const ongoingResponse = await apiCall.get(
+        `/exams/student/exams/ongoing/`
+      );
+      const response = await apiCall.get(`/exams/student/exams/completed/`);
+
+      const upcomingExams = upcomingResponse.data;
+      const ongoingExams = ongoingResponse.data;
+      const studentSubmissions = response.data;
+
+      const combinedExamsMap = new Map();
+      [...upcomingExams, ...ongoingExams].forEach((exam) => {
+        combinedExamsMap.set(exam.id, exam);
+      });
+
+      const combinedExams = Array.from(combinedExamsMap.values());
+
+      const result = getTrueUpcomingExams(combinedExams, studentSubmissions);
+
+      return result;
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const fetchCompletedExams = createAsyncThunk(
+  "exams/fetchCompletedExams",
+  async (_, thunkApi) => {
+    try {
+      const examResponse = await apiCall.get("/exams/get-exams/");
+      const exams = examResponse.data;
+
+      const response = await apiCall.get(`/exams/student/exams/completed/`);
+      const studentSubmissions = response.data;
+
+      const { completed: completedExams } = analyzeStudentExamsDetailed(
+        exams,
+        studentSubmissions
+      );
+
+      // console.log({ exams, studentSubmissions, completedExams });
+
+      return completedExams;
+    } catch (error) {
+      return thunkApi.rejectWithValue(error.response.data);
+    }
+  }
+);
+
+function analyzeStudentExamsDetailed(allExams, studentSubmissions) {
+  const result = {
+    completed: [],
+    missed: [],
+  };
+
+  const submissionMap = new Map();
+  studentSubmissions.forEach((submission) => {
+    if (submission.exam && submission.exam.id) {
+      submissionMap.set(submission.exam.id, submission);
+    }
+  });
+
+  allExams.forEach((exam) => {
+    const submission = submissionMap.get(exam.id);
+
+    if (submission) {
+      result.completed.push(exam);
+    } else {
+      result.missed.push(exam);
+    }
+  });
+
+  return result;
+}
+
+function getTrueUpcomingExams(upcomingExams, studentSubmissions) {
+  const result = [];
+
+  const submissionMap = new Map();
+  studentSubmissions.forEach((submission) => {
+    if (submission.exam && submission.exam.id) {
+      submissionMap.set(submission.exam.id, submission);
+    }
+  });
+
+  upcomingExams.forEach((exam) => {
+    const submission = submissionMap.get(exam.id);
+
+    if (!submission) {
+      result.push(exam);
+    }
+  });
+
+  return result;
+}
 
 // NEW: Add the updateStudentScores async thunk for API call
 export const updateStudentScores = createAsyncThunk(
@@ -159,6 +269,10 @@ const examSlice = createSlice({
     allExams: [],
     teacherExams: [],
     studentExams: [],
+
+    studentUpcomingExams: [],
+    studentCompletedExams: [],
+    studentMissedExams: [],
 
     studentResult: null,
     hasUnsavedChanges: false, // Changed to false initially
@@ -210,28 +324,27 @@ const examSlice = createSlice({
     // FIXED: Better score update logic
     updateQuestionScore: (state, action) => {
       const { questionIndex, newScore } = action.payload;
+      const details = convertDetailStructure(
+        state.studentResult.results.details
+      );
 
-      if (
-        state.studentResult &&
-        state.studentResult.results.details[questionIndex]
-      ) {
+      if (state.studentResult && details[questionIndex]) {
         const score = parseFloat(newScore) || 0;
 
         // Update score in the correct location based on grading status
         if (state.studentResult.submissionInfo.grading_status === "completed") {
           // For completed grading, update the nested score
-          if (state.studentResult.results.details[questionIndex][1]) {
-            state.studentResult.results.details[questionIndex][1].score = score;
+          if (details[questionIndex][1]) {
+            details[questionIndex][1].score = score;
           }
         } else {
           // For manual grading, update both locations
-          if (state.studentResult.results.details[questionIndex][1]) {
-            state.studentResult.results.details[questionIndex][1].score = score;
+          if (details[questionIndex][1]) {
+            details[questionIndex][1].score = score;
           }
           // Also update question_scores if it exists
-          if (state.studentResult.results.details.question_scores) {
-            state.studentResult.results.details.question_scores[questionIndex] =
-              score;
+          if (details.question_scores) {
+            details.question_scores[questionIndex] = score;
           }
         }
 
@@ -282,6 +395,32 @@ const examSlice = createSlice({
         state.error = action.payload;
       })
 
+      .addCase(fetchUpcomingExams.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUpcomingExams.fulfilled, (state, action) => {
+        state.loading = false;
+        state.studentUpcomingExams = action.payload;
+      })
+      .addCase(fetchUpcomingExams.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(fetchCompletedExams.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCompletedExams.fulfilled, (state, action) => {
+        state.loading = false;
+        state.studentCompletedExams = action.payload;
+      })
+      .addCase(fetchCompletedExams.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       .addCase(fetchExamsforACourse.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -314,30 +453,31 @@ const examSlice = createSlice({
       })
       .addCase(fetchExamSubmissions.fulfilled, (state, action) => {
         state.loading = false;
-        const filteredSubmissions = action.payload.reduce((acc, submission) => {
-          const studentId = submission.student.student_id;
-          const existingSubmission = acc.find(
-            (sub) => sub.student.student_id === studentId
-          );
+        // const filteredSubmissions = action.payload.reduce((acc, submission) => {
+        //   const studentId = submission.student.student_id;
+        //   const existingSubmission = acc.find(
+        //     (sub) => sub.student.student_id === studentId
+        //   );
 
-          if (!existingSubmission) {
-            acc.push(submission);
-          } else {
-            if (
-              submission.answers !== null &&
-              existingSubmission.answers === null
-            ) {
-              const index = acc.findIndex(
-                (sub) => sub.student.student_id === studentId
-              );
-              acc[index] = submission;
-            }
-          }
+        //   if (!existingSubmission) {
+        //     acc.push(submission);
+        //   } else {
+        //     if (
+        //       submission.answers !== null &&
+        //       existingSubmission.answers === null
+        //     ) {
+        //       const index = acc.findIndex(
+        //         (sub) => sub.student.student_id === studentId
+        //       );
+        //       acc[index] = submission;
+        //     }
+        //   }
 
-          return acc;
-        }, []);
+        //   return acc;
+        // }, []);
 
-        state.examSubmissions = filteredSubmissions;
+        // state.examSubmissions = filteredSubmissions;
+        state.examSubmissions = action.payload;
       })
       .addCase(fetchExamSubmissions.rejected, (state, action) => {
         state.loading = false;

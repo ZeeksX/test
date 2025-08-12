@@ -86,14 +86,69 @@ Contributions are welcome! If you'd like to contribute:
 4. Push to your branch: `git push origin feature-name`.
 5. Open a pull request.
 
+### **Acad-AI Frontend Branching Structure Update**
+
+**Effective Date:** August 2, 2025
+
+Please note the following updates to our **Acad-AI Frontend** repository branching structure:
+
+### **Branch Renaming**
+
+To enhance clarity and streamline our development workflow, the following branch names have been updated:
+
+- `dev` ➝ `prod`
+- `beta-test` ➝ `version`
+- `main` ➝ `staging`
+
+Kindly update your local repositories accordingly to reflect these changes.
+
+> Note: Prior to these changes, the default branch was updated from main to dev. As such, our current default branch is now prod.
+
+---
+
+### **Branching Hierarchy**
+
+### **Primary Branches:**
+
+1. `prod` – **Production Branch**
+
+   This branch reflects the latest stable version of the application and must not be modified during the workweek except in the case of emergency fixes (e.g., critical bugs or fatal errors). Updates to this branch should occur only at the **end of each week (Friday)** following successful testing in the `staging` branch.
+
+2. `version` – **Versioning Branch**
+
+   This branch serves as the integration point for features and enhancements intended for the next major version of Acad-AI. All changes targeting future releases should be merged here.
+
+   Final approval for merging this branch into `prod` must be obtained from [Nsikak](https://github.com/Nsiikak) and [Anjola](https://github.com/lifewjola).
+
+3. `staging` – **Staging Branch**
+
+   All new features, improvements, and fixes are to be merged into this branch for testing and review prior to their promotion to `prod`. This ensures system stability and alignment with project goals.
+
+### **Secondary Branches:**
+
+- `ezekiel`
+- `pellumi`
+- `pentest-branch`
+
+These branches serve as dedicated workspaces for individual developers and testing efforts. All secondary developers are encouraged to **create feature-specific branches** from any of the relevant primary branches and submit pull requests upon completion.
+
+---
+
+### **Developer Responsibilities**
+
+- **Primary Frontend Developers** are assigned personal branches and may merge directly into `staging`, `version`, or (in special cases) `prod`, ensuring due diligence and testing has been conducted.
+- **Secondary Frontend Developers** must create a feature branch from the appropriate base, push their changes, and initiate a pull request for review.
+
+> This structure is not a reflection of your capabilities but a deliberate strategy to maintain transparency, accountability, and system integrity.
+
+We appreciate your adherence to these guidelines and your continued dedication to building a resilient and scalable system.
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for more information.
 
 ## Contact
 
-For any questions or suggestions, feel free to reach out to the project maintainers or open an issue on the repository. You can also reach out to [Ezekiel](mailto:ikinwotezekiel@gmail.com), [Philip](mailto:philip.edward1510@gmail.com)  or visit their GitHub profile [ZeeksX](https://github.com/ZeeksX), [Pellumi](https://github.com/Pellumi).
+For any questions or suggestions, feel free to reach out to the project maintainers or open an issue on the repository. You can also reach out to [Ezekiel](mailto:ikinwotezekiel@gmail.com), [Philip](mailto:philip.edward1510@gmail.com) or visit their GitHub profile [ZeeksX](https://github.com/ZeeksX), [Pellumi](https://github.com/Pellumi).
 
 ---
-
-Happy coding! 🎉

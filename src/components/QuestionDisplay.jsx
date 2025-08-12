@@ -32,7 +32,7 @@ const QuestionDisplay = ({ question, number }) => {
         <div className="">
           <CardContent className="!p-0">
             <div className="w-full h-3 border-b border-dashed"></div>
-            <p className="font-semibold text-sm my-2">Model Answer</p>
+            <p className="font-semibold text-sm my-2">Correct Answer</p>
             <CardDescription className="whitespace-pre-wrap">
               {question.modelAnswer}
             </CardDescription>

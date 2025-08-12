@@ -1,171 +1,230 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import ChevronLeft from "@mui/icons-material/ChevronLeft";
 import ChevronRight from "@mui/icons-material/ChevronRight";
-import { FaCheckCircle } from "react-icons/fa";
-import { MdCancel } from "react-icons/md";
+import { FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
+import { MdCancel, MdEdit, MdSave, MdUndo } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
-import { CardFormattedText } from "../ui/Card";
-import ReactMarkdown from "react-markdown";
+
 import { Input } from "../ui/Input";
 import CustomButton from "../ui/Button";
 import { useDispatch, useSelector } from "react-redux";
 import {
   newFetchStudentResult,
-  updateQuestionScore,
-  updateStudentScores,
   resetStudentResult,
 } from "../../features/reducers/examSlice";
 import { Loader } from "../ui/Loader";
-import axios from "axios";
-import { PETTY_SERVER_URL } from "../../utils/constants";
 import Toast from "../modals/Toast";
+import { IoChevronBack } from "react-icons/io5";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/Tooltip";
+import { FiHelpCircle } from "react-icons/fi";
+import { mapQuestions } from "../modals/UIUtilities";
+import apiCall from "../../utils/apiCall";
+import { RenderFeedback } from "../RenderComponents";
+import ReactMarkdown from "react-markdown";
 
 const StudentResultPage = () => {
-  // const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { studentId, examId } = useParams();
+
+  // State management
   const [toast, setToast] = useState({
     open: false,
     message: "",
     severity: "info",
   });
-
   const [updating, setUpdating] = useState(false);
-
-  // Get everything from Redux store
-  const { studentResult, hasUnsavedChanges, loading, error } = useSelector(
-    (state) => state.exams
-  );
-  // Only keep currentQuestionIndex as local state since it's just UI state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [showStatistics, setShowStatistics] = useState(false);
+  const [editingScore, setEditingScore] = useState(null);
+  const [tempScore, setTempScore] = useState("");
+  const [localScoreChanges, setLocalScoreChanges] = useState({});
+
+  // Redux state
+  const { studentResult, loading, error } = useSelector((state) => state.exams);
+
+  const hasUnsavedChanges = Object.keys(localScoreChanges).length > 0;
 
   useEffect(() => {
     dispatch(newFetchStudentResult({ examId, studentId }));
-
-    // Cleanup when component unmounts
     return () => {
       dispatch(resetStudentResult());
     };
   }, [dispatch, examId, studentId]);
 
-  // Early return if no student result
+  const calculatedData = useMemo(() => {
+    if (!studentResult) return null;
+
+    const results = studentResult.results;
+    // const details = convertDetailStructure(results.details);
+    const details = results.details;
+    const exam = studentResult.exam;
+    const userAnswers = studentResult.userAnswers;
+    const submissionInfo = studentResult.submissionInfo;
+    const questions = mapQuestions(exam.questions) || [];
+
+    console.log({ exam, results, details, userAnswers });
+
+    // Apply local changes to details
+    const updatedDetails = Object.fromEntries(
+      Object.entries(details).map(([key, value]) => [key, { ...value }])
+    );
+
+    Object.entries(localScoreChanges).forEach(([questionIndex, data]) => {
+      if (updatedDetails[questionIndex]) {
+        updatedDetails[questionIndex].score = data.score;
+        updatedDetails[questionIndex].feedback = data.feedback;
+      }
+    });
+
+    // Calculate statistics with updated scores
+    const totalQuestions = questions.length;
+    const answeredQuestions = Object.values(userAnswers).filter(
+      (answer) => answer !== null && answer !== undefined && answer !== ""
+    ).length;
+
+    const correctAnswers = Object.entries(updatedDetails).filter(
+      ([index, detail]) => {
+        const question = questions[index];
+        const score = detail[1]?.score || 0;
+        return question && score === question.score;
+      }
+    ).length;
+
+    const totalScore = Object.values(updatedDetails).reduce((sum, item) => {
+      const score = Number(item?.score);
+      return sum + (isNaN(score) ? 0 : score);
+    }, 0);
+
+    const maxPossibleScore = questions.reduce(
+      (sum, q) => sum + (parseInt(q.score) || 0),
+      0
+    );
+
+    const percentageScore =
+      maxPossibleScore > 0
+        ? Math.round((totalScore / maxPossibleScore) * 100)
+        : 0;
+
+    // Question difficulty analysis with local changes
+    const questionAnalysis = questions.map((question, index) => {
+      const detail = updatedDetails[index];
+      const score = detail?.[1]?.score || 0;
+      const maxScore = question.score || 0;
+      const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
+
+      return {
+        index,
+        score,
+        maxScore,
+        percentage,
+        status:
+          percentage === 100
+            ? "correct"
+            : percentage > 0
+            ? "partial"
+            : "incorrect",
+      };
+    });
+
+    return {
+      results,
+      details: updatedDetails, // Use updated details
+      exam,
+      userAnswers,
+      submissionInfo,
+      questions,
+      totalQuestions,
+      answeredQuestions,
+      correctAnswers,
+      totalScore,
+      maxPossibleScore,
+      percentageScore,
+      questionAnalysis,
+    };
+  }, [studentResult, localScoreChanges]);
+
   if (loading) {
     return <Loader />;
   }
 
-  if (!studentResult) {
-    return <div>No student result found</div>;
+  if (!calculatedData) {
+    return (
+      <div className="flex items-center justify-center h-full my-auto">
+        <div className="text-center">
+          <FaExclamationTriangle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Exam not submitted for this student
+          </h3>
+          <p className="text-gray-500">
+            The student result could not be loaded. <br /> Please contact the
+            student to ensure that they turned in their work.
+          </p>
+        </div>
+      </div>
+    );
   }
 
-  const results = studentResult.results;
-  console.log({ results });
-  const exam = studentResult.exam;
-  const userAnswers = studentResult.userAnswers;
-  const submissionInfo = studentResult.submissionInfo;
+  const {
+    results,
+    details,
+    userAnswers,
+    submissionInfo,
+    questions,
+    totalQuestions,
+    totalScore,
+    maxPossibleScore,
+  } = calculatedData;
 
-  // Get questions array from exam data
-  const questions = exam.questions || [];
-  console.log({ questions });
-  const totalQuestions = questions.length;
+  // console.log({ exam, results, details, userAnswers });
 
-  // Calculate total score dynamically from current question scores
-  const calculateTotalScore = () => {
-    if (studentResult.submissionInfo.grading_status === "completed") {
-      return Object.values(results.details).reduce((total, detail) => {
-        return total + (detail[1]?.score || 0);
-      }, 0);
-    } else {
-      const questionScores = results.details.question_scores;
-      return Object.values(questionScores).reduce(
-        (total, score) => total + score,
-        0
-      );
-    }
+  // Score editing functions
+  const startEditingScore = (questionIndex) => {
+    const currentScore = details[questionIndex]?.[1]?.score || 0;
+    setEditingScore(questionIndex);
+    setTempScore(currentScore.toString());
   };
 
-  const totalScore = calculateTotalScore();
-  const maxPossibleScore = questions.reduce(
-    (sum, q) => sum + (parseInt(q.score) || 0),
-    0
-  );
-  const percentageScore =
-    maxPossibleScore > 0
-      ? Math.round((totalScore / maxPossibleScore) * 100)
-      : 0;
+  const saveScoreEdit = (questionId) => {
+    const newScore = parseFloat(tempScore);
+    const maxScore = currentQuestion.score || 0;
 
-  // Perfect score flag
-  const isPerfectScore = totalScore === maxPossibleScore;
-
-  // Function to update individual question score - now using Redux
-  const handleQuestionScoreUpdate = (questionIndex, newScore) => {
-    const maxQuestionScore = questions[questionIndex]?.score || 0;
-
-    // Validate the score
-    if (newScore < 0 || newScore > maxQuestionScore) {
-      alert(`Score must be between 0 and ${maxQuestionScore}`);
+    // Validate score
+    if (isNaN(newScore) || newScore < 0 || newScore > maxScore) {
+      showToast(`Score must be between 0 and ${maxScore}`, "error");
       return;
     }
 
-    // Dispatch Redux action
-    dispatch(updateQuestionScore({ questionIndex, newScore }));
+    // Update local state immediately
+    const updatedChanges = {
+      ...localScoreChanges,
+      [questionId]: {
+        score: newScore,
+        // feedback: details[currentQuestionIndex]?.[1]?.feedback || "",
+        feedback: "This score has been updated by the lecturer.",
+      },
+    };
+
+    setLocalScoreChanges(updatedChanges);
+    setEditingScore(null);
+    setTempScore("");
+
+    // Mark as having unsaved changes (assuming you have this in Redux)
+    // You might need to dispatch an action here to update hasUnsavedChanges
+    showToast(
+      "Score updated locally. Click 'Save Changes' to persist.",
+      "success"
+    );
   };
 
-  // Function to save the updated scores using Redux
-  const handleUpdateScore = async () => {
-    try {
-      setUpdating(true);
-      const newTotalScore = calculateTotalScore();
-      const questionScores = Object.fromEntries(
-        Object.entries(results.details).map(([index, detail]) => [
-          index,
-          detail[1]?.score || 0,
-        ])
-      );
-
-      // const body = {
-      //   examId,
-      //   studentId,
-      //   questionScores,
-      //   totalScore: newTotalScore,
-      // };
-
-      // console.log({ body });
-
-      // const response = await axios.put(
-      //   `${PETTY_SERVER_URL}/api/exams/update-scores`,
-      //   body
-      // );
-
-      const resultAction = await dispatch(
-        updateStudentScores({
-          examId,
-          studentId,
-          questionScores,
-          totalScore: newTotalScore,
-        })
-      );
-
-      if (updateStudentScores.fulfilled.match(resultAction)) {
-        showToast("Student score has been updated successfully!", "success");
-      } else {
-        showToast("Failed to update score. Please try again!", "error");
-      }
-
-      // console.log("Updating scores:", {
-      //   examId,
-      //   studentId,
-      //   questionScores,
-      //   totalScore: newTotalScore,
-      // });
-
-      // Dispatch the async thunk to update scores
-    } catch (error) {
-      console.error("Error updating scores:", error);
-      showToast("Failed to update score. Please try again!", "error");
-    } finally {
-      setUpdating(false);
-    }
+  const cancelScoreEdit = () => {
+    setEditingScore(null);
+    setTempScore("");
   };
 
   // Navigation functions
@@ -187,6 +246,47 @@ const StudentResultPage = () => {
     }
   };
 
+  // Update score handler
+  const handleUpdateScore = async () => {
+    if (Object.keys(localScoreChanges).length === 0) {
+      showToast("No changes to save", "info");
+      return;
+    }
+
+    setUpdating(true);
+
+    try {
+      const result = {};
+      Object.entries(localScoreChanges).forEach(([questionIndex, data]) => {
+        result[questionIndex] = {
+          score: data.score,
+          feedback: data.feedback,
+        };
+      });
+
+      const response = await apiCall.patch(
+        `/exams/results/edit-score/${submissionInfo.student_exam_id}`,
+        { result }
+      );
+
+      if (response.status === 200) {
+        setLocalScoreChanges({});
+
+        dispatch(newFetchStudentResult({ examId, studentId }));
+
+        showToast("Scores updated successfully!", "success");
+      }
+    } catch (error) {
+      console.error("Error updating scores:", error);
+      showToast(
+        error.response?.data?.message || "Failed to update scores",
+        "error"
+      );
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const showToast = (message, severity = "info") => {
     setToast({ open: true, message, severity });
   };
@@ -195,9 +295,9 @@ const StudentResultPage = () => {
     setToast({ open: false, message: "", severity: "info" });
   };
 
-  // Generate pagination array for display
+  // Generate pagination
   const generatePagination = () => {
-    const visiblePageCount = 5;
+    const visiblePageCount = 7;
     let startPage = Math.max(
       0,
       Math.min(
@@ -213,150 +313,98 @@ const StudentResultPage = () => {
     );
   };
 
-  const formatBoldText = (text) => {
-    if (!text || typeof text !== "string") return text;
-    return text.replace(/\*([^*]+)\*/g, "**$1**");
-  };
+  const renderScoreEditor = (questionId) => {
+    const currentQuestion = questions[currentQuestionIndex] || {};
 
-  // Current question and its result
-  const currentQuestion = questions[currentQuestionIndex] || {};
-  const currentAnswerScore =
-    studentResult.submissionInfo.grading_status === "completed"
-      ? results.details[currentQuestionIndex]?.[1]?.score || 0
-      : results.details.question_scores?.[currentQuestionIndex] || 0;
-  const questionResult = results;
-  const paginationPages = generatePagination();
+    // Check if there's a local change for this question
+    const localChange = localScoreChanges[questionId];
+    const currentAnswerScore = localChange
+      ? localChange.score
+      : details[questionId]?.score || 0;
 
-  // Helper function to parse score breakdown from feedback string
-  const parseScoreBreakdown = (feedbackStr) => {
-    if (!feedbackStr || typeof feedbackStr !== "string") return null;
-
-    const scoreBreakdownMatch = feedbackStr.match(
-      /Score Breakdown:([\s\S]*?)(?:$|(?=\n\n))/
-    );
-    if (!scoreBreakdownMatch) return null;
-
-    const scoreBreakdownText = scoreBreakdownMatch[1].trim();
-    const criteriaLines = scoreBreakdownText
-      .split("\n")
-      .filter((line) => line.trim().startsWith("Criterion"));
-
-    if (criteriaLines.length === 0) return null;
-
-    return criteriaLines
-      .map((line, index) => {
-        const criterionMatch = line.match(
-          /Criterion (\d+) - (.*?) - (\d+\.\d+)\/(\d+\.\d+)/
-        );
-        if (!criterionMatch) return null;
-
-        return {
-          criterionNumber: criterionMatch[1],
-          criterionText: criterionMatch[2],
-          scoreObtained: criterionMatch[3],
-          maxScore: criterionMatch[4],
-        };
-      })
-      .filter(Boolean);
-  };
-
-  // Extract general feedback
-  const extractGeneralFeedback = (feedbackStr) => {
-    if (!feedbackStr || typeof feedbackStr !== "string") return "";
-    const parts = feedbackStr.split(/Model Answer:[\s\S]*?(?=\n\n|$)/i);
-    return parts[0].replace(/Score Breakdown:[\s\S]*/, "").trim();
-  };
-
-  // Helper function to render feedback
-  const renderFeedback = (feedback) => {
-    if (!feedback) return null;
-
-    if (typeof feedback === "object" && feedback !== null) {
-      return (
-        <div className="mt-6">
-          <h3 className="text-lg font-bold mb-2">Feedback</h3>
-          <div className="p-4 border border-gray-300 rounded bg-gray-50">
-            <table className="w-full">
-              <tbody>
-                {Object.entries(feedback).map(([key, value]) => (
-                  <tr key={key} className="border-b last:border-b-0">
-                    <td className="py-2 pr-4 font-medium">{key}:</td>
-                    <td className="py-2">
-                      <CardFormattedText text={value} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-
-    const scoreBreakdown = parseScoreBreakdown(feedback);
-    let generalFeedback = extractGeneralFeedback(feedback);
-    generalFeedback = formatBoldText(generalFeedback);
+    const isEditing = editingScore === currentQuestionIndex;
 
     return (
-      <div className="mt-6">
-        <h3 className="text-lg font-bold mb-2">Feedback</h3>
-        <div className="p-4 border border-gray-300 rounded bg-gray-50">
-          <ReactMarkdown>{generalFeedback}</ReactMarkdown>
+      <div className="flex items-center">
+        <span className="text-lg font-medium">Score:</span>
 
-          {scoreBreakdown && scoreBreakdown.length > 0 && (
-            <div className="mt-4">
-              <h4 className="font-bold mb-2">Score Breakdown:</h4>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="p-2 text-left border border-gray-300">
-                        Criteria No
-                      </th>
-                      <th className="p-2 text-left border border-gray-300">
-                        Criteria
-                      </th>
-                      <th className="p-2 text-center border border-gray-300">
-                        Marks Obtained
-                      </th>
-                      <th className="p-2 text-center border border-gray-300">
-                        Max Marks
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scoreBreakdown.map((criterion, index) => (
-                      <tr key={index} className="border-b border-gray-200">
-                        <td className="p-2 border border-gray-300">
-                          {criterion.criterionNumber}
-                        </td>
-                        <td className="p-2 border border-gray-300">
-                          {criterion.criterionText}
-                        </td>
-                        <td className="p-2 text-center border border-gray-300">
-                          {criterion.scoreObtained}
-                        </td>
-                        <td className="p-2 text-center border border-gray-300">
-                          {criterion.maxScore}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
+        {isEditing ? (
+          <div className="flex items-center gap-2">
+            <Input
+              className="!w-[80px]"
+              type="number"
+              min="0"
+              max={currentQuestion.score || 0}
+              step="0.5"
+              value={tempScore}
+              onChange={(e) => setTempScore(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  saveScoreEdit(currentQuestion.id);
+                }
+                if (e.key === "Escape") cancelScoreEdit();
+              }}
+              autoFocus
+            />
+            <span className="text-gray-500">
+              / {currentQuestion.score || 0}
+            </span>
+            <button
+              onClick={() => {
+                saveScoreEdit(currentQuestion.id);
+                // console.log(localScoreChanges)
+              }}
+              className="p-1 text-green-600 hover:bg-green-100 rounded"
+            >
+              <MdSave size={18} />
+            </button>
+            <button
+              onClick={cancelScoreEdit}
+              className="p-1 text-red-600 hover:bg-red-100 rounded"
+            >
+              <MdUndo size={18} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-lg font-bold ${
+                currentAnswerScore === currentQuestion.score
+                  ? "text-green-600"
+                  : currentAnswerScore > 0
+                  ? "text-orange-600"
+                  : "text-red-600"
+              } ${localChange ? "bg-yellow-100 px-2 py-1 rounded" : ""}`}
+            >
+              {currentAnswerScore}
+            </span>
+            <span className="text-gray-500">
+              / {currentQuestion.score || 0}
+            </span>
+            {localChange && (
+              <span className="text-xs text-yellow-600 ml-1">(Modified)</span>
+            )}
+            {!submissionInfo.is_approved && (
+              <button
+                onClick={() => startEditingScore(currentQuestionIndex)}
+                className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+              >
+                <MdEdit size={18} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   };
 
-  // Helper function to render the student's answer and feedback
   const renderAnswerAndFeedback = (question, result, index) => {
-    if (!question || !result.details[index]) return null;
+    if (!question || !details[index]) return null;
+    const currentAnswerScore = details[index]?.score || 0;
 
-    const answerDetails = result.details[index][1];
+    const answerDetails = details[index];
     const userAnswer = userAnswers[question.id];
+    // console.log({ userAnswer });
 
     switch (question.type) {
       case "multiple-choice": {
@@ -368,9 +416,14 @@ const StudentResultPage = () => {
           <div className="">
             <h3 className="text-lg font-bold mb-4">Options</h3>
             <div className="space-y-4">
-              {question.options.map((option) => {
+              {question.options.map((option, index) => {
                 const isCorrect = option.isCorrect;
-                const isUserSelected = option.id === userAnswer;
+                const isUserSelected =
+                  typeof userAnswer === "string"
+                    ? option.text === userAnswer
+                    : Array.isArray(userAnswer)
+                    ? userAnswer.includes(option.text)
+                    : false;
 
                 let bgColor = "bg-white";
                 if (isUserSelected) {
@@ -408,11 +461,13 @@ const StudentResultPage = () => {
                         (Correct Answer)
                       </span>
                     )}
+                    {/* {!isUserSelected && <p className="">User did not select any option</p>} */}
                   </div>
                 );
               })}
             </div>
-            {renderFeedback(answerDetails.feedback)}
+            {/* {RenderFeedback(answerDetails.feedback)} */}
+            <RenderFeedback feedback={answerDetails.feedback} />
           </div>
         );
       }
@@ -438,7 +493,8 @@ const StudentResultPage = () => {
                     : `Incorrect. Correct answer: ${question.modelAnswer}`}
                 </p>
               </div>
-              {renderFeedback(answerDetails.feedback)}
+              {/* {RenderFeedback(answerDetails.feedback)} */}
+              <RenderFeedback feedback={answerDetails.feedback} />
             </div>
           </div>
         );
@@ -456,14 +512,15 @@ const StudentResultPage = () => {
               )}
             </div>
             <div className="mt-4">
-              <h3 className="text-lg font-bold mb-2">Model Answer</h3>
+              <h3 className="text-lg font-bold mb-2">Correct Answer</h3>
               <div className="p-4 border border-gray-300 rounded bg-blue-50 min-h-32 mb-4">
                 <ReactMarkdown>
-                  {question.modelAnswer || "No model answer provided"}
+                  {question.modelAnswer || "No correct answer provided"}
                 </ReactMarkdown>
               </div>
             </div>
-            {renderFeedback(answerDetails.feedback)}
+            {/* {RenderFeedback({feedback: answerDetails.feedback})} */}
+            <RenderFeedback feedback={answerDetails.feedback} />
           </div>
         );
       }
@@ -473,155 +530,195 @@ const StudentResultPage = () => {
     }
   };
 
-  // Back to dashboard button handler
-  const handleBackToDashboard = () => {
-    if (hasUnsavedChanges) {
-      const confirmLeave = window.confirm(
-        "You have unsaved changes. Are you sure you want to leave?"
-      );
-      if (!confirmLeave) return;
-    }
-    navigate("/dashboard");
-  };
+  const currentQuestion = questions[currentQuestionIndex] || {};
+  const paginationPages = generatePagination();
 
   return (
     <div className="flex-1 overflow-auto flex flex-col h-full">
       <div className="px-6 py-4 flex-grow">
         {submissionInfo.is_approved == true && (
           <div
-            className={`px-3 mb-4 py-1 rounded-full text-sm text-center font-medium bg-blue-100 text-blue-500`}
+            className={`px-3 mb-4 py-1 rounded-full md:text-sm text-xs text-center font-medium bg-blue-100 text-blue-500`}
           >
             This Exam has been published, it cannot be edited again
           </div>
         )}
-        <div className="flex justify-between items-start mb-6">
+        {/* Header with student info and controls */}
+        <div className="flex flex-col lg:flex-row justify-between items-start mb-6">
+
           <div className="">
-            <h1 className="text-2xl font-semibold text-gray-900">
-              {results.student.name}
-              <br />{" "}
-            </h1>
+            <div className="flex gap-4">
+              <button
+                onClick={() => navigate(-1)}
+                className="rounded-full w-8 hover:bg-[#EAECF0] bg-transparent flex items-center justify-center hover:text-primary-main"
+              >
+                <IoChevronBack size={24} />
+              </button>
+              <h1 className="text-2xl font-semibold text-gray-900">
+                {results.student.name}
+                <br />{" "}
+              </h1>
+            </div>
             <p className="text-gray-500">{results.student.matricnumber}</p>
           </div>
-          <div className="flex items-center gap-4">
-            <div
-              className={`px-4 py-2 rounded-md flex border items-center ${
-                hasUnsavedChanges ? "border-orange-300 bg-orange-50" : ""
-              }`}
-            >
-              <span className="text-gray-600 mr-2">Score:</span>
-              <span
-                className={
-                  hasUnsavedChanges ? "text-orange-600 font-semibold" : ""
-                }
-              >
-                {parseFloat(totalScore).toFixed(2)}/{parseFloat(maxPossibleScore).toFixed(2)}
-              </span>
-              {hasUnsavedChanges && (
-                <span className="ml-2 text-xs text-orange-600">*</span>
-              )}
+
+          <TooltipProvider>
+            <div className="mt-4 max-md:w-full">
+              <div className="flex flex-col md:flex-row w-full items-start md:items-center gap-4">
+                <div
+                  className={`px-4 py-2 rounded-md w-full flex border items-center justify-between`}
+                >
+                  <span>
+                    <span className="text-gray-600 mr-2">Tab Leave Count:</span>
+                    <span className="mr-2">
+                      {submissionInfo.tab_switch_count}
+                    </span>
+                  </span>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <FiHelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      className="bg-gray-900 text-white p-3 rounded-lg max-w-xs"
+                    >
+                      <p className="font-medium mb-1">Tab Leave Count</p>
+                      <p className="text-sm">
+                        This is the number of times a student left their exam
+                        page during the examination. <br />
+                        <strong>Note:</strong> The exams automatically submits
+                        once the student leaves the tab three (3) times.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <div className="flex gap-3">
+                  <div
+                    className={`px-4 py-2 rounded-md flex border items-center ${
+                      hasUnsavedChanges ? "border-orange-300 bg-orange-50" : ""
+                    }`}
+                  >
+                    <span className="text-gray-600 mr-2">Score:</span>
+                    <span
+                      className={
+                        hasUnsavedChanges ? "text-orange-600 font-semibold" : ""
+                      }
+                    >
+                      {parseFloat(totalScore).toFixed(1)}/
+                      {parseFloat(maxPossibleScore).toFixed(1)}
+                    </span>
+                    {hasUnsavedChanges && (
+                      <span className="ml-2 text-xs text-orange-600">*</span>
+                    )}
+                  </div>
+                  <CustomButton
+                    className={`w-[150px] ${
+                      hasUnsavedChanges
+                        ? "bg-orange-500 hover:bg-orange-600"
+                        : ""
+                    }`}
+                    onClick={handleUpdateScore}
+                    disabled={!hasUnsavedChanges}
+                    loading={updating}
+                  >
+                    {hasUnsavedChanges ? "Save Changes" : "Update Score"}
+                  </CustomButton>
+                </div>
+              </div>
             </div>
-            <CustomButton
-              className={`w-[150px] ${
-                hasUnsavedChanges ? "bg-orange-500 hover:bg-orange-600" : ""
-              }`}
-              onClick={handleUpdateScore}
-              disabled={!hasUnsavedChanges}
-              loading={updating}
-            >
-              {hasUnsavedChanges ? "Save Changes" : "Update Score"}
-            </CustomButton>
-          </div>
+          </TooltipProvider>
         </div>
 
-        <div className="border-t pt-4">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-bold">
-              Question {currentQuestionIndex + 1}
-            </h2>
-            <div className="flex items-center">
-              <p className="text-xl font-bold mr-4">Mark(s)</p>
-              <Input
-                topClassName="!w-max"
-                className="!w-[80px]"
-                type="number"
-                disabled={submissionInfo.is_approved == true}
-                min="0"
-                max={currentQuestion.score || 0}
-                step="0.5"
-                value={currentAnswerScore}
-                onChange={(e) =>
-                  handleQuestionScoreUpdate(
-                    currentQuestionIndex,
-                    Number.parseFloat(e.target.value) || 0
-                  )
-                }
-              />
-              <span className="ml-2 text-gray-500">
-                / {currentQuestion.score || 0}
-              </span>
+        {/* Performance overview */}
+        {/* {renderPerformanceCard()} */}
+
+        {/* Question content */}
+        <div className="border-t pt-6">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h2 className="text-xl font-bold mb-2">
+                Question {currentQuestionIndex + 1} of {totalQuestions}
+              </h2>
+              <div className="text-sm text-gray-500 mb-4">
+                {currentQuestion.type && (
+                  <span className="inline-block bg-gray-100 px-2 py-1 rounded text-xs font-medium mr-2">
+                    {currentQuestion.type.replace("-", " ").toUpperCase()}
+                  </span>
+                )}
+                Max Score: {currentQuestion.score || 0} points
+              </div>
             </div>
+
+            {renderScoreEditor(currentQuestion.id)}
           </div>
 
           <div className="mb-8">
-            <p className="mb-4">{currentQuestion.text}</p>
+            <div className="mb-8">
+              <div className="prose max-w-none">
+                <ReactMarkdown>{currentQuestion.text}</ReactMarkdown>
+              </div>
+            </div>
+
+            {renderAnswerAndFeedback(
+              currentQuestion,
+              results,
+              currentQuestion.id
+            )}
           </div>
-
-          {renderAnswerAndFeedback(
-            currentQuestion,
-            questionResult,
-            currentQuestionIndex
-          )}
         </div>
-      </div>
 
-      {/* Footer Navigation */}
-      <div className="border-t p-4 flex justify-between items-center mt-auto">
-        <button
-          className={`flex items-center font-medium ${
-            currentQuestionIndex > 0 ? "text-[#1836B2]" : "text-gray-400"
-          }`}
-          onClick={goToPreviousQuestion}
-          disabled={currentQuestionIndex === 0}
-        >
-          <ChevronLeft className="mr-1" />
-          Previous
-        </button>
-
-        <div className="flex items-center space-x-2">
-          {paginationPages.map((page) => (
+        {/* Enhanced Footer Navigation */}
+        <div className="bg-white p-4 pt-0">
+          {/* Question pagination with status indicators */}
+          <div className="border-t p-4 flex justify-between items-center mt-auto">
             <button
-              key={page}
-              className={`w-8 h-8 flex items-center justify-center rounded-md ${
-                page === currentQuestionIndex
-                  ? "bg-[#1836B2] text-white"
-                  : "bg-gray-200 text-gray-700"
+              className={`flex items-center font-medium ${
+                currentQuestionIndex > 0 ? "text-[#1836B2]" : "text-gray-400"
               }`}
-              onClick={() => goToQuestion(page)}
+              onClick={goToPreviousQuestion}
+              disabled={currentQuestionIndex === 0}
             >
-              {page + 1}
+              <ChevronLeft className="mr-1" />
+              Previous
             </button>
-          ))}
-        </div>
 
-        <button
-          className={`flex items-center font-medium ${
-            currentQuestionIndex < totalQuestions - 1
-              ? "text-[#1836B2]"
-              : "text-gray-400"
-          }`}
-          onClick={goToNextQuestion}
-          disabled={currentQuestionIndex === totalQuestions - 1}
-        >
-          Next
-          <ChevronRight className="ml-1" />
-        </button>
+            <div className="flex items-center space-x-2">
+              {paginationPages.map((page) => (
+                <button
+                  key={page}
+                  className={`w-8 h-8 flex items-center justify-center rounded-md ${
+                    page === currentQuestionIndex
+                      ? "bg-[#1836B2] text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                  onClick={() => goToQuestion(page)}
+                >
+                  {page + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              className={`flex items-center font-medium ${
+                currentQuestionIndex < totalQuestions - 1
+                  ? "text-[#1836B2]"
+                  : "text-gray-400"
+              }`}
+              onClick={goToNextQuestion}
+              disabled={currentQuestionIndex === totalQuestions - 1}
+            >
+              Next
+              <ChevronRight className="ml-1" />
+            </button>
+          </div>
+        </div>
+        <Toast
+          open={toast.open}
+          message={toast.message}
+          severity={toast.severity}
+          onClose={closeToast}
+        />
       </div>
-      <Toast
-        open={toast.open}
-        message={toast.message}
-        severity={toast.severity}
-        onClose={closeToast}
-      />
     </div>
   );
 };

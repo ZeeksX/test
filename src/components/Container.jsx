@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { AvatarFallback, AvatarImage } from "./ui/Avatar";
-import Avatar from "@mui/material/Avatar";
+// import { Avatar, AvatarFallback, AvatarImage } from "./ui/Avatar";
 import { useAuth } from "./Auth.jsx";
 import StudentContainer from "./students/Container.jsx";
 import LecturerContainer from "./lecturer/Container.jsx";
@@ -13,11 +12,12 @@ import { profileImageDefault } from "../utils/images.js";
 import axios from "axios";
 import { Loader } from "./ui/Loader.jsx";
 import { fetchUserDetails } from "../features/reducers/userSlice.jsx";
+import { useNavigate } from "react-router";
 
 const Container = () => {
-  const [src, setSrc] = useState("");
   const [studentGroup, setStudentGroup] = useState([]);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const hasPostedCourse = useRef(false);
 
@@ -25,7 +25,6 @@ const Container = () => {
     (state) => state.users
   );
 
-  // Post course details on mount if userData exists in localStorage
   useEffect(() => {
     const postCourseDetails = async () => {
       try {
@@ -40,12 +39,9 @@ const Container = () => {
 
         const parsedData = JSON.parse(storedData);
 
-        // Only proceed if it's a teacher with form data
         if (parsedData.role === "teacher" && parsedData.form) {
-          // Mark as being processed to prevent duplicate requests
           hasPostedCourse.current = true;
 
-          // Ensure you correctly map the fields from parsedData.form
           const { course: course_title, code: course_code } = parsedData.form;
 
           const response = await fetch(`${SERVER_URL}/exams/courses/`, {
@@ -58,15 +54,16 @@ const Container = () => {
           });
 
           if (!response.ok) {
-            // Reset the flag if request failed so it can be retried
             hasPostedCourse.current = false;
-            // If response is not OK, try to get the text response for debugging
             const errorText = await response.text();
             throw new Error(`Server Error: ${errorText}`);
           }
 
           const data = await response.json();
-          console.log("Course created successfully:", data);
+          navigate(`/course/${data.id}/published`);
+          localStorage.removeItem("userData");
+        } else if (parsedData.role === "student") {
+          dispatch(setShowJoinStudentGroupDialog(true))
           localStorage.removeItem("userData");
         } else {
           localStorage.removeItem("userData");
@@ -100,39 +97,50 @@ const Container = () => {
 
   return (
     <div className="w-full h-full p-5 overflow-auto bg-[#F9F9F9]">
-      <div className="flex items-center justify-start gap-5 mb-5">
-        <Avatar
-          sx={{ bgcolor: "blue" }}
-          className="!w-[60px] !h-[60px] rounded-full"
-          alt="Profile Image"
-          src={user.profile_image ? user.profile_image : profileImageDefault}
-        >
-          {user?.last_name ? user?.last_name.charAt(0) : "A"}
-        </Avatar>
-        <div className="flex flex-row justify-between h-[60px] w-full">
-          <div className="flex flex-col justify-between">
-            <h3 className="text-2xl font-medium">
+      <div className="flex items-center justify-start gap-5 mb-5 w-full">
+        <div className="flex flex-1 justify-start gap-2">
+          <div
+            // sx={{ bgcolor: "blue" }}
+            className="!w-[60px] !h-[60px] rounded-full bg-primary-main"
+            alt="Profile Image"
+          >
+            <img
+              className="rounded-full w-full h-full object-cover"
+              src={
+                user.profile_image ? user.profile_image : profileImageDefault
+              }
+              alt=""
+            />
+            {/* {user?.last_name ? user?.last_name.charAt(0) : "A"} */}
+          </div>
+          <div className="flex flex-col">
+            <h3 className="text-lg md:text-2xl font-medium">
               Welcome, {userDetails?.title} {user?.last_name}
             </h3>
             <p className="text-base text-[#858585] capitalize">{user?.role}</p>
           </div>
-          <div
-            className={
-              studentGroup.length === 0
-                ? "hidden"
-                : "flex items-center justify-center"
-            }
-          >
+        </div>
+        {/* <div className="flex h-[60px] w-max"> */}
+        {user?.role === "student" && (
+          <div>
             <CustomButton
               onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
-              className="gap-2 !font-medium !text-sm"
+              className="hidden container:flex gap-3  items-center"
               size="lg"
             >
               Join Student Group
               <FaPlus />
             </CustomButton>
+            <CustomButton
+              onClick={() => dispatch(setShowJoinStudentGroupDialog(true))}
+              className="block container:hidden gap-3 h-full"
+              size="lg"
+            >
+              <FaPlus />
+            </CustomButton>
           </div>
-        </div>
+        )}
+        {/* </div> */}
       </div>
       {user?.role === "teacher" ? (
         <LecturerContainer />

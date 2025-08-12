@@ -119,7 +119,6 @@ const examRoomSlice = createSlice({
   initialState: {
     allStudentGroups: [],
     teacherStudentGroups: [],
-    // Remove allStudentStudentGroups if no longer needed
     studentStudentGroups: [],
     studentGroup: {
       id: 0,
@@ -148,7 +147,11 @@ const examRoomSlice = createSlice({
     removeStudentLoading: false,
     removeStudentError: null,
   },
-  reducers: {},
+  reducers: {
+    createLocalStudentGroup: (state, action) => {
+      state.teacherStudentGroups.push(action.payload);
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchStudentGroups.pending, (state) => {
@@ -327,7 +330,7 @@ const examRoomSlice = createSlice({
         state.removeStudentLoading = false;
         const user = JSON.parse(localStorage.getItem("user"));
         const studentId = user.studentId;
-        
+
         const { groupId } = action.payload;
         const updateGroup = (group) => ({
           ...group,
@@ -355,6 +358,8 @@ const examRoomSlice = createSlice({
       });
   },
 });
+
+export const { createLocalStudentGroup } = examRoomSlice.actions;
 
 export const selectStudentGroupById = (state, id) => {
   return (

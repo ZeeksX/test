@@ -1,7 +1,7 @@
 import emptyFolderImg from "../assets/Folder.png";
 import arrow from "/Vector.svg";
-import lightLogoShort from "/logo_light_short.svg";
-import darkLogoLong from "/logo_dark_long.svg";
+import lightLogoShort from "/hex.svg";
+import darkLogoLong from "/long_hex.svg";
 import Rectangle4221 from "/Rectangle_4221.svg";
 import Rectangle4223 from "/Rectangle_4223.png";
 import Rectangle4225 from "/Rectangle_4225.png";
@@ -10,13 +10,13 @@ import instagramLogo from "../assets/instagram.webp";
 import githubLogo from "../assets/github.png";
 import twitterLogo from "../assets/twitter.webp";
 import figmaLogo from "../assets/figma.png";
-import logoMobile from "../assets/logo.webp";
+import logoMobile from "../assets/logo_icon.svg";
 import featuredIcon from "../assets/Featured icon.png";
 import dangerImg from "../assets/Danger.svg";
 import iconPdf from "../assets/File type icon-pdf.svg";
 import iconDocx from "../assets/File type icon-docx.svg";
 import iconPptx from "../assets/File type icon-pptx.svg";
-import bannerTransparent from "../assets/banner-trans.webp";
+import bannerTransparent from "../assets/logo_main.svg";
 import illustration1 from "../assets/illustration-1.svg";
 import illustration2 from "../assets/illustration-2.png";
 import illustration3 from "../assets/illustration-3.png";
@@ -42,6 +42,17 @@ import twit from "../assets/twitter.webp";
 import faceb from "../assets/face.webp";
 import yout from "../assets/youtube.webp";
 import link from "../assets/linkedin.webp";
+import new_landing_img from "../assets/landing_img.webp";
+import new_landing_img_sm from "../assets/landing_img_sm.webp";
+import Ourwhy from "/Our-Why.svg?url";
+import icon1 from "../assets/icon1.svg";
+import icon2 from "../assets/icon2.svg";
+import icon3 from "../assets/icon3.svg";
+import CTAImageOne from "../assets/made-1.webp";
+import CTAImageTwo from "../assets/cta-image-two.webp";
+import star from "../assets/star.svg";
+import featuredIn1 from "../assets/featuredIn1.png";
+import EdugistLogo from "../assets/Edugist-logo.png"
 
 export {
   emptyFolderImg,
@@ -88,4 +99,15 @@ export {
   faceb,
   yout,
   link,
+  new_landing_img,
+  new_landing_img_sm,
+  Ourwhy,
+  icon1,
+  icon2,
+  icon3,
+  CTAImageOne, 
+  CTAImageTwo, 
+  star,
+  featuredIn1,
+  EdugistLogo
 };

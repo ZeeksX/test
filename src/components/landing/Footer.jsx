@@ -2,7 +2,7 @@
 // import { Link } from "react-router-dom";
 import { GrLinkedinOption } from "react-icons/gr";
 // import { TiSocialFacebookCircular } from "react-icons/ti";
-import { footerLogo } from "../utils/images";
+import { footerLogo } from "../../utils/images";
 import { FaFacebookF, FaXTwitter } from "react-icons/fa6";
 import { BsInstagram } from "react-icons/bs";
 

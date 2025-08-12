@@ -1,49 +1,42 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar";
 import { bannerTransparent, profileImageDefault } from "../../utils/images.js";
-import { FiBell, FiSettings } from "react-icons/fi";
+import { FiChevronDown, FiCreditCard, FiSettings } from "react-icons/fi";
 import { useAuth } from "../Auth.jsx";
 import DensityMediumIcon from "@mui/icons-material/DensityMedium";
 import MobileSidebar from "../lecturer/MobileSidebar.jsx";
 import StudentMobileSidebar from "../students/StudentMobileSidebar.jsx";
-import { IoChevronBackOutline, IoChevronForwardOutline } from "react-icons/io5";
 import Dropdown from "./Dropdown.jsx";
 import { useNavigate } from "react-router-dom";
 import CustomButton from "../ui/Button.jsx";
+import { DropdownMenu, DropdownMenuContent } from "../ui/Dropdown.jsx";
+import { setShowPurchaseCreditDialog } from "../../features/reducers/uiSlice.jsx";
+import { useDispatch } from "react-redux";
+import { PurchaseCreditDialog } from "./PurchaseCreditDialog.jsx";
+import { useSelector } from "react-redux";
+import { Loader } from "../ui/Loader.jsx";
+import { fetchUserCredits } from "../../features/reducers/userSlice.jsx";
 
 const DynamicTopNav = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showDropDown, setShowDropDown] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const toggleSidebar = () => setShowSidebar((prev) => !prev);
-  const [canGoForward, setCanGoForward] = useState(false);
+
+  const { userCredits: credits, getCreditsLoading } = useSelector(
+    (state) => state.users
+  );
 
   useEffect(() => {
-    const updateForwardState = () => {
-      const currentLength = window.history.length;
-      const currentState = window.history.state;
+    dispatch(fetchUserCredits());
+  }, [dispatch]);
 
-      setCanGoForward(window.history.length > 1);
-    };
+  const [isOpen, setIsOpen] = useState(false);
 
-    updateForwardState();
-
-    window.addEventListener("popstate", updateForwardState);
-
-    return () => {
-      window.removeEventListener("popstate", updateForwardState);
-    };
-  }, []);
-
-  const handleBack = () => {
-    window.history.back();
-  };
-
-  const handleForward = () => {
-    if (canGoForward) {
-      window.history.forward();
-    }
+  const toggleDropdown = () => {
+    setIsOpen((prev) => !prev);
   };
 
   const handleClick = () => setShowDropDown((prev) => !prev);
@@ -52,11 +45,15 @@ const DynamicTopNav = () => {
     navigate("/settings");
   };
 
+  if (getCreditsLoading) {
+    return <Loader />;
+  }
+
   return (
     <>
       <div
         className={
-          "fixed top-0 z-10 w-full flex flex-row items-center justify-between h-16 px-4 border-b-[4px] border-b-border-main bg-white"
+          "fixed top-0 z-10 w-full flex flex-row items-center justify-between h-16 px-4 border-b-[4px] border-b-border-main bg-white max-w-[1440px]"
         }
       >
         <div className="flex">
@@ -65,10 +62,11 @@ const DynamicTopNav = () => {
               <DensityMediumIcon onClick={toggleSidebar} />
             </div>
             <img
-              className="w-36 max-[350px]:w-28 lg:w-48"
+              className="w-36 max-[350px]:w-28 lg:w-48 pl-2 md:pl-4"
               src={bannerTransparent}
               alt="Acad AI logo"
             />
+            {/* <Logo /> */}
           </div>
           {/* <div className="flex ml-6">
             <CustomButton
@@ -87,7 +85,46 @@ const DynamicTopNav = () => {
             </CustomButton>
           </div> */}
         </div>
-        <div className="flex items-center justify-start gap-6">
+        <div className="flex items-center justify-start gap-2 md:gap-6">
+          {user.role === "teacher" && (
+            <DropdownMenu>
+              {/* <DropdownMenuTrigger> */}
+              <button
+                // variant="outline"
+                onClick={toggleDropdown}
+                className="px-4 py-2 rounded flex items-center gap-2 border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+              >
+                <FiCreditCard className="w-4 h-4" />
+                <span className="font-medium text-sm md:block hidden">{credits} Credit(s)</span>
+                <FiChevronDown className="w-4 h-4" />
+              </button>
+              {/* </DropdownMenuTrigger> */}
+              <DropdownMenuContent
+                align="start"
+                className="w-[250px] p-2"
+                open={isOpen}
+                setOpen={setIsOpen}
+              >
+                <div className="px-3 py-2 text-sm text-gray-600">
+                  Current Balance:{" "}
+                  <span className="font-semibold text-primabg-primary-main">
+                    {credits} Credit(s)
+                  </span>
+                </div>
+                <CustomButton
+                  // variant="clear"
+                  onClick={() => {
+                    toggleDropdown();
+                    dispatch(setShowPurchaseCreditDialog(true));
+                  }}
+                  className="cursor-pointer w-full mt-2"
+                >
+                  <FiCreditCard className="w-4 h-4 mr-2" />
+                  Purchase More Credits
+                </CustomButton>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           {/* <FiBell size={20} className="cursor-pointer max-md:hidden" /> */}
           <FiSettings
             size={20}
@@ -113,6 +150,12 @@ const DynamicTopNav = () => {
             }}
           >
             <Avatar>
+              <div className="relative">
+                <Dropdown
+                  showDropDown={showDropDown}
+                  setShowDropDown={setShowDropDown}
+                />
+              </div>
               {profileImageDefault ? (
                 <AvatarImage src={profileImageDefault} alt="Profile" />
               ) : (
@@ -135,7 +178,8 @@ const DynamicTopNav = () => {
           toggleSidebar={toggleSidebar}
         />
       ) : null}
-      <Dropdown showDropDown={showDropDown} setShowDropDown={setShowDropDown} />
+
+      <PurchaseCreditDialog />
     </>
   );
 };

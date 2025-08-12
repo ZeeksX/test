@@ -6,8 +6,14 @@ import { Label } from "../ui/Label";
 import { Badge } from "../ui/Badge";
 import { formatDate } from "../modals/UIUtilities";
 import { useState } from "react";
+import Toast from "../modals/Toast";
 
 const CourseExamPreview = ({ examData, setPreview, updateExamData }) => {
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
   const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
 
@@ -35,6 +41,12 @@ const CourseExamPreview = ({ examData, setPreview, updateExamData }) => {
     const updatedQuestions = examData.questions.filter(
       (q) => q.id !== questionId
     );
+
+    if (examData.questions.length < 2) {
+      showToast("You need to have at least one question", "error");
+      return;
+    }
+
     updateExamData({ questions: updatedQuestions });
   };
 
@@ -53,6 +65,14 @@ const CourseExamPreview = ({ examData, setPreview, updateExamData }) => {
       ...prev,
       options: updatedOptions,
     }));
+  };
+
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
+  const closeToast = () => {
+    setToast({ open: false, message: "", severity: "info" });
   };
 
   return (
@@ -129,6 +149,12 @@ const CourseExamPreview = ({ examData, setPreview, updateExamData }) => {
           <p className="">You have not created any questions</p>
         </div>
       )}
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={closeToast}
+      />
     </div>
   );
 };

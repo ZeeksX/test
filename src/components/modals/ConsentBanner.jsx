@@ -5,7 +5,7 @@ const ConsentBanner = () => {
 
   useEffect(() => {
     if (consent === "accepted") {
-      loadGTM();
+      loadGA();
     }
   }, [consent]);
 
@@ -19,18 +19,17 @@ const ConsentBanner = () => {
     setConsent("rejected");
   };
 
-  const loadGTM = () => {
-    const script = document.createElement("script");
-    script.src = "https://www.googletagmanager.com/gtm.js?id=GT-MQXVVVMB";
+  const loadGA = () => {
+    // Add GA4 script
+    const script = document.createElement('script');
     script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-045J2PF48F';
     document.head.appendChild(script);
 
-    const noscript = document.createElement("noscript");
-    noscript.innerHTML = `
-      <iframe src="https://www.googletagmanager.com/ns.html?id=GT-MQXVVVMB"
-              height="0" width="0" style="display:none;visibility:hidden"></iframe>
-    `;
-    document.body.appendChild(noscript);
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-045J2PF48F');
   };
 
   if (consent) return null;

@@ -11,10 +11,12 @@ import {
 } from "../ui/Select";
 import { Checkbox } from "../ui/Checkbox";
 import {
+  FiAlertCircle,
   FiCheck,
   FiChevronDown,
   FiChevronRight,
   FiCopy,
+  FiHelpCircle,
   FiMinus,
   FiPlus,
   FiTrash,
@@ -27,6 +29,15 @@ import { iconDocx, iconPdf, iconPptx } from "../../utils/images";
 import apiCall from "../../utils/apiCall";
 import Toast from "../modals/Toast";
 import { RadioGroup } from "../ui/Radio";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/Tooltip";
+import { useDispatch } from "react-redux";
+import { fetchUserCredits } from "../../features/reducers/userSlice";
+import { mapQuestions, unMapQuestion } from "../modals/UIUtilities";
 
 export const ManualCreateExamQuestion = ({
   examData,
@@ -40,7 +51,7 @@ export const ManualCreateExamQuestion = ({
   const [isOpen, setIsOpen] = useState();
   const [questions, setQuestions] = useState([
     {
-      id: "q1",
+      id: "1",
       type: "theory",
       text: "",
       score: 2,
@@ -55,11 +66,11 @@ export const ManualCreateExamQuestion = ({
 
   useEffect(() => {
     if (examData.questions && examData.questions.length > 0) {
-      setQuestions([...examData.questions]);
+      setQuestions([...mapQuestions(examData.questions)]);
     } else {
       setQuestions([
         {
-          id: "q1",
+          id: "1",
           type: "theory",
           text: "",
           score: 2,
@@ -69,11 +80,13 @@ export const ManualCreateExamQuestion = ({
     }
   }, [examData.questions]);
 
+  // console.log(questions)
+
   const [activeQuestion, setActiveQuestion] = useState(0);
 
   const addQuestion = () => {
     const newQuestion = {
-      id: `q${questions.length + 1}`,
+      id: `${questions.length + 1}`,
       type: "theory",
       score: 2,
       text: "",
@@ -87,7 +100,7 @@ export const ManualCreateExamQuestion = ({
     const questionToDuplicate = questions[index];
     const duplicatedQuestion = {
       ...JSON.parse(JSON.stringify(questionToDuplicate)),
-      id: `q${questions.length + 1}`,
+      id: `${questions.length + 1}`,
     };
 
     // Update option IDs in the duplicated question if it has options
@@ -108,7 +121,7 @@ export const ManualCreateExamQuestion = ({
     if (questions.length === 1) {
       setQuestions([
         {
-          id: "q1",
+          id: "1",
           type: "theory",
           text: "",
           score: 2,
@@ -177,7 +190,6 @@ export const ManualCreateExamQuestion = ({
   const deleteOption = (questionIndex, optionIndex) => {
     const newQuestions = [...questions];
 
-    // Don't allow deleting if there are only 2 options left
     if (newQuestions[questionIndex].options.length <= 2) {
       return;
     }
@@ -193,9 +205,18 @@ export const ManualCreateExamQuestion = ({
   };
 
   const toggleOptionCorrect = (questionIndex, optionIndex) => {
-    const newQuestions = [...questions];
-    newQuestions[questionIndex].options[optionIndex].isCorrect =
-      !newQuestions[questionIndex].options[optionIndex].isCorrect;
+    const newQuestions = questions.map((q, idx) =>
+      idx === questionIndex
+        ? {
+            ...q,
+            options: q.options.map((option, idx2) => ({
+              ...option,
+              isCorrect: idx2 === optionIndex,
+            })),
+          }
+        : q
+    );
+
     setQuestions(newQuestions);
   };
 
@@ -252,7 +273,7 @@ export const ManualCreateExamQuestion = ({
         } else if (question.type === "theory" || question.type === "cloze") {
           if (!question.modelAnswer || question.modelAnswer.trim() === "") {
             validationErrors.push(
-              `Question ${questionNumber}: Model answer is required for ${question.type} questions`
+              `Question ${questionNumber}: Correct answer is required for ${question.type} questions`
             );
           }
         }
@@ -268,6 +289,12 @@ export const ManualCreateExamQuestion = ({
 
       const uniqueQuestionTypes = [...new Set(questions.map((q) => q.type))];
       const questionStyle = [style];
+
+      console.log({
+        questions: [...questions],
+        questionTypes: [uniqueQuestionTypes],
+        addQuestion: [...questionStyle],
+      })
 
       updateExamData({
         questions: [...questions],
@@ -289,7 +316,7 @@ export const ManualCreateExamQuestion = ({
 
   return (
     <div className="">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col md:flex-row justify-between items-start">
         <div className="mb-4">
           <Input
             name="name"
@@ -306,7 +333,7 @@ export const ManualCreateExamQuestion = ({
             className="text-gray-500 border-none !p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
-        <div className="flex justify-end mb-4 space-x-2">
+        <div className="flex justify-end mb-4 ml-auto space-x-2">
           <CustomButton variant="clear" onClick={setPreviousStep}>
             Previous
           </CustomButton>
@@ -315,10 +342,10 @@ export const ManualCreateExamQuestion = ({
           </CustomButton>
         </div>
       </div>
-      <div className="space-y-8 max-w-2xl mx-auto p-4 !pl-0">
+      <div className="space-y-8 max-w-2xl mx-auto p-4 !px-0">
         {questions.map((question, questionIndex) => (
           <div className="border p-4 rounded-md !relative" key={questionIndex}>
-            <CustomButton
+            {/* <CustomButton
               type="button"
               variant="clear"
               size="icon"
@@ -326,22 +353,12 @@ export const ManualCreateExamQuestion = ({
               className="!absolute top-0 left-full ml-2"
             >
               <FiMinus className="h-4 w-4" />
-            </CustomButton>
+            </CustomButton> */}
             <h2 className="mb-4 font-bold text-xl">
               Question {questionIndex + 1}
             </h2>
-            <Textarea
-              placeholder={`Enter question text`}
-              rows={3}
-              value={questions[questionIndex].text}
-              onChange={(e) =>
-                updateQuestionText(e.target.value, questionIndex)
-              }
-              required
-              className="w-full p-3 border-[1.5px] rounded-md outline-none placeholder:text-text-placeholder focus:outline-none focus:border-primary-main resize-none"
-            />
 
-            <div className="my-4 flex justify-between gap-4">
+            <div className="my-4 flex flex-col md:flex-row justify-between gap-4">
               <div className="flex-1">
                 <Label className="mb-1">Question Type</Label>
                 <Select
@@ -380,6 +397,18 @@ export const ManualCreateExamQuestion = ({
               </div>
             </div>
 
+            <Textarea
+              placeholder={`Enter question text`}
+              rows={3}
+              value={questions[questionIndex].text}
+              onChange={(e) =>
+                updateQuestionText(e.target.value, questionIndex)
+              }
+              required
+              maxLength={250}
+              className="w-full p-3 border-[1.5px] rounded-md outline-none placeholder:text-text-placeholder focus:outline-none focus:border-primary-main resize-none"
+            />
+
             {questions[questionIndex].type === "multiple-choice" && (
               <>
                 <p className="text-sm text-gray-500 mb-4">
@@ -406,7 +435,7 @@ export const ManualCreateExamQuestion = ({
                         onChange={(e) =>
                           updateOptionText(
                             e.target.value,
-                            activeQuestion,
+                            questionIndex,
                             optionIndex
                           )
                         }
@@ -439,7 +468,7 @@ export const ManualCreateExamQuestion = ({
             {questions[questionIndex].type === "cloze" && (
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-1">
-                  Model answer
+                  Correct answer
                 </label>
                 <Input
                   placeholder="Short answer"
@@ -454,7 +483,7 @@ export const ManualCreateExamQuestion = ({
             {questions[questionIndex].type === "theory" && (
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-1">
-                  Model answer
+                  Correct answer
                 </label>
                 <Textarea
                   placeholder="Long answer"
@@ -468,59 +497,6 @@ export const ManualCreateExamQuestion = ({
                 />
               </div>
             )}
-
-            {/* <div className="w-full">
-              <div className="mb-1">
-                <div className="w-full flex items-center justify-between">
-                  Advanced Settings
-                  <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="p-2 rounded-full bg-neutral-ghost hover:bg-text-placeholder"
-                  >
-                    <FiChevronDown
-                      className={`h-4 w-4 transition-transform duration-200 ${
-                        isOpen ? "rotate-180 transform" : ""
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-              <AnimatePresence initial={false}>
-                {isOpen && (
-                  <motion.div
-                    key="content"
-                    initial="collapsed"
-                    animate="open"
-                    exit="collapsed"
-                    variants={{
-                      open: { opacity: 1, height: "auto" },
-                      collapsed: { opacity: 0, height: 0 },
-                    }}
-                    transition={{
-                      duration: 0.3,
-                      ease: [0.04, 0.62, 0.23, 0.98],
-                    }}
-                  >
-                    <div className="overflow-auto pb-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="questionScore">Maximum Score</Label>
-                        <Input
-                          id="questionScore"
-                          name="score"
-                          type="number"
-                          placeholder="0"
-                          topClassName="!w-[200px]"
-                          value={questions[questionIndex].score}
-                          onChange={(e) =>
-                            updateQuestionScore(e.target.value, questionIndex)
-                          }
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div> */}
 
             <div className="flex justify-end mt-6 space-x-4">
               <button
@@ -573,11 +549,20 @@ export const MaterialCreateExamUpdateMetaData = ({
   setPreviousStep,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const dispatch = useDispatch();
   const [toast, setToast] = useState({
     open: false,
     message: "",
     severity: "info",
   });
+
+  useEffect(() => {
+    if (!examData.questionTypes.includes("theory")) {
+      updateExamData({
+        questionTypes: [...examData.questionTypes, "theory"],
+      });
+    }
+  }, []);
 
   const handleQuestionTypeChange = (type) => {
     const currentTypes = [...examData.questionTypes];
@@ -613,11 +598,11 @@ export const MaterialCreateExamUpdateMetaData = ({
     const numQuestions = examData.numberOfQuestions;
 
     try {
-      console.log({
-        uploadedFiles: examData.uploadedFiles[0]?.file,
-        questionTypes,
-        numQuestions,
-      });
+      // console.log({
+      //   uploadedFiles: examData.uploadedFiles[0]?.file,
+      //   questionTypes,
+      //   numQuestions,
+      // });
 
       const result = await uploadFile(
         examData.uploadedFiles[0]?.file,
@@ -625,13 +610,27 @@ export const MaterialCreateExamUpdateMetaData = ({
         numQuestions
       );
 
-      updateExamData({ questions: mapQuestions(result.questions) });
+      // console.log({ result });
+
+      updateExamData({
+        questions: mapQuestions(result.questions),
+        examCreationMethod: "material",
+      });
+      await dispatch(fetchUserCredits()).unwrap();
       showToast("Your questions have been generated", "success");
       // setTimeout(() => {
       //   setSelectedQuestionMethod();
       // }, 2000);
     } catch (error) {
-      showToast("Failed to generate questions. Please try again.", "error");
+      if (error.status == 400) {
+        showToast(
+          error.response?.data?.error ||
+            "Failed to generate questions. Please try again.",
+          "error"
+        );
+      } else {
+        showToast("Failed to generate questions. Please try again.", "error");
+      }
       console.error("Upload error:", error);
     }
   };
@@ -657,7 +656,6 @@ export const MaterialCreateExamUpdateMetaData = ({
       return response.data;
     } catch (error) {
       console.error("Upload Error:", error);
-      showToast("Failed to generate questions. Please try again.", "error");
       throw error;
     } finally {
       setIsUploading(false);
@@ -708,7 +706,9 @@ export const MaterialCreateExamUpdateMetaData = ({
       </div>
       <div className="bg-white border rounded-lg p-6 mb-6">
         <div className="">
-          <h2 className="text-lg font-medium mb-4">Question Types</h2>
+          <div className="flex items-start justify-between">
+            <h2 className="text-lg font-medium mb-4">Question Types</h2>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center flex-1 justify-start space-x-2">
@@ -731,7 +731,7 @@ export const MaterialCreateExamUpdateMetaData = ({
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="theory"
-                checked={true}
+                checked={examData?.questionTypes?.includes("theory")}
                 onCheckedChange={() => handleQuestionTypeChange("theory")}
               />
               <Label htmlFor="theory">Theory</Label>
@@ -756,15 +756,74 @@ export const MaterialCreateExamUpdateMetaData = ({
           <CustomButton variant="clear" onClick={() => handleCancel()}>
             Cancel
           </CustomButton>
-          <CustomButton
-            disabled={isUploading}
-            loading={isUploading}
-            onClick={() => handleDone()}
-            className="w-[200px]"
-          >
-            Generate Questions
-          </CustomButton>
+          <div className="flex gap-3">
+            {/* <TooltipProvider>
+              <button
+                disabled
+                className="px-4 py-2 rounded flex items-center gap-2 border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+              >
+                <span className="font-medium text-sm md:block hidden">
+                  Total Cost: {examData.numberOfQuestions / 5} Credit(s)
+                </span>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <FiHelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    className="bg-gray-900 text-white text-left p-3 rounded-lg max-w-xs"
+                  >
+                    <p className="font-semibold mb-1 mr-auto">Credit Cost</p>
+                    <p className="text-sm mb-2">
+                      This is the amount of credit that will be deducted to
+                      generate your questions.
+                    </p>
+                    <p className="text-sm">
+                      You can generate 5 questions with one credit
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </button>
+            </TooltipProvider> */}
+            <CustomButton
+              disabled={isUploading}
+              loading={isUploading}
+              onClick={() => handleDone()}
+              className="w-[200px]"
+            >
+              Generate Questions
+            </CustomButton>
+          </div>
         </div>
+        <TooltipProvider>
+          <button
+            disabled
+            className="w-full px-4 py-2 rounded flex items-center justify-between mt-4 gap-2 border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+          >
+            <span className="font-medium text-sm">
+              {/* Total Cost: {Math.ceil(examData.numberOfQuestions / 5)} Credit(s) */}
+              Total Cost: {examData.numberOfQuestions / 5} Credit(s)
+            </span>
+            <Tooltip>
+              <TooltipTrigger>
+                <FiHelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                className="bg-gray-900 text-white text-left p-3 rounded-lg max-w-xs"
+              >
+                <p className="font-semibold mb-1 mr-auto">Credit Cost</p>
+                <p className="text-sm mb-2">
+                  This is the amount of credit that will be deducted to generate
+                  your questions.
+                </p>
+                <p className="text-sm">
+                  You can generate 5 questions with one credit
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </button>
+        </TooltipProvider>
       </div>
 
       <Toast
@@ -785,6 +844,10 @@ export const MaterialCreateExamAddMaterial = ({
   const [uploadedFile, setUploadedFile] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [fileError, setFileError] = useState(null);
+
+  // 5MB in bytes
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
   useEffect(() => {
     if (uploadedFile) {
@@ -824,43 +887,66 @@ export const MaterialCreateExamAddMaterial = ({
   };
 
   const handleFile = (file) => {
+    // Clear any previous errors
+    setFileError(null);
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError(
+        `File size exceeds 5MB limit. Your file is ${(
+          file.size /
+          (1024 * 1024)
+        ).toFixed(2)}MB.`
+      );
+      return;
+    }
+
+    // Check file type
     if (
-      [
+      ![
         "application/pdf",
         "application/vnd.openxmlformats-officedocument.presentationml.presentation",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       ].includes(file.type)
     ) {
-      setUploadingFile({
-        name: file.name,
-        size: `${Math.round(file.size / 1024)} KB`,
-        type: file.type,
-        progress: 0,
-        status: "uploading",
-      });
-
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setUploadingFile((prev) => ({ ...prev, progress }));
-        if (progress >= 100) {
-          clearInterval(interval);
-          setUploadingFile(null);
-          setUploadedFile({
-            file,
-            name: file.name,
-            size: Math.round(file.size / 1024),
-            type: file.type,
-            status: "completed",
-          });
-        }
-      }, 300);
+      setFileError("Only PDF and DOCX files are supported.");
+      return;
     }
+
+    setUploadingFile({
+      name: file.name,
+      size: `${Math.round(file.size / 1024)} KB`,
+      type: file.type,
+      progress: 0,
+      status: "uploading",
+    });
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setUploadingFile((prev) => ({ ...prev, progress }));
+      if (progress >= 100) {
+        clearInterval(interval);
+        setUploadingFile(null);
+        setUploadedFile({
+          file,
+          name: file.name,
+          size: Math.round(file.size / 1024),
+          type: file.type,
+          status: "completed",
+        });
+      }
+    }, 300);
   };
 
   const removeFile = () => {
     setUploadedFile(null);
+    setFileError(null);
     updateExamData({ uploadedFiles: [] });
+  };
+
+  const clearError = () => {
+    setFileError(null);
   };
 
   const fileIcons = {
@@ -877,8 +963,8 @@ export const MaterialCreateExamAddMaterial = ({
         <div>
           <h3 className="font-medium">Upload file</h3>
           <p className="text-sm text-gray-500">
-            Upload your teaching notes, specify the type and number of questions, edit
-            your questions
+            Upload your teaching notes, specify the type and number of
+            questions, edit your questions
           </p>
         </div>
         {/* <FiChevronRight className="h-5 w-5 text-gray-400" /> */}
@@ -908,9 +994,26 @@ export const MaterialCreateExamAddMaterial = ({
           to upload
         </p>
         <p className="text-xs text-gray-500 mt-1">
-          Only PDF & DOCX are supported
+          Only PDF & DOCX are supported (Max 5MB)
         </p>
       </div>
+
+      {fileError && (
+        <div className="mt-4 border border-red-300 bg-red-50 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <FiAlertCircle className="h-4 w-4 text-red-500 mr-2" />
+              <p className="text-sm text-red-700">{fileError}</p>
+            </div>
+            <button
+              onClick={clearError}
+              className="text-red-500 hover:text-red-700"
+            >
+              <FiX className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {uploadingFile && (
         <div className="mt-4 border rounded-lg p-3">
@@ -956,35 +1059,4 @@ export const MaterialCreateExamAddMaterial = ({
       )}
     </div>
   );
-};
-
-const mapQuestions = (response) => {
-  return response.map((q) => {
-    let mappedQuestion = {
-      id: `q${q.id}`,
-      text: q.question,
-      score: q.max_score,
-    };
-
-    if (q.answer_type === "mcq") {
-      mappedQuestion.type = "multiple-choice";
-      mappedQuestion.options = q.mcq_options.map((option, index) => ({
-        id: `q${q.id}_opt${index + 1}`,
-        text: option,
-        isCorrect: q.model_answer.includes(option),
-      }));
-    } else if (q.answer_type === "theory") {
-      mappedQuestion.type = "theory";
-      mappedQuestion.options = [];
-      mappedQuestion.modelAnswer = q.model_answer;
-    } else if (q.answer_type === "cloze") {
-      mappedQuestion.type = "cloze";
-      mappedQuestion.options = [];
-      mappedQuestion.modelAnswer = Array.isArray(q.model_answer)
-        ? q.model_answer.join(", ")
-        : q.model_answer;
-    }
-
-    return mappedQuestion;
-  });
 };

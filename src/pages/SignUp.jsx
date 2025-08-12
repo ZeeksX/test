@@ -11,6 +11,7 @@ import { Label } from "../components/ui/Label.jsx";
 import { Loader } from "../components/ui/Loader.jsx";
 import { CustomButton } from "../components/ui/Button.jsx";
 import axios from "axios";
+import { capitalize } from "../components/modals/UIUtilities.jsx";
 
 // Lazy load the OTPPage component
 const OTPPage = lazy(() => import("./OTPPage.jsx"));
@@ -21,6 +22,8 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
   const [title, setTitle] = useState("");
+  const [school, setSchool] = useState("");
+  const [studentID, setStudentID] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [hasSignedUp, setHasSignedUp] = useState(false);
@@ -59,8 +62,12 @@ const SignUp = () => {
       const parsedData = JSON.parse(storedData);
       setRole(parsedData.role);
       setTitle(parsedData.title);
+      setSchool(parsedData.schoolName);
+      setStudentID(parsedData.studentNumber);
+    } else {
+      navigate("/onboarding");
     }
-  }, []);
+  }, [navigate]);
 
   // Validation functions
   const validateLastName = (value) => {
@@ -162,6 +169,8 @@ const SignUp = () => {
         role: role,
         password: password,
         confirm_password: confirmPassword,
+        school,
+        student_number: studentID,
       };
 
       // Only include title if role is not student
@@ -195,7 +204,7 @@ const SignUp = () => {
         } catch (error) {
           showToast(
             error.response?.data?.error ||
-            "Failed to resend OTP. Please try again.",
+              "Failed to resend OTP. Please try again.",
             "error"
           );
         } finally {
@@ -229,7 +238,21 @@ const SignUp = () => {
         setHasSignedUp(true);
       } else {
         setLoader(false);
-        showToast(data.email || "Sign up failed. Please try again.", "error");
+        // console.log(data);
+        setErrors((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            Object.entries(data).map(([field, msgs]) => [
+              field,
+              msgs.join(" "),
+            ])
+          ),
+        }));
+        showErrors(data);
+        // showToast(
+        //   data.email || data.password || "Sign up failed. Please try again.",
+        //   "error"
+        // );
       }
     } catch (error) {
       setLoader(false);
@@ -238,6 +261,16 @@ const SignUp = () => {
     } finally {
       setLoader(false);
     }
+  };
+
+  const showErrors = (errorObj) => {
+    const allMessages = Object.entries(errorObj)
+      .flatMap(([field, messages]) =>
+        messages.map((msg) => `${capitalize(field)}: ${msg}`)
+      )
+      .join("\n");
+
+    showToast(allMessages, "error");
   };
 
   // Update input change handlers to validate on change
@@ -318,7 +351,7 @@ const SignUp = () => {
             <div className="login hide-scrollbar flex flex-col lg:max-w-screen-lg w-full overflow-scroll md:rounded-r-2xl bg-[white] text-black px-2 md:px-4 lg:px-3 border gap-4 py-4">
               <div className="flex flex-col justify-center items-center gap-1 lg:gap-2">
                 <img
-                  className="w-1/4 max-sm:w-1/2 max-2xl:w-1/3"
+                  className="w-28 md:w-48"
                   src={bannerTransparent}
                   loading="lazy"
                   alt="Acad AI logo"

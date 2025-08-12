@@ -67,7 +67,7 @@ export const OutsideDismissDialog = ({
 
   return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[9999] cursor-pointer"
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-white bg-opacity-30 z-[9999] cursor-pointer"
       onClick={() => dispatch(onOpenChange(false))}
     >
       <div
@@ -95,6 +95,8 @@ export const CustomBlurBgDialog = ({
   open,
   onOpenChange,
   children,
+  maxWidth = "448px",
+  height = "max-content",
 }) => {
   const dispatch = useDispatch();
   const ref = useRef(null);
@@ -115,12 +117,13 @@ export const CustomBlurBgDialog = ({
 
   return ReactDOM.createPortal(
     <div
-      className="fixed max-w-[100vw] inset-0 flex items-center justify-center backdrop-blur-sm bg-white bg-opacity-30 z-[9999] cursor-pointer"
+      className="fixed max-w-[100vw] pt-6 h-screen overflow-y-auto inset-0 flex items-center justify-center backdrop-blur-sm bg-white bg-opacity-30 z-[9999] cursor-pointer"
       onClick={() => dispatch(onOpenChange(false))}
     >
       <div
         ref={ref}
         className="bg-white overflow-hidden cursor-default rounded-[20px] shadow-2xl w-full relative md:max-w-[448px] max-w-[85vw]"
+        style={{ maxWidth, height }}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -134,6 +137,8 @@ CustomBlurBgDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onOpenChange: PropTypes.func.isRequired,
   children: PropTypes.node.isRequired,
+  maxWidth: PropTypes.string,
+  height: PropTypes.string,
 };
 
 export const DialogTrigger = ({ children, onClick }) => {

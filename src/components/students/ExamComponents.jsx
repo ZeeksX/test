@@ -84,7 +84,7 @@ export const submitExamForGrading = async (examId, userAnswers, exam) => {
       grading_requests: gradingRequests,
     };
 
-    console.log("Submitting exam with data:", requestBody);
+    // console.log("Submitting exam with data:", requestBody);
 
     const response = await fetch(`${SERVER_URL}/exams/grade-exam/`, {
       method: "POST",
@@ -104,7 +104,7 @@ export const submitExamForGrading = async (examId, userAnswers, exam) => {
     }
 
     const data = await response.json();
-    console.log("Response from the backend", data);
+    // console.log("Response from the backend", data);
     return data;
   } catch (error) {
     console.error("Error submitting exam for grading:", error);
