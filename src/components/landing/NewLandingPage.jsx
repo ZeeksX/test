@@ -1,4 +1,3 @@
-import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { new_landing_img, new_landing_img_sm } from "../../utils/images";
 import { PiStarFourFill } from "react-icons/pi";
@@ -8,46 +7,49 @@ const words = ["Grading", "Marking", "Scoring"];
 
 const NewLandingPage = () => {
   const [index, setIndex] = useState(0);
-  const currentWord = words[index];
+  const [text, setText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [cursorVisible, setCursorVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 950);
     };
-
     checkScreenSize();
-
     window.addEventListener("resize", checkScreenSize);
-
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
+  // Typing / deleting logic
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % words.length);
-    }, 5000); // change word every 5 seconds
+    const typingSpeed = isDeleting ? 80 : 150;
+    const fullWord = words[index];
 
-    return () => clearInterval(interval);
+    const timeout = setTimeout(() => {
+      if (!isDeleting && text.length < fullWord.length) {
+        setText(fullWord.substring(0, text.length + 1));
+      } else if (isDeleting && text.length > 0) {
+        setText(fullWord.substring(0, text.length - 1));
+      } else if (!isDeleting && text.length === fullWord.length) {
+        setTimeout(() => setIsDeleting(true), 1200); // pause before deleting
+      } else if (isDeleting && text.length === 0) {
+        setIsDeleting(false);
+        setIndex((prev) => (prev + 1) % words.length);
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [text, isDeleting, index]);
+
+  // Blinking cursor effect
+  useEffect(() => {
+    const blink = setInterval(() => {
+      setCursorVisible((prev) => !prev);
+    }, 500);
+    return () => clearInterval(blink);
   }, []);
 
-  const wordVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: (i) => ({
-      opacity: 1,
-      x: 0,
-      transition: {
-        delay: i * 0.25,
-      },
-    }),
-    exit: (i) => ({
-      opacity: 0,
-      x: 20,
-      transition: {
-        delay: i * 0.25,
-      },
-    }),
-  };
   return (
     <div
       className="bg-gradient-to-t from-[#C7CEEC] w-full flex flex-col land:flex-row p-4 px-4 sm:px-6 md:px-8 lg:px-[4.5%] md:mt-24 gap-12 sm:gap-8 lg:gap-0"
@@ -63,35 +65,33 @@ const NewLandingPage = () => {
           <p className="text-neutral-new text-[13px]">Reclaim your time</p>
         </span>
         <div className="relative w-full">
-          <h1 className="text-[34px] sm:text-[50px] md:text-[46px] xl:text-[58px] leading-[1.2] relative land:w-[calc(100%_+_80px)] font-medium">
-            <div className="inline-block font-metropolis mr-1 sm:mr-2 leading-[1] text-[#222222]">
+          <h1 className="text-[34px] sm:text-[50px] md:text-[46px] xl:text-[58px] leading-[1.2] relative flex flex-col land:w-[calc(100%_+_80px)] font-medium">
+            <div className="inline-block font-metropolis mr-1 sm:mr-2 leading-[1] text-[#222222] max-w-">
               Turn hours of{" "}
             </div>
-            <span className="relative font-metropolis leading-[100%] py-1 mx-1 mr-3 inline-block bg-gradient-to-r from-[#85C7ED] to-[#155EEF] bg-clip-text text-transparent">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentWord}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  className="max-md:w-full"
+
+            {/* Typing text with cursor at the beginning */}
+            <div className="flex flex-row">
+              <span className="relative flex items-center font-metropolis leading-[100%] py-1 mx-1 mr-3 bg-gradient-to-r from-[#85C7ED] to-[#155EEF] bg-clip-text text-transparent">
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: "8px",
+                    marginRight: "4px",
+                    backgroundColor: cursorVisible ? "#1836B2" : "transparent",
+                    transition: "background-color 0.1s",
+                  }}
                 >
-                  {currentWord.split("").map((char, i) => (
-                    <motion.span
-                      key={i}
-                      custom={i}
-                      variants={wordVariants}
-                      className="inline-block"
-                    >
-                      {char}
-                    </motion.span>
-                  ))}
-                </motion.div>
-              </AnimatePresence>
-            </span>
-            <div className="inline-block leading-[1] text-[#222222]">
-              into Minutes
+                  &nbsp;
+                </span>
+                {text}
+              </span>
+
+              <div className="inline-block leading-[1] text-[#222222]">
+                into Minutes
+              </div>
             </div>
+
           </h1>
         </div>
         <p className="text-neutral-new text-sm leading-6">
@@ -113,7 +113,7 @@ const NewLandingPage = () => {
       <img
         src={isMobile ? new_landing_img_sm : new_landing_img}
         alt=""
-        className="flex-1 land:max-w-[55%]"
+        className="flex-1 land:max-w-[50%]"
       />
     </div>
   );
